@@ -1,0 +1,12 @@
+build/**
+!build/native/nativeCompile/runestone-bank
+.gradle
+.kotlin
+.idea
+*.iml
+
+.env
+*.log
+hs_err_pid*.log
+
+kls_database.db

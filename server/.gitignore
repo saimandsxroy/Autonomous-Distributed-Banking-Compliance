@@ -1,0 +1,14 @@
+bin/
+build/
+.gradle/
+target/
+bin/
+.classpath
+.project
+.settings/
+.factorypath
+.factorypath
+*.iml
+.idea/
+.kotlin/
+kls_database.db
