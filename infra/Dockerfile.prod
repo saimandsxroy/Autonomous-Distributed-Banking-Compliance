@@ -1,0 +1,7 @@
+FROM alpine:latest
+RUN apk add --no-cache gcompat
+WORKDIR /app
+# GitHub builds the native binary before packaging this runtime image.
+COPY build/native/nativeCompile/runestone-bank .
+EXPOSE 8081
+ENTRYPOINT ["./runestone-bank"]
