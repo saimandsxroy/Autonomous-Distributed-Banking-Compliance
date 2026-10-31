@@ -1,0 +1,31 @@
+FROM ghcr.io/graalvm/native-image-community:21 AS build
+
+RUN microdnf install -y gcc glibc-devel zlib-devel libstdc++-devel gcc-c++
+
+WORKDIR /app
+
+#  OPTIMIZATION: Cache Gradle layers first
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle.kts settings.gradle.kts ./
+
+# Trigger a download of the Gradle distribution and dependencies
+RUN chmod +x gradlew && ./gradlew --version
+# -----------------------------------------------
+
+# Copy source code after dependencies are ready
+COPY src ./src
+
+# Run AOT compilation
+RUN ./gradlew nativeCompile -x test
+
+# Runtime
+FROM alpine:latest
+RUN apk add --no-cache gcompat
+WORKDIR /app
+
+# Copy the binary from the Gradle-specific output path
+COPY --from=build /app/build/native/nativeCompile/runestone-bank .
+
+EXPOSE 8081
+ENTRYPOINT ["./runestone-bank"]
