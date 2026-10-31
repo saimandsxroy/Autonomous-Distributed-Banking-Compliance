@@ -48,4 +48,11 @@ logs/
 *.sw?
 
 .DS_Store
+
+# Internal Implementation Notes & PRDs
+PROJECT_GUIDE_AND_TESTING.md
+api_style and ipl.md
+enterprise_treasury_aml_platform_prd.md
+enterprise_upgrade_master_plan_phases_7_10.md
+
 *.Zone.Identifier
