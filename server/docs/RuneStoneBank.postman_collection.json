@@ -1,0 +1,207 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "RuneStone Bank - Complete API Suite",
+		"description": "Full collection for User Management, Transactions, Bank Statements, and Debezium Kafka Connectors.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication & Users",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/user/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user", "login"] }
+					}
+				},
+				{
+					"name": "Create Account",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"otherName\": \"Jr\",\n    \"gender\": \"MALE\",\n    \"address\": \"123 Bank St\",\n    \"stateOfOrigin\": \"Lagos\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"securePass\",\n    \"phoneNumber\": \"08012345678\",\n    \"alternativePhoneNumber\": \"09012345678\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/user", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user"] }
+					}
+				},
+				{
+					"name": "Balance Enquiry",
+					"request": {
+						"method": "GET",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"url": { "raw": "{{baseUrl}}/api/v1/user/balanceEnquiry?accountNumber=1234567890", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user", "balanceEnquiry"], "query": [{ "key": "accountNumber", "value": "1234567890" }] }
+					}
+				},
+				{
+					"name": "Name Enquiry",
+					"request": {
+						"method": "GET",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"url": { "raw": "{{baseUrl}}/api/v1/user/nameEnquiry?accountNumber=1234567890", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user", "nameEnquiry"], "query": [{ "key": "accountNumber", "value": "1234567890" }] }
+					}
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"url": { "raw": "{{baseUrl}}/api/v1/user/profile?accountNumber=1234567890", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user", "profile"], "query": [{ "key": "accountNumber", "value": "1234567890" }] }
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Updated\",\n    \"email\": \"john.updated@example.com\",\n    \"emailNotifs\": true,\n    \"loginAlerts\": true,\n    \"transferAlerts\": true\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/user/profile?accountNumber=1234567890", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user", "profile"], "query": [{ "key": "accountNumber", "value": "1234567890" }] }
+					}
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"method": "PUT",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currentPassword\": \"oldPass\",\n    \"newPassword\": \"newSecurePass\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/user/password?accountNumber=1234567890", "host": ["{{baseUrl}}"], "path": ["api", "v1", "user", "password"], "query": [{ "key": "accountNumber", "value": "1234567890" }] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Transactions",
+			"item": [
+				{
+					"name": "Credit Account",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accountNumber\": \"1234567890\",\n    \"amount\": 5000.00\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/transactions/credit", "host": ["{{baseUrl}}"], "path": ["api", "v1", "transactions", "credit"] }
+					}
+				},
+				{
+					"name": "Debit Account",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accountNumber\": \"1234567890\",\n    \"amount\": 1000.00\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/transactions/debit", "host": ["{{baseUrl}}"], "path": ["api", "v1", "transactions", "debit"] }
+					}
+				},
+				{
+					"name": "Transfer Funds",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"sender\": \"1234567890\",\n    \"receiver\": \"0987654321\",\n    \"amount\": 2500.00\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": { "raw": "{{baseUrl}}/api/v1/transactions/transfer", "host": ["{{baseUrl}}"], "path": ["api", "v1", "transactions", "transfer"] }
+					}
+				},
+				{
+					"name": "Transaction History",
+					"request": {
+						"method": "GET",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"url": { "raw": "{{baseUrl}}/api/v1/transactions/history?accountNumber=1234567890", "host": ["{{baseUrl}}"], "path": ["api", "v1", "transactions", "history"], "query": [{ "key": "accountNumber", "value": "1234567890" }] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Bank Statements",
+			"item": [
+				{
+					"name": "Generate Statement",
+					"request": {
+						"method": "GET",
+						"header": [ { "key": "Authorization", "value": "Bearer {{jwtToken}}" } ],
+						"url": { 
+							"raw": "{{baseUrl}}/api/v1/bankstatement?accountNumber=1234567890&start=2023-01-01&end=2023-12-31", 
+							"host": ["{{baseUrl}}"], 
+							"path": ["api", "v1", "bankstatement"], 
+							"query": [
+								{ "key": "accountNumber", "value": "1234567890" },
+								{ "key": "start", "value": "2023-01-01" },
+								{ "key": "end", "value": "2023-12-31" }
+							] 
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Debezium Connectors",
+			"item": [
+				{
+					"name": "Register Outbox Connector",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"outbox-connector\",\n  \"config\": {\n    \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\n    \"tasks.max\": \"1\",\n    \"database.hostname\": \"db\",\n    \"database.port\": \"5432\",\n    \"database.user\": \"postgres\",\n    \"database.password\": \"admin\",\n    \"database.dbname\": \"runestone_bank\",\n    \"topic.prefix\": \"bank_events\",\n    \"table.include.list\": \"public.outbox\",\n    \"plugin.name\": \"pgoutput\",\n    \"transforms\": \"outbox\",\n    \"transforms.outbox.type\": \"io.debezium.transforms.outbox.EventRouter\",\n    \"transforms.outbox.table.field.event_id\": \"id\",\n    \"transforms.outbox.table.field.event_key\": \"aggregate_id\",\n    \"transforms.outbox.table.field.event_payload\": \"payload\",\n    \"transforms.outbox.route.topic.replacement\": \"${routedByValue}\",\n    \"transforms.outbox.route.by.field\": \"aggregate_type\"\n  }\n}"
+						},
+						"url": { "raw": "{{connectUrl}}/connectors", "host": ["{{connectUrl}}"], "path": ["connectors"] }
+					}
+				},
+				{
+					"name": "Get Connector Status",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{connectUrl}}/connectors/outbox-connector/status", "host": ["{{connectUrl}}"], "path": ["connectors", "outbox-connector", "status"] }
+					}
+				},
+				{
+					"name": "Delete Connector",
+					"request": {
+						"method": "DELETE",
+						"url": { "raw": "{{connectUrl}}/connectors/outbox-connector", "host": ["{{connectUrl}}"], "path": ["connectors", "outbox-connector"] }
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": { "type": "text/javascript", "exec": [""] }
+		}
+	],
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8081", "type": "string" },
+		{ "key": "connectUrl", "value": "http://localhost:8083", "type": "string" },
+		{ "key": "jwtToken", "value": "your_jwt_here", "type": "string" }
+	]
+}
