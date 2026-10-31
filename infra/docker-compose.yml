@@ -1,0 +1,190 @@
+# Runtime safeguards added after the 2026-09-22 Azure VM disk-full incident
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: runestone-mysql
+    restart: always
+
+    environment:
+      MYSQL_DATABASE: runestone_treasury
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_USER: treasury_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-root}
+
+    ports:
+      - "3306:3306"
+
+    command:
+      [
+        "--default-authentication-plugin=mysql_native_password",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci"
+      ]
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    networks:
+      - runestone-network
+
+    logging: *default-logging
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: runestone-redis
+    restart: always
+
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - runestone-network
+
+    logging: *default-logging
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: runestone-zookeeper
+    restart: always
+
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+
+    healthcheck:
+      test: ["CMD-SHELL", "cub zk-ready localhost:2181 40"]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+      start_period: 10s
+
+    networks:
+      - runestone-network
+
+    logging: *default-logging
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: runestone-kafka
+    restart: always
+
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+
+    ports:
+      - "9094:9094"
+
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      KAFKA_LISTENERS: >-
+        PLAINTEXT://0.0.0.0:29092,
+        PLAINTEXT_HOST://0.0.0.0:9094
+
+      KAFKA_ADVERTISED_LISTENERS: >-
+        PLAINTEXT://kafka:29092,
+        PLAINTEXT_HOST://localhost:9094
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: >-
+        PLAINTEXT:PLAINTEXT,
+        PLAINTEXT_HOST:PLAINTEXT
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cub kafka-ready -b localhost:29092 1 20"
+        ]
+      interval: 10s
+      timeout: 25s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - runestone-network
+
+    logging: *default-logging
+
+  app:
+    image: ${DOCKER_IMAGE:-runestone-app-local}
+
+    build:
+      context: ../server
+      dockerfile: ../infra/Dockerfile.dev
+
+    container_name: runestone-app
+    restart: always
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      DB_URL: jdbc:mysql://db:3306/runestone_treasury?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      APP_USERNAME: ${APP_USERNAME}
+      APP_PASSWORD: ${APP_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-900000}
+
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+      kafka:
+        condition: service_healthy
+
+    networks:
+      - runestone-network
+
+    logging: *default-logging
+
+volumes:
+  mysql_data:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_logs:
+
+networks:
+  runestone-network:
+    driver: bridge
