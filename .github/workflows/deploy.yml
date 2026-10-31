@@ -1,0 +1,215 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+          cache-dependency-path: |
+            server/*.gradle*
+            server/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run server tests
+        run: ./gradlew test --no-daemon
+
+  build-and-push:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+          cache-matching-strategy: 'all'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Native Image with Gradle
+        run: ./gradlew nativeCompile -x test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Prepare Docker Tag
+        id: prep
+        run: |
+          CLEAN_USER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr -d '[:space:]')
+          echo "tag=${CLEAN_USER}/runestone-bank:latest" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        run: |
+          docker buildx build --push -f ../infra/Dockerfile.prod -t ${{ steps.prep.outputs.tag }} .
+        working-directory: ./server
+
+  deploy:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate Compose checksum
+        id: compose
+        run: echo "sha256=$(sha256sum infra/docker-compose.yml | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Copy infra folder to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          source: "infra/*"
+          target: "~/runestone-bank/infra"
+          strip_components: 1
+          overwrite: true
+
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          COMPOSE_SHA256: ${{ steps.compose.outputs.sha256 }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+          APP_USERNAME: ${{ secrets.APP_USERNAME }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          command_timeout: 20m
+          script_stop: true
+          envs: COMPOSE_SHA256,DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,DB_PASSWORD,JWT_SECRET,JWT_EXPIRATION,APP_USERNAME,APP_PASSWORD
+          script: |
+            set -Eeuo pipefail
+
+            cd ~/runestone-bank/infra
+
+            printf '%s  %s\n' "$COMPOSE_SHA256" docker-compose.yml | sha256sum --check --status
+            docker compose config --quiet
+
+            CLEAN_DOCKER_USER=$(printf '%s' "$DOCKERHUB_USERNAME" | tr -d '[:space:]')
+            if [ -z "$CLEAN_DOCKER_USER" ]; then
+              echo "Docker Hub username is empty after normalization" >&2
+              exit 1
+            fi
+
+            export DOCKER_IMAGE="${CLEAN_DOCKER_USER}/runestone-bank:latest"
+            printf '%s' "$DOCKERHUB_TOKEN" | docker login --username "$CLEAN_DOCKER_USER" --password-stdin
+
+            wait_for_container_health() {
+              container="$1"
+              label="$2"
+
+              for attempt in $(seq 1 24); do
+                status=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)
+                if [ "$status" = "healthy" ]; then
+                  echo "$label is healthy"
+                  return 0
+                fi
+
+                if [ "$status" = "exited" ] || [ "$status" = "dead" ]; then
+                  echo "$label stopped before becoming healthy" >&2
+                  return 1
+                fi
+
+                sleep 5
+              done
+
+              echo "$label did not become healthy in time" >&2
+              return 1
+            }
+
+            wait_for_url() {
+              label="$1"
+              url="$2"
+
+              for attempt in $(seq 1 24); do
+                if curl --fail --silent --show-error --max-time 5 "$url" >/dev/null; then
+                  echo "$label is ready"
+                  return 0
+                fi
+                sleep 5
+              done
+
+              echo "$label did not become ready in time" >&2
+              return 1
+            }
+
+            docker compose up -d --no-build db zookeeper kafka connect kafka-ui
+            wait_for_container_health runestone-db PostgreSQL
+            wait_for_container_health runestone-zookeeper ZooKeeper
+            wait_for_container_health runestone-kafka Kafka
+            wait_for_url "Kafka Connect" http://localhost:8083/
+
+            docker compose pull app
+            docker compose up -d --no-deps --force-recreate --no-build app
+
+            expected_image_id=$(docker image inspect --format '{{.Id}}' "$DOCKER_IMAGE")
+            container_image_id=$(docker inspect --format '{{.Image}}' runestone-app)
+            if [ "$container_image_id" != "$expected_image_id" ]; then
+              echo "Application container is not using the pulled image" >&2
+              exit 1
+            fi
+
+            for attempt in $(seq 1 36); do
+              response=$(curl --fail --silent --show-error --max-time 5 http://localhost:8081/actuator/health 2>/dev/null || true)
+              if printf '%s' "$response" | grep --quiet --extended-regexp '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+                echo "Application health is UP"
+                docker image prune -f
+                exit 0
+              fi
+
+              app_status=$(docker inspect --format '{{.State.Status}}' runestone-app 2>/dev/null || true)
+              if [ "$app_status" = "exited" ] || [ "$app_status" = "dead" ]; then
+                echo "Application stopped before becoming healthy" >&2
+                exit 1
+              fi
+
+              sleep 5
+            done
+
+            echo "Application health did not become UP in time" >&2
+            docker ps --all --filter name=runestone-app --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' >&2
+            exit 1
