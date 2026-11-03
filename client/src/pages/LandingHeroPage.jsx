@@ -498,3 +498,103 @@ export function LandingHeroPage() {
               </div>
             </div>
 
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6 hidden sm:block">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#E8E5DE] tracking-tight">
+                4-LEG FX
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                MULTI-CURRENCY &amp; BATCH
+              </div>
+            </div>
+
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6 hidden md:block">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#E8E5DE] tracking-tight">
+                SHA-256
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                TAMPER-EVIDENT AUDIT CHAIN
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          STAGE 2: SCROLL TRANSITION TO ARCHIVAL BONE SPECIFICATION
+          Plate 1: Warm Archival Stone (#EAE6DF)
+          ===================================================================== */}
+      <section
+        className={`relative z-20 min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-12 py-16 sm:py-24 pointer-events-none transition-all duration-700 ease-institutional ${
+          isSection2
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-8"
+        }`}
+      >
+        <div className="w-full max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 items-center gap-8 lg:gap-12">
+          {/* Left Column on Stone Plate: Two-Tone Stacked Headline & Datasheet */}
+          <div className="lg:col-span-7 pointer-events-auto select-none">
+            {/* Two-Tone Stacked Headline */}
+            <h2 className="font-hero-display text-2xl sm:text-4xl lg:text-5xl leading-[1.08]">
+              <span className="block text-[#2A2D32]">Mathematical ledger certainty.</span>
+              <span className="block text-[#1D4477]">Autonomous AI compliance.</span>
+            </h2>
+
+            {/* Editorial Paragraph */}
+            <p className="font-editorial-body mt-4 sm:mt-6 max-w-[520px] text-[13px] sm:text-[15px] leading-[1.65] text-[#3F434A]">
+              Legacy banks move funds blindly and audit logs days later. RuneStone traverses five hops of counterparty history inside MySQL before a single cent settles—quarantining circular laundering rings in escrow while clearing legitimate corporate wires, bulk CSV payrolls, and 4-leg cross-border FX transfers at line speed.
+            </p>
+
+            {/* 2x4 Precision Datasheet Table */}
+            <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 gap-x-8 lg:gap-x-12 text-[10px] sm:text-[11px] font-tech-mono border-t border-black/15 pt-2">
+              {/* Left Column Rows */}
+              <div className="space-y-0">
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">LOCK ORDERING</span>
+                  <span className="text-[#1D2125] font-semibold">ASCENDING PESSIMISTIC</span>
+                </div>
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">IDEMPOTENCY FENCE</span>
+                  <span className="text-[#1D2125] font-semibold">REDIS NX + SHA-256</span>
+                </div>
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">MULTI-CURRENCY FX</span>
+                  <span className="text-[#1D2125] font-semibold">4-LEG LIQUIDITY POOL</span>
+                </div>
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">BATCH THROUGHPUT</span>
+                  <span className="text-[#1D2125] font-semibold">JAVA 21 VIRTUAL THREADS</span>
+                </div>
+              </div>
+
+              {/* Right Column Rows */}
+              <div className="space-y-0">
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">GRAPH TRAVERSAL</span>
+                  <span className="text-[#1D4477] font-bold">5-HOP MYSQL CTE</span>
+                </div>
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">AI GOVERNANCE</span>
+                  <span className="text-[#1D2125] font-semibold">MCP READ_AUTO / WRITE_HITL</span>
+                </div>
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">SUPERVISORY RULE</span>
+                  <span className="text-[#1D2125] font-semibold">FINRA 3110 4-EYES</span>
+                </div>
+                <div className="border-b border-black/15 py-2 sm:py-2.5 flex justify-between items-center">
+                  <span className="text-[#6B6F76] uppercase tracking-wider">REGULATORY EXPORT</span>
+                  <span className="text-[#1D2125] font-semibold">FINCEN SAR PDF + HMAC</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick-Launch Operational Navigation */}
+            <div className="mt-8 sm:mt-10 pt-4 sm:pt-6 border-t border-black/15">
+              <div className="text-[9px] sm:text-[10px] font-tech-mono tracking-[0.24em] text-[#6B6F76] uppercase mb-3 sm:mb-4 font-semibold">
+                OPERATIONAL PORTAL ACCESS
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <Link
+                  to="/dashboard"
+                  onMouseEnter={handleInteractiveEnter}
+                  onMouseLeave={handleInteractiveLeave}
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-[#14181D] hover:bg-black text-[#E8E5DE] rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase font-semibold transition min-h-[36px]"
