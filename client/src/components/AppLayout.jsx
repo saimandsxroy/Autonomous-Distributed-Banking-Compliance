@@ -98,3 +98,103 @@ export function AppLayout() {
           onClick={() => setMobileMenuOpen(true)}
           className="relative h-14 w-14 rounded-[1.2rem] overflow-hidden shadow-brutal border-2 border-zinc-800 shrink-0 bg-zinc-900 transition-transform active:scale-95 focus:outline-none"
           aria-label="Open Mobile Menu"
+        >
+          <img
+            src={logo}
+            alt="RuneStone Logo"
+            className="absolute inset-0 h-full w-full object-cover scale-110 pointer-events-none"
+          />
+        </button>
+
+        {/* Mobile Portal Indicator */}
+        <span
+          className={`text-[10px] font-mono font-bold uppercase px-3 py-1 rounded-full border ${
+            isOfficer
+              ? "bg-rose-950 text-rose-300 border-rose-500"
+              : "bg-emerald-950 text-emerald-300 border-emerald-500"
+          }`}
+        >
+          {isOfficer ? "Sentinel AML SRE" : "Corporate Portal"}
+        </span>
+      </header>
+
+      {/* Fullscreen Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-zinc-950 flex flex-col py-6 px-4 animate-in slide-in-from-bottom-8 duration-200">
+          <div className="flex justify-between items-center mb-12 px-2">
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="relative h-14 w-14 rounded-[1.2rem] overflow-hidden shadow-brutal border-2 border-zinc-800 shrink-0 bg-zinc-900 transition-transform active:scale-95 focus:outline-none"
+              aria-label="Close Mobile Menu"
+            >
+              <img
+                src={logo}
+                alt="RuneStone Logo"
+                className="absolute inset-0 h-full w-full object-cover scale-110 pointer-events-none"
+              />
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-3 border-4 border-zinc-800 bg-zinc-900 text-white active:bg-zinc-800"
+              aria-label="Close Menu"
+            >
+              <X size={28} />
+            </button>
+          </div>
+
+          <nav className="flex flex-col space-y-3 px-2 flex-1 overflow-y-auto">
+            {isOfficer ? (
+              <>
+                <SidebarLink
+                  to="/compliance"
+                  icon={<ShieldAlert size={28} />}
+                  label="AML Command Center"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+                <SidebarLink
+                  to="/reconciliation"
+                  icon={<Scale size={28} />}
+                  label="Recon & Wires"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+                <SidebarLink
+                  to="/batch-fx"
+                  icon={<Layers size={28} />}
+                  label="Batch & FX"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+                <SidebarLink
+                  to="/transactions"
+                  icon={<History size={28} />}
+                  label="Transactions"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+                <SidebarLink
+                  to="/dashboard"
+                  icon={<LayoutDashboard size={28} />}
+                  label="Dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+              </>
+            ) : (
+              <>
+                <SidebarLink
+                  to="/dashboard"
+                  icon={<LayoutDashboard size={28} />}
+                  label="Dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+                <SidebarLink
+                  to="/transfer"
+                  icon={<Send size={28} />}
+                  label="Transfer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  isMobile
+                />
+                <SidebarLink
