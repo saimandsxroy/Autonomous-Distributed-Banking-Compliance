@@ -48,3 +48,53 @@ public class AmlComplianceController {
 
   @Autowired private AmlPolicyChunkRepository amlPolicyChunkRepository;
 
+  @Autowired private AmlInvestigationRepository amlInvestigationRepository;
+
+  @Autowired private McpToolInvocationRepository mcpToolInvocationRepository;
+
+  @Autowired private HitlApprovalRequestRepository hitlApprovalRequestRepository;
+
+  @Autowired private AmlMcpToolService amlMcpToolService;
+
+  @Autowired private GeminiAmlDetectiveService geminiAmlDetectiveService;
+
+  @Autowired private HitlApprovalService hitlApprovalService;
+
+  @Autowired private ComplianceAuditLogService complianceAuditLogService;
+
+  @Autowired private com.runestone.treasury.service.AmlDemoSeederService amlDemoSeederService;
+
+  @Autowired private SarPdfExportService sarPdfExportService;
+
+  @Autowired
+  private com.runestone.treasury.repository.TreasuryAccountRepository treasuryAccountRepository;
+
+  @Autowired private com.runestone.treasury.repository.BalanceHoldRepository balanceHoldRepository;
+
+  @Autowired
+  private com.runestone.treasury.repository.ReconciliationDiscrepancyRepository
+      reconciliationDiscrepancyRepository;
+
+  @Autowired
+  private com.runestone.treasury.repository.MakerCheckerWireRepository makerCheckerWireRepository;
+
+  @Autowired private com.runestone.treasury.repository.OutboxEventRepository outboxEventRepository;
+
+  @Autowired
+  private com.runestone.treasury.repository.DeadLetterEventRepository deadLetterEventRepository;
+
+  /**
+   * GET /compliance/graph/account/{accountId} Returns the 5-hop subgraph analysis, cycle detection
+   * status, and fan-out/fan-in metrics for the given account.
+   */
+  @GetMapping("/graph/account/{accountId}")
+  public ResponseEntity<?> getAccountGraph(@PathVariable Long accountId) {
+    try {
+      Map<String, Object> subgraph = amlGraphDetectionService.getAccountSubgraph(accountId);
+      if (subgraph == null || subgraph.isEmpty()) {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      }
+      return new ResponseEntity<>(subgraph, HttpStatus.OK);
+    } catch (Exception e) {
+      log.error("Failed to retrieve subgraph for account {}: {}", accountId, e.getMessage());
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
