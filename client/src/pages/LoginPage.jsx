@@ -298,3 +298,103 @@ export function LoginPage() {
                 {demoLoggingIn === "alice" ? (
                   <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-emerald-400">
                     <Loader2 size={15} className="animate-spin" />
+                    <span className="hidden sm:inline">Authenticating...</span>
+                  </div>
+                ) : (
+                  <ArrowRight
+                    size={16}
+                    className="text-zinc-600 group-hover:text-[#38BDF8] group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </div>
+            </button>
+
+            {/* Bob Jones Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantDemoLogin("bob", "/reconciliation")}
+              disabled={!!demoLoggingIn || isLoading}
+              className="w-full text-left p-4 lg:p-5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-[#38BDF8]/30 transition-all duration-300 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-105 transition-transform shrink-0">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                    <span className="text-sm font-medium text-white group-hover:text-amber-300 transition-colors">
+                      Bob Jones
+                    </span>
+                    <span className="text-[9px] font-tech-mono font-medium px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 uppercase tracking-wider">
+                      CHECKER
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8E9299] mt-0.5 font-hero-sub break-words">
+                    Dual-control approvals &amp; reconciliation.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center pl-2 sm:pl-3 shrink-0">
+                {demoLoggingIn === "bob" ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-amber-400">
+                    <Loader2 size={15} className="animate-spin" />
+                    <span className="hidden sm:inline">Authenticating...</span>
+                  </div>
+                ) : (
+                  <ArrowRight
+                    size={16}
+                    className="text-zinc-600 group-hover:text-[#38BDF8] group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </div>
+            </button>
+
+            {/* Sarah Connor Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantDemoLogin("sarah_compliance", "/compliance")}
+              disabled={!!demoLoggingIn || isLoading}
+              className="w-full text-left p-4 lg:p-5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-[#38BDF8]/30 transition-all duration-300 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
+                  <KeyRound size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                    <span className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors">
+                      Sarah Connor
+                    </span>
+                    <span className="text-[9px] font-tech-mono font-medium px-2 py-0.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 uppercase tracking-wider">
+                      COMPLIANCE
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8E9299] mt-0.5 font-hero-sub break-words">
+                    AI investigation &amp; AML graph analysis.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center pl-2 sm:pl-3 shrink-0">
+                {demoLoggingIn === "sarah_compliance" ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-indigo-400">
+                    <Loader2 size={15} className="animate-spin" />
+                    <span className="hidden sm:inline">Authenticating...</span>
+                  </div>
+                ) : (
+                  <ArrowRight
+                    size={16}
+                    className="text-zinc-600 group-hover:text-[#38BDF8] group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* =================================================================
+            RIGHT COLUMN: GLASSMORPHIC CRYPTOGRAPHIC AUTH TERMINAL
+            ================================================================= */}
+        <div className="w-full lg:max-w-md mx-auto shrink-0">
+          <div className="relative rounded-2xl bg-[#0B0E13]/90 backdrop-blur-xl border border-white/12 p-5 sm:p-7 lg:p-8 shadow-2xl overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent">
+            {/* Ambient Sapphire Glow in Corner */}
+            <div className="absolute -top-24 -right-24 w-60 h-60 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
