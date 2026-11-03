@@ -63,3 +63,68 @@ public class MakerCheckerWire {
   private LocalDateTime createdAt = LocalDateTime.now();
 
   public MakerCheckerWire() {}
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getIdempotencyKey() {
+    return idempotencyKey;
+  }
+
+  public void setIdempotencyKey(String idempotencyKey) {
+    this.idempotencyKey = idempotencyKey;
+  }
+
+  public Long getSourceAccountId() {
+    return sourceAccountId;
+  }
+
+  public void setSourceAccountId(Long sourceAccountId) {
+    this.sourceAccountId = sourceAccountId;
+  }
+
+  public Long getDestinationAccountId() {
+    return destinationAccountId;
+  }
+
+  public void setDestinationAccountId(Long destinationAccountId) {
+    this.destinationAccountId = destinationAccountId;
+  }
+
+  public BigDecimal getAmount() {
+    return amount;
+  }
+
+  public void setAmount(BigDecimal amount) {
+    this.amount = amount;
+  }
+
+  public String getCurrency() {
+    return currency;
+  }
+
+  public void setCurrency(String currency) {
+    this.currency = currency;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getPolicyTier() {
+    return policyTier;
+  }
+
+  public void setPolicyTier(String policyTier) {
+    this.policyTier = policyTier;
+  }
+
