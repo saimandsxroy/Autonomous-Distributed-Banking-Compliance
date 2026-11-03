@@ -73,3 +73,13 @@ public class MakerCheckerController {
     } catch (Exception e) {
       log.error("Failed approving corporate wire #{}: {}", wireId, e.getMessage(), e);
       return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GetMapping
+  public ResponseEntity<?> getWires() {
+    try {
+      List<MakerCheckerWire> wires = makerCheckerWireService.getWires();
+      return new ResponseEntity<>(wires, HttpStatus.OK);
+    } catch (Exception e) {
