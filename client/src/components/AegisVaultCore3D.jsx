@@ -548,3 +548,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
         if (!isDraggingRef.current) {
           container.style.cursor = "grab";
         }
+        if (onHoverChange) {
+          onHoverChange(false, null);
+        }
+      }
+
+      // Smooth hover scale & emissive spring on nodes
+      nodeMeshes.forEach((node) => {
+        const isHovered = hoveredObject === node;
+        const targetScale = isHovered ? 1.55 : 1.0;
+        node.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), damp * 3.0);
+
+        if (node.userData.isAmlRing) {
+          const baseEmissive = node.userData.isQuarantineTarget ? 1.0 : 0.85;
+          const targetEmissive = isHovered ? 2.8 : baseEmissive;
+          node.material.emissiveIntensity +=
+            (targetEmissive - node.material.emissiveIntensity) * damp * 3.0;
+          if (isHovered) {
+            node.material.emissive.setHex(0xff1744);
+          } else {
+            node.material.emissive.setHex(0xe11d48);
+          }
+        } else {
+          const baseEmissive = 0.35;
+          const targetEmissive = isHovered ? 1.8 : baseEmissive;
+          node.material.emissiveIntensity +=
+            (targetEmissive - node.material.emissiveIntensity) * damp * 3.0;
+          if (isHovered) {
+            node.material.emissive.setHex(0x7dd3fc);
+          } else {
+            node.material.emissive.setHex(0x0284c7);
+          }
+        }
+      });
+
+      // Smooth hover glow on gimbal rings
+      const isRing1Hovered = hoveredObject === gimbalRing1;
+      const targetRing1Emissive = isRing1Hovered ? 0.85 : 0.0;
+      gimbalMat1.emissiveIntensity +=
+        (targetRing1Emissive - gimbalMat1.emissiveIntensity) * damp * 2.8;
+
+      const isRing2Hovered = hoveredObject === gimbalRing2;
+      const targetRing2Emissive = isRing2Hovered ? 0.85 : 0.0;
+      gimbalMat2.emissiveIntensity +=
+        (targetRing2Emissive - gimbalMat2.emissiveIntensity) * damp * 2.8;
+
+      // Smooth hover reaction on ledger core
+      const isCoreHovered = hoveredObject === coreMesh || hoveredObject === shellMesh;
+      const targetCorePulse = isCoreHovered ? corePulse * 1.15 : corePulse;
+      coreGroup.scale.lerp(
+        new THREE.Vector3(targetCorePulse, targetCorePulse, targetCorePulse),
