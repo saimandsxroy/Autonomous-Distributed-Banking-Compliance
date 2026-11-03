@@ -109,11 +109,12 @@ public class AdminController {
   }
 
   /**
-   * POST /admin/dlq/id/{dlqId}/replay — replays a quarantined dead letter event by re-queuing it as
-   * a new PENDING outbox event (or re-publishing directly to Kafka if broker is available). Marks
-   * the DLQ record as REPLAYED. Records a ComplianceAuditLog entry. Returns 200 OK.
+   * POST /admin/dlq/id/{dlqId}/replay or /admin/dlq/replay/{dlqId} — replays a quarantined dead
+   * letter event by re-queuing it as a new PENDING outbox event (or re-publishing directly to Kafka
+   * if broker is available). Marks the DLQ record as REPLAYED. Records a ComplianceAuditLog entry.
+   * Returns 200 OK.
    */
-  @PostMapping("/dlq/id/{dlqId}/replay")
+  @PostMapping({"/dlq/id/{dlqId}/replay", "/dlq/replay/{dlqId}"})
   public ResponseEntity<?> replayDlqEvent(@PathVariable Long dlqId) {
     String actor =
         SecurityContextHolder.getContext().getAuthentication() != null
