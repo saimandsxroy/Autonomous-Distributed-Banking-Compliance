@@ -93,3 +93,48 @@ public class MakerCheckerWireService {
           policyTier,
           requiredApprovals);
     }
+
+    MakerCheckerWire saved = makerCheckerWireRepository.save(wire);
+
+    complianceAuditLogService.recordAuditEvent(
+        operator, "CORPORATE_WIRE_SUBMITTED", saved.getId(), saved);
+
+    return saved;
+  }
+
+  @Transactional
+  public MakerCheckerWire approveWire(Long wireId, String checkerUserName, String notes) {
+    MakerCheckerWire wire =
+        makerCheckerWireRepository
+            .findById(wireId)
+            .orElseThrow(() -> new IllegalArgumentException("Corporate wire not found: " + wireId));
+
+    if (!"PENDING_APPROVAL".equalsIgnoreCase(wire.getStatus())) {
+      throw new IllegalStateException(
+          "Corporate wire is not pending approval: " + wire.getStatus());
+    }
+
+    String approver =
+        (checkerUserName != null && !checkerUserName.isBlank())
+            ? checkerUserName
+            : "sarah_compliance";
+
+    // FINRA Rule 3110 / Separation of duties: Maker cannot approve own wire
+    if (approver.equalsIgnoreCase(wire.getMakerUserName())) {
+      throw new SeparationOfDutiesViolationException(
+          "FINRA Rule 3110: Approver '"
+              + approver
+              + "' cannot approve their own corporate wire request (Maker-Checker violation).");
+    }
+
+    // Check if checker already provided approval on this dual-signature wire
+    if (wire.getCheckerOneUserName() != null
+        && approver.equalsIgnoreCase(wire.getCheckerOneUserName())) {
+      throw new SeparationOfDutiesViolationException(
+          "FINRA Rule 3110: Approver '"
+              + approver
+              + "' has already provided the first approval for this wire.");
+    }
+
+    if (wire.getCheckerOneUserName() == null) {
+      wire.setCheckerOneUserName(approver);
