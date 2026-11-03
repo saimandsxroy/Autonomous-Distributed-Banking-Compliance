@@ -1048,3 +1048,139 @@ export function ReconciliationAndCorporateWires() {
                             <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
                             <span className="text-emerald-400 font-black font-mono text-lg uppercase">
                               VERIFIED INTACT
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="w-3 h-3 rounded-full bg-rose-500" />
+                            <span className="text-rose-400 font-black font-mono text-lg uppercase">
+                              UNVERIFIED
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-zinc-950 p-5 rounded-2xl border-2 border-zinc-800 shadow-brutal">
+                      <span className="text-[11px] font-mono uppercase text-zinc-500 block mb-1">
+                        Active Balance Holds
+                      </span>
+                      <span className="text-2xl font-black text-amber-400 font-mono">
+                        {telemetry.activeHoldsCount}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 block font-mono">Pending AML Review</span>
+                    </div>
+
+                    <div className="bg-zinc-950 p-5 rounded-2xl border-2 border-zinc-800 shadow-brutal">
+                      <span className="text-[11px] font-mono uppercase text-zinc-500 block mb-1">
+                        Open Recon Discrepancies
+                      </span>
+                      <span className="text-2xl font-black text-rose-400 font-mono">
+                        {telemetry.openReconciliationDiscrepancies}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 block font-mono">Requires Nostro Healing</span>
+                    </div>
+                  </div>
+
+                  {/* Secondary Counters */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-zinc-950/70 p-4 rounded-xl border border-zinc-800">
+                      <span className="text-[10px] font-mono uppercase text-zinc-500 block">
+                        Pending Maker-Checker Wires
+                      </span>
+                      <span className="text-xl font-bold text-white font-mono">
+                        {telemetry.pendingMakerCheckerWires}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-950/70 p-4 rounded-xl border border-zinc-800">
+                      <span className="text-[10px] font-mono uppercase text-zinc-500 block">
+                        Outbox Pending Events
+                      </span>
+                      <span className="text-xl font-bold text-yellow-400 font-mono">
+                        {telemetry.outboxPendingCount}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-950/70 p-4 rounded-xl border border-zinc-800">
+                      <span className="text-[10px] font-mono uppercase text-zinc-500 block">
+                        Dead Letter Queue (DLQ)
+                      </span>
+                      <span className="text-xl font-bold text-rose-400 font-mono">
+                        {telemetry.dlqCount}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-950/70 p-4 rounded-xl border border-zinc-800">
+                      <span className="text-[10px] font-mono uppercase text-zinc-500 block">
+                        MCP Auto-Executions
+                      </span>
+                      <span className="text-xl font-bold text-emerald-400 font-mono">
+                        {telemetry.mcpAutoExecutionsCount}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Diagnostic Footer */}
+                  <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-mono flex items-center justify-between text-zinc-500">
+                    <div>
+                      <span>Telemetry Timestamp: </span>
+                      <span className="text-zinc-300">{telemetry.timestamp || new Date().toISOString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="text-emerald-400 uppercase font-bold text-[11px]">
+                        Dual-Entry Invariant Net-Zero Guaranteed
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-zinc-500 font-mono">
+                  Loading real-time telemetry metrics...
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal: Custom JSON Statement Input */}
+      {showCustomModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border-2 border-zinc-700 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4">
+            <h3 className="text-lg font-black uppercase text-white flex items-center gap-2">
+              <FileText className="text-yellow-500" size={20} />
+              Run Custom SWIFT MT940 Clearing Batch
+            </h3>
+            <p className="text-xs text-zinc-400 font-mono">
+              Paste a JSON array of external statement lines with idempotencyKey, sourceAccountId, destinationAccountId, amount, and currency.
+            </p>
+            <textarea
+              rows={8}
+              value={customJsonInput}
+              onChange={(e) => setCustomJsonInput(e.target.value)}
+              placeholder={`[\n  {\n    "idempotencyKey": "WIRE-EXT-01",\n    "sourceAccountId": 1,\n    "destinationAccountId": 2,\n    "amount": 120.00,\n    "currency": "USD"\n  }\n]`}
+              className="w-full bg-zinc-950 border-2 border-zinc-800 text-white font-mono text-xs rounded-xl p-3 focus:outline-none focus:border-yellow-500"
+            />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                onClick={() => setShowCustomModal(false)}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs px-4 py-2 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRunCustomStatement}
+                disabled={reconLoading || !customJsonInput.trim()}
+                className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold uppercase text-xs px-5 py-2 rounded-xl shadow-brutal"
+              >
+                Run Statement Reconciliation
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
