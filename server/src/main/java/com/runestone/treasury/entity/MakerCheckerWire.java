@@ -128,3 +128,67 @@ public class MakerCheckerWire {
     this.policyTier = policyTier;
   }
 
+  public int getRequiredApprovals() {
+    return requiredApprovals;
+  }
+
+  public void setRequiredApprovals(int requiredApprovals) {
+    this.requiredApprovals = requiredApprovals;
+  }
+
+  public int getCurrentApprovals() {
+    return currentApprovals;
+  }
+
+  public void setCurrentApprovals(int currentApprovals) {
+    this.currentApprovals = currentApprovals;
+  }
+
+  public String getMakerUserName() {
+    return makerUserName;
+  }
+
+  public void setMakerUserName(String makerUserName) {
+    this.makerUserName = makerUserName;
+  }
+
+  public String getCheckerOneUserName() {
+    return checkerOneUserName;
+  }
+
+  public void setCheckerOneUserName(String checkerOneUserName) {
+    this.checkerOneUserName = checkerOneUserName;
+  }
+
+  public String getCheckerTwoUserName() {
+    return checkerTwoUserName;
+  }
+
+  public void setCheckerTwoUserName(String checkerTwoUserName) {
+    this.checkerTwoUserName = checkerTwoUserName;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public Long getSettledJournalEntryId() {
+    return settledJournalEntryId;
+  }
+
+  public void setSettledJournalEntryId(Long settledJournalEntryId) {
+    this.settledJournalEntryId = settledJournalEntryId;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+}
