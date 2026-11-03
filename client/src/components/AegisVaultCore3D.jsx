@@ -298,3 +298,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
       const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.024, 8, false);
       const tubeMat = new THREE.MeshStandardMaterial({
         color: 0xf43f5e,
+        emissive: 0xe11d48,
+        emissiveIntensity: 0.95,
+        roughness: 0.2,
+        metalness: 0.9,
+      });
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      networkGroup.add(tube);
+      amlTubes.push({ tube, curve });
+    });
+
+    // Data packet particles animating along edges
+    const particleCount = 18;
+    const particleGeo = new THREE.SphereGeometry(0.028, 8, 8);
+    const cleanParticleMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const crimsonParticleMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+
+    const particles = [];
+    for (let k = 0; k < particleCount; k++) {
+      const isCrimson = k < 6;
+      const pMesh = new THREE.Mesh(particleGeo, isCrimson ? crimsonParticleMat : cleanParticleMat);
+      networkGroup.add(pMesh);
+
+      const targetCurves = isCrimson ? amlTubes : cleanTubes;
+      const targetEdge = targetCurves[k % targetCurves.length];
+      particles.push({
+        mesh: pMesh,
+        curve: targetEdge.curve,
+        progress: k / particleCount,
+        speed: 0.006 + Math.random() * 0.004,
+        isCrimson,
+      });
+    }
+
+    // =========================================================================
+    // LAYER 3: DUAL MACHINED TITANIUM GIMBAL RINGS (gimbalGroup)
+    // =========================================================================
+    const gimbalGroup = new THREE.Group();
+    masterGroup.add(gimbalGroup);
+
+    const gimbalMat1 = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      metalness: 0.88,
+      roughness: 0.24,
+      emissive: new THREE.Color(0x38bdf8),
+      emissiveIntensity: 0.0,
+    });
+
+    const gimbalMat2 = new THREE.MeshStandardMaterial({
+      color: 0x475569,
+      metalness: 0.92,
