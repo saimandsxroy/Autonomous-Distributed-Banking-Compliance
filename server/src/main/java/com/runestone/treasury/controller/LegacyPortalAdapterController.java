@@ -187,8 +187,12 @@ public class LegacyPortalAdapterController {
             treasuryAccountRepository.findById(leg.getCounterpartyAccountId());
         if (cpAcct.isPresent()) {
           tx.put("counterpartyAccountNumber", cpAcct.get().getAccountNumber());
-          Optional<User> cpUser = userRepository.findById(cpAcct.get().getUserId());
-          tx.put("counterpartyName", cpUser.map(User::getUserName).orElse("Treasury"));
+          if (cpAcct.get().getUserId() != null) {
+            Optional<User> cpUser = userRepository.findById(cpAcct.get().getUserId());
+            tx.put("counterpartyName", cpUser.map(User::getUserName).orElse("Treasury"));
+          } else {
+            tx.put("counterpartyName", "Treasury Counterparty");
+          }
         } else {
           tx.put("counterpartyAccountNumber", "TREASURY");
           tx.put("counterpartyName", "Treasury Counterparty");
