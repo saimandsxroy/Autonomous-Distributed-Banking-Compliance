@@ -22,6 +22,7 @@ export function QuickTransfer({ isRevealed }) {
     setSuccessMessage("");
     setIsLoading(true);
 
+
     try {
       await transferFunds({
         sender: user.accountNumber,
@@ -29,6 +30,7 @@ export function QuickTransfer({ isRevealed }) {
         amount: parseFloat(amount),
       });
 
+      
       setSuccessMessage(
         `$${parseFloat(amount).toFixed(2)} transferred successfully.`
       );
