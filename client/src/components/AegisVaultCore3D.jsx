@@ -148,3 +148,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
       transparent: true,
       metalness: 0.15,
       roughness: 0.1,
+      ior: 1.65,
+      reflectivity: 0.9,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05,
+    });
+    const shellGeo = new THREE.SphereGeometry(0.72, 32, 32);
+    const shellMesh = new THREE.Mesh(shellGeo, sapphireShellMat);
+    coreGroup.add(shellMesh);
+
+    // Zero-sum invariant equatorial ring around the core
+    const eqRingGeo = new THREE.TorusGeometry(0.82, 0.012, 16, 64);
+    const eqRingMat = new THREE.MeshBasicMaterial({
+      color: 0x60a5fa,
+      transparent: true,
+      opacity: 0.65,
+    });
+    const eqRing = new THREE.Mesh(eqRingGeo, eqRingMat);
+    eqRing.rotation.x = Math.PI / 2;
+    coreGroup.add(eqRing);
+
+    // =========================================================================
+    // LAYER 2: 3D 5-HOP GRAPH & FRAUD RING CONSTELLATION (networkGroup)
+    // =========================================================================
+    const networkGroup = new THREE.Group();
+    masterGroup.add(networkGroup);
+
+    // Node Positions in 3D Orbital Space (radius ~ 1.35 to 1.6)
+    // Nodes 0, 1, 2 represent the circular 3-hop ring: Alice (#1) -> Bob (#2) -> Charlie (#3) -> Alice (#1)
+    const nodeCoords = [
+      new THREE.Vector3(-1.15, 0.85, 0.45),   // Node 0: Alice (Leg 1 Source)
+      new THREE.Vector3(0.15, 1.35, -0.4),    // Node 1: Bob (Leg 2 Mule)
+      new THREE.Vector3(1.3, -0.6, 0.7),      // Node 2: Charlie (QUARANTINED INTERCEPT)
+      new THREE.Vector3(-1.4, -0.65, -0.5),   // Node 3: Liquidity Pool USD
+      new THREE.Vector3(-0.45, -1.35, 0.45),  // Node 4: Clearing Nostro
+      new THREE.Vector3(1.05, 0.95, -0.6),    // Node 5: Treasury Escrow
+      new THREE.Vector3(1.35, 0.15, -0.85),   // Node 6: Fedwire Gateway
+      new THREE.Vector3(-0.85, 0.25, -1.25),  // Node 7: Corporate Client
+      new THREE.Vector3(0.55, -1.25, -0.75),  // Node 8: FX Partner Bank
+      new THREE.Vector3(-0.15, 0.0, 1.45),    // Node 9: Vostro Settlement
+    ];
+
+    const nodeMeshes = [];
+    const legitimateNodeMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.35,
+    });
+
