@@ -598,3 +598,153 @@ export function ReconciliationAndCorporateWires() {
                               ) : (
                                 <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
                                   <CheckCircle2 size={12} /> COMPENSATED
+                                </span>
+                              )}
+                              {disc.compensatingJournalId && (
+                                <div className="text-[10px] text-zinc-500">
+                                  Jnl #{disc.compensatingJournalId} by {disc.resolvedBy}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">
+                              {disc.resolutionStatus === "OPEN" ? (
+                                <Button
+                                  onClick={() => handleResolveDiscrepancy(disc)}
+                                  disabled={resolvingId === disc.id}
+                                  className="bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase text-[11px] px-3 py-1.5 rounded-lg shadow-brutal transition-all inline-flex items-center gap-1.5"
+                                >
+                                  {resolvingId === disc.id ? (
+                                    <RefreshCw size={12} className="animate-spin" />
+                                  ) : (
+                                    <Scale size={12} />
+                                  )}
+                                  Post Compensating Adjustment
+                                </Button>
+                              ) : (
+                                <span className="text-zinc-500 text-[11px]">Healed (Nostro Suspense)</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            ) : (
+              <CardContent className="py-12 text-center text-zinc-500">
+                Click "⚡ Simulate EOD SWIFT Clearing" above to run statement reconciliation.
+              </CardContent>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 2: MAKER-CHECKER CORPORATE SPEND DESK
+          ========================================================================= */}
+      {activeTab === "wires" && (
+        <div className="space-y-6">
+          {/* Wire Submission & Policy Evaluator */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 bg-zinc-900/90 border-2 border-zinc-800 shadow-brutal">
+              <CardHeader className="border-b-2 border-zinc-800 pb-4">
+                <CardTitle className="text-xl font-black uppercase tracking-wide flex items-center gap-2 text-white">
+                  <UserCheck className="text-yellow-500" size={20} />
+                  Corporate Spend Wire Desk
+                </CardTitle>
+                <p className="text-xs text-zinc-400 mt-1 font-mono">
+                  Enforces automated policy thresholding and FINRA Rule 3110 separation of duties across Alice (Maker), Bob (Checker 1), and Sarah (Checker 2).
+                </p>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleSubmitCorporateWire} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs uppercase font-mono font-bold text-zinc-400 block mb-1">
+                        Funding Source Account
+                      </label>
+                      <select
+                        value={wireForm.sourceAccountId}
+                        onChange={(e) => setWireForm({ ...wireForm, sourceAccountId: e.target.value })}
+                        className="w-full bg-zinc-950 border-2 border-zinc-800 text-white font-mono text-sm rounded-xl p-3 focus:outline-none focus:border-yellow-500"
+                      >
+                        {accounts.map((acct) => (
+                          <option key={acct.id} value={acct.id}>
+                            Account #{acct.id} ({acct.accountNumber}) — ${parseFloat(acct.availableBalance).toFixed(2)} USD
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs uppercase font-mono font-bold text-zinc-400 block mb-1">
+                        Destination Counterparty Account ID
+                      </label>
+                      <Input
+                        type="number"
+                        value={wireForm.destinationAccountId}
+                        onChange={(e) => setWireForm({ ...wireForm, destinationAccountId: e.target.value })}
+                        placeholder="e.g. 2"
+                        className="bg-zinc-950 border-2 border-zinc-800 text-white font-mono"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs uppercase font-mono font-bold text-zinc-400 block mb-1">
+                        Wire Amount ($ USD)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={wireForm.amount}
+                        onChange={(e) => setWireForm({ ...wireForm, amount: e.target.value })}
+                        placeholder="15000.00"
+                        className="bg-zinc-950 border-2 border-zinc-800 text-white font-mono font-bold text-lg"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs uppercase font-mono font-bold text-zinc-400 block mb-1">
+                        Business Purpose / Reference
+                      </label>
+                      <Input
+                        type="text"
+                        value={wireForm.description}
+                        onChange={(e) => setWireForm({ ...wireForm, description: e.target.value })}
+                        placeholder="Corporate vendor payout"
+                        className="bg-zinc-950 border-2 border-zinc-800 text-white font-mono"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dynamic Spend Tier Preview Banner */}
+                  <div className={`p-4 rounded-xl border-2 flex items-center justify-between font-mono text-xs ${currentTier.color}`}>
+                    <div>
+                      <span className="font-black uppercase tracking-wider block">{currentTier.label}</span>
+                      <span className="text-[11px] opacity-80">{currentTier.badge}</span>
+                    </div>
+                    <span className="text-xs font-black uppercase px-2.5 py-1 rounded bg-black/40 border border-current">
+                      Signatures: {currentTier.approvals}
+                    </span>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={wireSubmitting}
+                    className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase text-sm py-3 rounded-xl shadow-brutal transition-all flex items-center justify-center gap-2"
+                  >
+                    {wireSubmitting ? (
+                      <RefreshCw size={18} className="animate-spin" />
+                    ) : (
+                      <ArrowRight size={18} />
+                    )}
+                    Submit Corporate Spend Wire
+                  </Button>
+                </form>
+              </CardContent>
