@@ -53,3 +53,23 @@ public class MakerCheckerController {
     try {
       Authentication auth = SecurityContextHolder.getContext().getAuthentication();
       String checkerUserName =
+          (auth != null && auth.getName() != null) ? auth.getName() : "sarah_compliance";
+
+      String notes = body != null ? body.get("notes") : null;
+      MakerCheckerWire approved =
+          makerCheckerWireService.approveWire(wireId, checkerUserName, notes);
+      return new ResponseEntity<>(approved, HttpStatus.OK);
+    } catch (SeparationOfDutiesViolationException e) {
+      log.warn("Separation of duties violation approving wire #{}: {}", wireId, e.getMessage());
+      return new ResponseEntity<>(
+          Map.of("errorCode", "SEPARATION_OF_DUTIES_VIOLATION", "message", e.getMessage()),
+          HttpStatus.FORBIDDEN);
+    } catch (IllegalStateException e) {
+      log.warn("Corporate wire state conflict for #{}: {}", wireId, e.getMessage());
+      return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.CONFLICT);
+    } catch (IllegalArgumentException e) {
+      log.warn("Corporate wire not found #{}: {}", wireId, e.getMessage());
+      return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      log.error("Failed approving corporate wire #{}: {}", wireId, e.getMessage(), e);
+      return new ResponseEntity<>(
