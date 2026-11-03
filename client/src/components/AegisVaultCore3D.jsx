@@ -498,3 +498,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
 
       // Animate quarantine cage around Charlie #3
       const quarantineNode = nodeMeshes[2];
+      if (quarantineNode) {
+        const cage = quarantineNode.getObjectByName("quarantineCage");
+        if (cage) {
+          cage.rotation.y = elapsedTime * 1.8;
+          cage.rotation.z = elapsedTime * 1.2;
+        }
+        const pulse = quarantineNode.getObjectByName("pulseRing");
+        if (pulse) {
+          const s = 1.0 + Math.sin(elapsedTime * 4.0) * 0.25;
+          pulse.scale.set(s, s, s);
+          pulse.material.opacity = 0.5 + Math.sin(elapsedTime * 4.0) * 0.3;
+        }
+      }
+
+      // Animate data particles along tubes
+      particles.forEach((pt) => {
+        pt.progress += pt.speed;
+        if (pt.progress > 1.0) pt.progress = 0.0;
+        const ptPos = pt.curve.getPointAt(pt.progress);
+        pt.mesh.position.copy(ptPos);
+      });
+
+      // --- Raycasting & Hover Feedback ---
+      if (!isDraggingRef.current && mouse.x > -900) {
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(interactableObjects, false);
+
+        if (intersects.length > 0) {
+          const firstHit = intersects[0].object;
+          if (hoveredObject !== firstHit) {
+            hoveredObject = firstHit;
+            container.style.cursor = "pointer";
+            if (onHoverChange) {
+              onHoverChange(true, firstHit.userData || { label: "Interactive Object" });
+            }
+          }
+        } else {
+          if (hoveredObject !== null) {
+            hoveredObject = null;
+            container.style.cursor = "grab";
+            if (onHoverChange) {
+              onHoverChange(false, null);
+            }
+          }
+        }
+      } else if (hoveredObject !== null) {
+        hoveredObject = null;
+        if (!isDraggingRef.current) {
+          container.style.cursor = "grab";
+        }
