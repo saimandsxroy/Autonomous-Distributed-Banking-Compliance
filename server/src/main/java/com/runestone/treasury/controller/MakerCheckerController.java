@@ -83,3 +83,9 @@ public class MakerCheckerController {
       List<MakerCheckerWire> wires = makerCheckerWireService.getWires();
       return new ResponseEntity<>(wires, HttpStatus.OK);
     } catch (Exception e) {
+      log.error("Failed fetching corporate wires: {}", e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+}
