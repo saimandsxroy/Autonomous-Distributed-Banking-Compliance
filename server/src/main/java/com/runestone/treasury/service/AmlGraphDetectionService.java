@@ -118,3 +118,63 @@ public class AmlGraphDetectionService {
         edge.put("source", fromAccount);
         edge.put("target", toAccount);
         edge.put("amount", row[2]);
+        edge.put("timestamp", row[3] != null ? row[3].toString() : null);
+        edge.put("hopDepth", row[4]);
+
+        edgeMap.put(key, edge);
+        nodeSet.add(fromAccount);
+        nodeSet.add(toAccount);
+      }
+
+      // Check balance_holds for circular holds or pending holds
+      if (balanceHoldRepository != null) {
+        List<BalanceHold> holds = balanceHoldRepository.findAll();
+        for (BalanceHold bh : holds) {
+          if (bh.getSourceAccountId() != null && bh.getDestinationAccountId() != null) {
+            Long src = bh.getSourceAccountId();
+            Long dst = bh.getDestinationAccountId();
+            boolean isCirc = bh.getRiskReason() != null && bh.getRiskReason().contains("CIRCULAR");
+            boolean relevant =
+                src.equals(accountId)
+                    || dst.equals(accountId)
+                    || (nodeSet.contains(src) && nodeSet.contains(dst));
+            if (relevant && isCirc) {
+              String key = src + "->" + dst;
+              Map<String, Object> holdEdge = new HashMap<>();
+              holdEdge.put("from", src);
+              holdEdge.put("to", dst);
+              holdEdge.put("source", src);
+              holdEdge.put("target", dst);
+              holdEdge.put("amount", bh.getAmount());
+              holdEdge.put(
+                  "timestamp", bh.getCreatedAt() != null ? bh.getCreatedAt().toString() : null);
+              holdEdge.put("hopDepth", 3);
+              holdEdge.put("isHold", true);
+              holdEdge.put("isCycle", true);
+              edgeMap.put(key, holdEdge);
+              nodeSet.add(src);
+              nodeSet.add(dst);
+            }
+          }
+        }
+      }
+
+      List<Map<String, Object>> edges = new ArrayList<>(edgeMap.values());
+
+      // Dynamic Cycle Detection across all edges using DFS
+      List<String> cyclePaths = detectCycles(edges);
+      boolean cycleDetected = !cyclePaths.isEmpty();
+
+      for (Map<String, Object> edge : edges) {
+        Long fromAccount = (Long) edge.get("from");
+        Long toAccount = (Long) edge.get("to");
+        String edgeSub = fromAccount + "->" + toAccount;
+        boolean inCycle = false;
+        for (String cp : cyclePaths) {
+          if (cp.contains(edgeSub)) {
+            inCycle = true;
+            break;
+          }
+        }
+        if (inCycle) {
+          edge.put("isCycle", true);
