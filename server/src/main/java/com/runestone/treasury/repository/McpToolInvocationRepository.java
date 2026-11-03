@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface McpToolInvocationRepository extends JpaRepository<McpToolInvocation, Long> {
 
   List<McpToolInvocation> findByInvestigationIdOrderByIdAsc(Long investigationId);
+
+  long countByExecutionStatus(String executionStatus);
 }
