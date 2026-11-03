@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS settlement_batches (
     batch_reference VARCHAR(64) NOT NULL UNIQUE,
     uploaded_by_user VARCHAR(100) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
-    file_sha256_hash CHAR(64) NOT NULL UNIQUE,
+    file_sha256_hash VARCHAR(64) NOT NULL UNIQUE,
     source_account_id BIGINT NOT NULL,
     total_rows INT NOT NULL,
     settled_count INT NOT NULL DEFAULT 0,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS settlement_batches (
 CREATE TABLE IF NOT EXISTS settlement_batch_items (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     batch_id BIGINT NOT NULL,
-    row_number INT NOT NULL,
+    `row_number` INT NOT NULL,
     destination_account_id BIGINT NOT NULL,
     amount DECIMAL(19, 4) NOT NULL,
     currency VARCHAR(3) NOT NULL DEFAULT 'USD',
@@ -72,5 +72,5 @@ CREATE TABLE IF NOT EXISTS settlement_batch_items (
     CONSTRAINT fk_batch_item_dest FOREIGN KEY (destination_account_id) REFERENCES treasury_accounts(id)
 ) ENGINE=InnoDB;
 
-CREATE INDEX idx_batch_items_batch_id ON settlement_batch_items(batch_id, row_number);
+CREATE INDEX idx_batch_items_batch_id ON settlement_batch_items(batch_id, `row_number`);
 
