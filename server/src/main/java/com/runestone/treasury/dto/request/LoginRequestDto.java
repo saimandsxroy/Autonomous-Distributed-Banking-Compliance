@@ -1,20 +1,40 @@
 package com.runestone.treasury.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LoginRequestDto {
-  @NotBlank(message = "username is required")
   private String username;
-
-  @NotBlank(message = "password is required")
+  private String usernameOrEmail;
   private String password;
 
+  public LoginRequestDto() {}
+
+  public LoginRequestDto(String username, String password) {
+    this.username = username;
+    this.password = password;
+  }
+
   public String getUsername() {
-    return username;
+    if (username != null && !username.isBlank()) {
+      return username;
+    }
+    return usernameOrEmail;
   }
 
   public void setUsername(String username) {
     this.username = username;
+  }
+
+  public String getUsernameOrEmail() {
+    if (usernameOrEmail != null && !usernameOrEmail.isBlank()) {
+      return usernameOrEmail;
+    }
+    return username;
+  }
+
+  public void setUsernameOrEmail(String usernameOrEmail) {
+    this.usernameOrEmail = usernameOrEmail;
   }
 
   public String getPassword() {
