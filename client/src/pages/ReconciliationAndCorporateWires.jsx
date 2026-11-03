@@ -298,3 +298,153 @@ export function ReconciliationAndCorporateWires() {
       const result = await approveCorporateWire(wire.id, notes);
       setWireAlert({
         type: "success",
+        message:
+          result.status === "SETTLED"
+            ? `Corporate Wire #${wire.id} FULLY APPROVED and settled on double-entry ledger! Journal Entry #${result.settledJournalEntryId || "SETTLED"}.`
+            : `Corporate Wire #${wire.id} approved by ${activePersonaKey}. Current progress: ${result.currentApprovals}/${result.requiredApprovals} signatures.`,
+      });
+      const updatedWires = await fetchCorporateWires();
+      setCorporateWires(updatedWires);
+      refreshTelemetry();
+    } catch (err) {
+      setWireAlert({
+        type: "error",
+        message: err.message || `Approval rejected for wire #${wire.id}`,
+      });
+    } finally {
+      setWireApprovingId(null);
+    }
+  };
+
+  // Helper: Refresh Telemetry Metrics
+  const refreshTelemetry = async () => {
+    setTelemetryLoading(true);
+    try {
+      const telem = await fetchTelemetryMetrics();
+      setTelemetry(telem);
+    } catch (err) {
+      console.error("Failed fetching telemetry:", err);
+    } finally {
+      setTelemetryLoading(false);
+    }
+  };
+
+  const currentTier = computeWireTier(wireForm.amount);
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Header Banner */}
+      <div className="border-b-4 border-zinc-800 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-yellow-500/10 border-2 border-yellow-500/30 text-yellow-500">
+              <Scale size={28} />
+            </span>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight uppercase">
+                Reconciliation & Corporate Spend Desk
+              </h1>
+              <p className="text-sm font-mono text-zinc-400 mt-0.5">
+                Phase 11: EOD Nostro/Vostro Split-Brain Healing • Phase 12: FINRA Multi-Tier Maker-Checker
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Persona Indicator */}
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-zinc-900 border-2 border-zinc-800 rounded-xl shadow-brutal self-start md:self-auto">
+          <Building size={18} className="text-yellow-500 shrink-0" />
+          <div className="text-xs font-mono">
+            <span className="text-zinc-400">Signer Identity: </span>
+            <span className="text-white font-bold">{PERSONAS[activePersonaKey]?.displayName || activePersonaKey}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="flex flex-wrap gap-2 border-b-2 border-zinc-800 pb-2">
+        <button
+          onClick={() => setActiveTab("recon")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold uppercase text-xs tracking-wider transition-all border-2 ${
+            activeTab === "recon"
+              ? "bg-yellow-500 text-black border-yellow-500 shadow-brutal"
+              : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+          }`}
+        >
+          <FileCheck size={16} />
+          EOD Nostro/Vostro Statement Reconciliation
+        </button>
+        <button
+          onClick={() => setActiveTab("wires")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold uppercase text-xs tracking-wider transition-all border-2 ${
+            activeTab === "wires"
+              ? "bg-yellow-500 text-black border-yellow-500 shadow-brutal"
+              : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+          }`}
+        >
+          <UserCheck size={16} />
+          Maker-Checker Corporate Spend Desk
+        </button>
+        <button
+          onClick={() => setActiveTab("telemetry")}
+          className={`flex items-center gap-2 px-5 py-3 rounded-xl font-bold uppercase text-xs tracking-wider transition-all border-2 ${
+            activeTab === "telemetry"
+              ? "bg-yellow-500 text-black border-yellow-500 shadow-brutal"
+              : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+          }`}
+        >
+          <Activity size={16} />
+          Real-Time SRE & Ledger Telemetry
+        </button>
+      </div>
+
+      {/* =========================================================================
+          TAB 1: EOD NOSTRO/VOSTRO RECONCILIATION
+          ========================================================================= */}
+      {activeTab === "recon" && (
+        <div className="space-y-6">
+          {/* Action Trigger Card */}
+          <Card className="bg-zinc-900/90 border-2 border-zinc-800 shadow-brutal">
+            <CardHeader className="border-b-2 border-zinc-800 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-xl font-black uppercase tracking-wide flex items-center gap-2 text-white">
+                    <Sparkles className="text-yellow-500" size={20} />
+                    SWIFT MT940 End-of-Day Statement Clearing Engine
+                  </CardTitle>
+                  <p className="text-xs text-zinc-400 mt-1 font-mono">
+                    Performs an O(N) idempotency-keyed comparison between external bank clearing lines and internal double-entry journals.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleSimulateEodStatement}
+                    disabled={reconLoading}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase text-xs px-5 py-2.5 rounded-xl shadow-brutal transition-all flex items-center gap-2"
+                  >
+                    {reconLoading ? (
+                      <RefreshCw size={16} className="animate-spin" />
+                    ) : (
+                      <Zap size={16} />
+                    )}
+                    ⚡ Simulate EOD SWIFT Clearing (Inject 3 Split-Brain Anomalies)
+                  </Button>
+                  <Button
+                    onClick={() => setShowCustomModal(true)}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase text-xs px-4 py-2.5 rounded-xl border-2 border-zinc-700"
+                  >
+                    Custom JSON Statement
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+
+            {reconAlert && (
+              <div
+                className={`m-6 p-4 rounded-xl border-2 flex items-start gap-3 font-mono text-xs ${
+                  reconAlert.type === "success"
+                    ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-300"
+                    : "bg-rose-950/40 border-rose-500/50 text-rose-300"
+                }`}
+              >
+                {reconAlert.type === "success" ? (
