@@ -298,3 +298,103 @@ export function LandingHeroPage() {
             <div className="animate-hero-pill institutional-glass-badge inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-tech-mono tracking-[0.14em] text-[#E2E8F0] uppercase mb-4 sm:mb-6 w-fit transition-all duration-500 max-w-full">
               <span
                 className="w-2 h-2 rounded-full transition-colors duration-700 animate-pulse shadow-sm shrink-0"
+                style={{
+                  backgroundColor: activePhase === 0 ? "#F43F5E" : "#38BDF8",
+                  boxShadow:
+                    activePhase === 0
+                      ? "0 0 10px rgba(244, 63, 94, 0.8)"
+                      : "0 0 10px rgba(56, 189, 248, 0.8)",
+                }}
+              />
+              <span className="truncate">REAL-TIME TREASURY &amp; FRAUD INTERCEPTION</span>
+            </div>
+
+            {/* Main Institutional Heading (Tightly stacked, unified statement) */}
+            <h1 className="font-display-sans text-3xl sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.06] sm:leading-[1.02] tracking-[-0.035em] font-[500] text-[#F3F1EC]">
+              {/* Line 1: "Intercept fraud" */}
+              <div
+                className="relative block w-fit phase-transition-smooth"
+                style={{
+                  transform: activePhase === 0 ? "translateY(-2px)" : "translateY(0px)",
+                  opacity: activePhase === 0 ? 1 : 0.88,
+                }}
+              >
+                <span
+                  className="inline-block transition-all duration-700 text-[#F3F1EC]"
+                  style={{
+                    textShadow:
+                      activePhase === 0
+                        ? "0 0 35px rgba(244, 63, 94, 0.4), 0 2px 20px rgba(255, 255, 255, 0.2)"
+                        : "0 2px 20px rgba(255, 255, 255, 0.1)",
+                  }}
+                >
+                  Intercept fraud
+                </span>
+
+                {/* Threat Vector Monospace Tag */}
+                <span
+                  className="ml-2 sm:ml-3 inline-flex items-center text-[8px] sm:text-[9px] font-tech-mono tracking-[0.16em] uppercase px-1.5 sm:px-2 py-0.5 rounded border transition-all duration-500 align-middle -translate-y-1"
+                  style={{
+                    opacity: activePhase === 0 ? 1 : 0,
+                    backgroundColor: "rgba(136, 19, 55, 0.6)",
+                    color: "#FDA4AF",
+                    borderColor: "rgba(244, 63, 94, 0.4)",
+                    transform: activePhase === 0 ? "scale(1)" : "scale(0.9)",
+                  }}
+                >
+                  [THREAT_VECTOR]
+                </span>
+
+                {/* Razor-thin crimson laser scanline sweeping bottom edge when activePhase === 0 */}
+                {activePhase === 0 && <div className="laser-scanline" />}
+              </div>
+
+              {/* Line 2: "before it settles." — stacked tightly */}
+              <div
+                className="relative block w-fit phase-transition-smooth"
+                style={{
+                  transform: activePhase === 1 ? "translateY(-2px)" : "translateY(0px)",
+                  opacity: activePhase === 1 ? 1 : 0.78,
+                }}
+              >
+                <span className="font-[400] transition-colors duration-700 mr-2 text-[#E2E8F0]">
+                  before it
+                </span>
+
+                <span
+                  className="font-editorial-serif text-[1.08em] tracking-[-0.02em] transition-all duration-700 inline-block font-normal"
+                  style={{
+                    backgroundImage:
+                      activePhase === 1
+                        ? "linear-gradient(135deg, #FFFFFF 15%, #7DD3FC 55%, #38BDF8 100%)"
+                        : "linear-gradient(135deg, #E2E8F0 0%, #94A3B8 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    textShadow:
+                      activePhase === 1
+                        ? "0 0 40px rgba(56, 189, 248, 0.45)"
+                        : "none",
+                  }}
+                >
+                  {scrambledWord}
+                </span>
+              </div>
+            </h1>
+          </div>
+
+          {/* Center Column (lg:col-span-4) — 3D Bounded Zone */}
+          <div className="lg:col-span-4 h-[220px] sm:h-[320px] lg:h-[480px] pointer-events-none relative" />
+
+          {/* Right Column (lg:col-span-4) — LIVE 7-STAGE DEFENSE PIPELINE */}
+          <div className="lg:col-span-4 flex flex-col justify-center pointer-events-auto select-none z-20 lg:pl-6">
+            <div className="w-full max-w-full lg:max-w-[400px]">
+              <div className="text-[10px] font-tech-mono tracking-[0.22em] text-[#8CB0DB] uppercase mb-2 font-semibold flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+                <span>LIVE 7-STAGE DEFENSE PIPELINE</span>
+              </div>
+
+              {/* Integrated Concise Subheading */}
+              <p className="text-[12px] sm:text-[12.5px] leading-[1.6] text-[#94A3B8] mb-4 max-w-full lg:max-w-[340px] font-sans">
+                Double-entry core banking fused with in-database 5-hop graph detection, sub-ms Redis velocity gates, and human-governed AI investigations.
+              </p>
+
