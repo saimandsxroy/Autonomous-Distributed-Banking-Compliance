@@ -48,3 +48,48 @@ public class MakerCheckerWireService {
       requiredApprovals = 1;
     } else {
       policyTier = "TIER_3_DUAL_CHECKER";
+      requiredApprovals = 2;
+    }
+
+    String key =
+        (dto.getIdempotencyKey() != null && !dto.getIdempotencyKey().isBlank())
+            ? dto.getIdempotencyKey()
+            : "CORP-WIRE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+    MakerCheckerWire wire = new MakerCheckerWire();
+    wire.setIdempotencyKey(key);
+    wire.setSourceAccountId(dto.getSourceAccountId());
+    wire.setDestinationAccountId(dto.getDestinationAccountId());
+    wire.setAmount(amount);
+    wire.setCurrency(dto.getCurrency() != null ? dto.getCurrency() : "USD");
+    wire.setDescription(
+        dto.getDescription() != null ? dto.getDescription() : "Corporate spend transfer");
+    wire.setPolicyTier(policyTier);
+    wire.setRequiredApprovals(requiredApprovals);
+    wire.setCurrentApprovals(0);
+    wire.setMakerUserName(operator);
+    wire.setCreatedAt(LocalDateTime.now());
+
+    if ("TIER_1_AUTO".equals(policyTier)) {
+      JournalEntry je = new JournalEntry();
+      je.setIdempotencyKey(key);
+      je.setSourceAccountId(wire.getSourceAccountId());
+      je.setDestinationAccountId(wire.getDestinationAccountId());
+      je.setAmount(wire.getAmount());
+      je.setCurrency(wire.getCurrency());
+      je.setReferenceType("CORPORATE_WIRE");
+      je.setTitle("Tier 1 Auto-Settled Corporate Spend");
+      je.setContent(wire.getDescription());
+
+      journalEntryService.saveEntry(je, operator, false, null);
+      wire.setStatus("SETTLED");
+      wire.setSettledJournalEntryId(je.getId());
+      log.info("Tier 1 corporate wire #{} auto-settled immediately: amount={}", key, amount);
+    } else {
+      wire.setStatus("PENDING_APPROVAL");
+      log.info(
+          "Corporate wire #{} submitted under {}: requires {} approval(s)",
+          key,
+          policyTier,
+          requiredApprovals);
+    }
