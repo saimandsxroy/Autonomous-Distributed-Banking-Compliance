@@ -138,3 +138,73 @@
 }
 
 /* Cinematic Staggered Entrance Animations */
+@keyframes heroFadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-pill {
+  animation: heroFadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.animate-hero-line-1 {
+  animation: heroFadeSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+}
+
+.animate-hero-line-2 {
+  animation: heroFadeSlideUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.34s both;
+}
+
+.animate-hero-sub {
+  animation: heroFadeSlideUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+}
+
+.animate-hero-ctas {
+  animation: heroFadeSlideUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+}
+
+.text-glow-white {
+  text-shadow: 0 2px 24px rgba(255, 255, 255, 0.18);
+}
+
+.text-glow-sapphire {
+  text-shadow: 0 0 28px rgba(56, 189, 248, 0.45);
+}
+
+/* Custom scrollbar for dark UI */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(113, 113, 122, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(113, 113, 122, 0.5);
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(113, 113, 122, 0.3) transparent;
+}
+
+/* Atmospheric Layer 1: Radial Optical Backlight */
+.optical-backlight {
+  background: radial-gradient(circle at 52% 46%, rgba(140, 176, 219, 0.14) 0%, rgba(30, 58, 95, 0.06) 38%, transparent 70%);
+}
+
+/* Atmospheric Layer 2: Subtle Film Grain Overlay */
+.film-grain {
