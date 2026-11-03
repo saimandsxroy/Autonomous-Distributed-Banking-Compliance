@@ -498,3 +498,103 @@ export function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
                       required
+                      className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-3 min-h-[44px] pr-12 text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full mt-2 py-3.5 px-6 min-h-[44px] rounded-xl font-tech-mono text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2 bg-[#E8E5DE] text-[#08090A] hover:bg-white hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Minting Stateless JWT...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Authenticate &amp; Enter Portal</span>
+                      <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* =============================================================
+                MODE B: SIGN UP FORM & TREASURY VAULT PROVISIONING
+                ============================================================= */}
+            {authMode === "signup" && (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                {/* Username */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="signup-username"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Corporate Username
+                  </label>
+                  <input
+                    id="signup-username"
+                    type="text"
+                    autoComplete="username"
+                    placeholder="e.g. david_treasurer"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 min-h-[44px] text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                  />
+                </div>
+
+                {/* Corporate Email */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="signup-email"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Corporate Work Email
+                  </label>
+                  <input
+                    id="signup-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="david@runestone.io"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 min-h-[44px] text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                  />
+                </div>
+
+                {/* Passphrase with Toggle */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="signup-password"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Master Passphrase
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signup-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="••••••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
