@@ -178,7 +178,7 @@ public class PostingLegRepositoryImpl implements PostingLegRepositoryCustom {
                 pl.created_at AS edge_timestamp,
                 1 AS hop_depth
             FROM posting_legs pl
-            WHERE pl.account_id = :accountId
+            WHERE (pl.account_id = :accountId OR pl.counterparty_account_id = :accountId)
               AND pl.leg_type = 'DEBIT'
               AND pl.created_at >= NOW(6) - INTERVAL 24 HOUR
 
@@ -192,10 +192,10 @@ public class PostingLegRepositoryImpl implements PostingLegRepositoryCustom {
                 sg.hop_depth + 1 AS hop_depth
             FROM subgraph sg
             INNER JOIN posting_legs next_leg
-                ON next_leg.account_id = sg.to_account
+                ON (next_leg.account_id = sg.to_account OR next_leg.counterparty_account_id = sg.from_account)
                AND next_leg.leg_type = 'DEBIT'
                AND next_leg.created_at >= NOW(6) - INTERVAL 24 HOUR
-            WHERE sg.hop_depth < 3
+            WHERE sg.hop_depth < 5
         )
         SELECT DISTINCT from_account, to_account, amount, edge_timestamp, hop_depth
         FROM subgraph
