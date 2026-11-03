@@ -248,3 +248,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
         // High-alert pulsing warning ring
         const ringGeo = new THREE.RingGeometry(0.25, 0.28, 32);
         const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xf43f5e,
+          transparent: true,
+          opacity: 0.7,
+          side: THREE.DoubleSide,
+        });
+        const pulseRing = new THREE.Mesh(ringGeo, ringMat);
+        pulseRing.name = "pulseRing";
+        nodeMesh.add(pulseRing);
+      }
+    });
+
+    // --- Edges / Settlement Tubes ---
+    const cleanEdgePairs = [
+      [3, 4], [4, 9], [3, 7], [5, 6], [6, 8], [7, 0], [8, 4]
+    ];
+
+    const amlEdgePairs = [
+      [0, 1], // Leg 1: Alice -> Bob ($120.00)
+      [1, 2], // Leg 2: Bob -> Charlie ($110.00)
+      [2, 0], // Leg 3: Charlie -> Alice ($100.00) CLOSED LOOP INTERCEPTED!
+    ];
+
+    const cleanTubes = [];
+    cleanEdgePairs.forEach(([i, j]) => {
+      const p1 = nodeCoords[i];
+      const p2 = nodeCoords[j];
+      const curve = new THREE.LineCurve3(p1, p2);
+      const tubeGeo = new THREE.TubeGeometry(curve, 16, 0.016, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.45,
+        roughness: 0.3,
+        metalness: 0.8,
+        transparent: true,
+        opacity: 0.75,
+      });
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      networkGroup.add(tube);
+      cleanTubes.push({ tube, curve });
+    });
+
+    const amlTubes = [];
+    amlEdgePairs.forEach(([i, j]) => {
+      const p1 = nodeCoords[i];
+      const p2 = nodeCoords[j];
+      const curve = new THREE.LineCurve3(p1, p2);
+      const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.024, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0xf43f5e,
