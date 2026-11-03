@@ -48,3 +48,57 @@ public class ReconciliationController {
     } catch (Exception e) {
       log.error("Failed executing reconciliation statement run: {}", e.getMessage(), e);
       return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GetMapping("/runs")
+  public ResponseEntity<?> getRuns() {
+    try {
+      List<ReconciliationRun> runs = eodReconciliationService.getRuns();
+      return new ResponseEntity<>(runs, HttpStatus.OK);
+    } catch (Exception e) {
+      log.error("Failed fetching reconciliation runs: {}", e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @GetMapping("/runs/{runId}/discrepancies")
+  public ResponseEntity<?> getDiscrepancies(@PathVariable Long runId) {
+    try {
+      List<ReconciliationDiscrepancy> discrepancies =
+          eodReconciliationService.getDiscrepanciesForRun(runId);
+      return new ResponseEntity<>(discrepancies, HttpStatus.OK);
+    } catch (Exception e) {
+      log.error("Failed fetching discrepancies for run #{}: {}", runId, e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @PostMapping("/discrepancies/id/{discrepancyId}/resolve")
+  public ResponseEntity<?> resolveDiscrepancy(
+      @PathVariable Long discrepancyId, @RequestBody(required = false) Map<String, String> body) {
+    try {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      String resolvedBy =
+          (auth != null && auth.getName() != null) ? auth.getName() : "sarah_compliance";
+
+      String notes = body != null ? body.get("notes") : null;
+      ReconciliationDiscrepancy resolved =
+          eodReconciliationService.resolveDiscrepancy(discrepancyId, resolvedBy, notes);
+      return new ResponseEntity<>(resolved, HttpStatus.OK);
+    } catch (IllegalStateException e) {
+      log.warn("Discrepancy state conflict for #{}: {}", discrepancyId, e.getMessage());
+      return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.CONFLICT);
+    } catch (IllegalArgumentException e) {
+      log.warn("Discrepancy not found #{}: {}", discrepancyId, e.getMessage());
+      return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      log.error("Failed resolving discrepancy #{}: {}", discrepancyId, e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+}
