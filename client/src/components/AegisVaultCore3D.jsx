@@ -398,3 +398,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
     ];
 
     // --- Interactive Drag Handling ---
+    const handlePointerDown = (e) => {
+      isDraggingRef.current = true;
+      previousMousePosRef.current = { x: e.clientX, y: e.clientY };
+      container.style.cursor = "grabbing";
+    };
+
+    const handlePointerMove = (e) => {
+      if (!isDraggingRef.current) return;
+      const deltaX = e.clientX - previousMousePosRef.current.x;
+      const deltaY = e.clientY - previousMousePosRef.current.y;
+
+      dragRotationRef.current.y += deltaX * 0.006;
+      dragRotationRef.current.x += deltaY * 0.006;
+      currentDragVelocityRef.current = { x: deltaY * 0.006, y: deltaX * 0.006 };
+
+      previousMousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointerUp = () => {
+      isDraggingRef.current = false;
+      container.style.cursor = "grab";
+    };
+
+    container.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    // Resize Handler with responsive mobile camera adjustment
+    const handleResize = () => {
+      if (!container) return;
+      const newWidth = container.clientWidth || window.innerWidth;
+      const newHeight = container.clientHeight || window.innerHeight;
+      camera.aspect = newWidth / newHeight;
+      const mobile = newWidth < 768;
+      camera.position.z = mobile ? 9.8 : 7.2;
+      camera.updateProjectionMatrix();
+      renderer.setSize(newWidth, newHeight);
+    };
+    window.addEventListener("resize", handleResize);
+
+    // --- Animation Loop with Frame-Rate Independent Exponential Smoothing ---
+    let clock = new THREE.Clock();
+    let lastTime = performance.now();
+    let smoothProgress = 0;
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+
+      const now = performance.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
