@@ -51,6 +51,8 @@ logs/
 
 # Internal Implementation Notes & PRDs
 PROJECT_GUIDE_AND_TESTING.md
+LOCALHOST_INSPECTION_MANIFESTO.md
+FRONTEND_UI_TESTING_GUIDE.md
 api_style and ipl.md
 enterprise_treasury_aml_platform_prd.md
 enterprise_upgrade_master_plan_phases_7_10.md
