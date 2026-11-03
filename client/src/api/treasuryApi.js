@@ -118,3 +118,63 @@ export function getUserRoles() {
   }
   const personaKey = getActivePersona();
   const info = PERSONAS[personaKey];
+  if (info && info.role) {
+    return info.role.split(",").map((r) => r.trim());
+  }
+  return ["ROLE_USER"];
+}
+
+export function isOfficerRole() {
+  const roles = getUserRoles();
+  return roles.some(
+    (r) =>
+      r.includes("COMPLIANCE") ||
+      r.includes("ADMIN") ||
+      r === "ROLE_COMPLIANCE_OFFICER" ||
+      r === "ROLE_ADMIN"
+  );
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+/** POST /auth/login — authenticates with credentials, generates and stores stateless JWT */
+export async function loginWithCredentials(usernameOrEmail, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usernameOrEmail, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Invalid username or password");
+  }
+  if (data.token) {
+    localStorage.setItem("runestone_jwt_token", data.token);
+    localStorage.setItem("jwt", data.token);
+    localStorage.setItem("runestone_user_profile", JSON.stringify(data));
+    localStorage.setItem("runestone_active_persona", data.username);
+    window.dispatchEvent(
+      new CustomEvent("runestone_persona_changed", { detail: data.username })
+    );
+  }
+  return data;
+}
+
+/** POST /auth/demo-switch/{personaUsername} — 1-click cryptographic demo persona swap */
+export async function switchDemoPersonaJwt(personaUsername) {
+  const response = await fetch(`${API_BASE_URL}/auth/demo-switch/${personaUsername}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || `Failed to switch to persona ${personaUsername}`);
+  }
+  if (data.token) {
+    localStorage.setItem("runestone_jwt_token", data.token);
+    localStorage.setItem("jwt", data.token);
+    localStorage.setItem("runestone_user_profile", JSON.stringify(data));
+    localStorage.setItem("runestone_active_persona", data.username);
+    window.dispatchEvent(
+      new CustomEvent("runestone_persona_changed", { detail: data.username })
+    );
