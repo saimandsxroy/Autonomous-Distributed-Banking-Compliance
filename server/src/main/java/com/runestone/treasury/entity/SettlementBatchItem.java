@@ -21,7 +21,7 @@ public class SettlementBatchItem {
   @Column(name = "batch_id", nullable = false)
   private Long batchId;
 
-  @Column(name = "row_number", nullable = false)
+  @Column(name = "`row_number`", nullable = false)
   private Integer rowNumber;
 
   @Column(name = "destination_account_id", nullable = false)
