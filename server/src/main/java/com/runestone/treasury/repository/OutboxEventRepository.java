@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OutboxEventRepository
-    extends JpaRepository<OutboxEvent, Long>, OutboxEventRepositoryCustom {}
+    extends JpaRepository<OutboxEvent, Long>, OutboxEventRepositoryCustom {
+  long countByStatus(String status);
+}
