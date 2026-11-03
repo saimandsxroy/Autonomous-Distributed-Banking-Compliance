@@ -11,4 +11,9 @@ public interface BalanceHoldRepository extends JpaRepository<BalanceHold, Long> 
   Optional<BalanceHold> findByIdempotencyKey(String idempotencyKey);
 
   List<BalanceHold> findByStatus(String status);
+
+  long countByStatus(String status);
+
+  List<BalanceHold> findBySourceAccountIdOrDestinationAccountId(
+      Long sourceAccountId, Long destinationAccountId);
 }
