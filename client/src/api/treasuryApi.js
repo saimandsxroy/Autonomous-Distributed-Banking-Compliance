@@ -238,3 +238,63 @@ async function treasuryFetch(url, options = {}) {
   // Handle 204 or empty bodies
   if (response.status === 204) {
     return {};
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+}
+
+/* =====================================================================
+   Treasury & Compliance Endpoints
+   ===================================================================== */
+
+/** GET /account Returns accounts belonging to current logged in persona */
+export async function fetchUserAccounts() {
+  try {
+    return await treasuryFetch("/account");
+  } catch (e) {
+    if (e?.status === 404) {
+      return [];
+    }
+    throw e;
+  }
+}
+
+/** GET /account/all Returns all treasury accounts in the institution */
+export async function fetchAllTreasuryAccounts() {
+  try {
+    return await treasuryFetch("/account/all");
+  } catch (e) {
+    if (e?.status === 404) {
+      return await fetchUserAccounts().catch(() => []);
+    }
+    throw e;
+  }
+}
+
+/** POST /account Creates a new treasury account with initial liquidity */
+export async function createTreasuryAccount(accountData) {
+  return await treasuryFetch("/account", {
+    method: "POST",
+    body: JSON.stringify(accountData),
+  });
+}
+
+/** POST /journal Creates a double-entry transfer with idempotency & AML checks */
+export async function createJournalTransfer(entry, idempotencyKey) {
+  return await treasuryFetch("/journal", {
+    method: "POST",
+    headers: {
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
+      currency: "USD",
+      referenceType: "TRANSFER",
+      idempotencyKey: idempotencyKey,
+      ...entry,
+    }),
+  });
+}
+
+/** GET /journal Returns journal entries for current user */
+export async function fetchUserJournalEntries() {
