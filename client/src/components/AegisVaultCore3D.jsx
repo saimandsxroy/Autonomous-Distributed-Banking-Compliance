@@ -198,3 +198,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
       emissiveIntensity: 0.35,
     });
 
+    const crimsonNodeMat = new THREE.MeshStandardMaterial({
+      color: 0xf43f5e,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0xe11d48,
+      emissiveIntensity: 0.85,
+    });
+
+    nodeCoords.forEach((pos, idx) => {
+      const isAmlRing = idx <= 2;
+      const isQuarantineTarget = idx === 2; // Charlie #3 where recursive CTE caught cycle
+      const radius = isQuarantineTarget ? 0.13 : isAmlRing ? 0.105 : 0.085;
+
+      const nodeGeo = new THREE.SphereGeometry(radius, 24, 24);
+      const baseMat = isAmlRing ? crimsonNodeMat : legitimateNodeMat;
+      const nodeMesh = new THREE.Mesh(nodeGeo, baseMat.clone());
+      nodeMesh.position.copy(pos);
+      nodeMesh.userData = {
+        id: idx,
+        isAmlRing,
+        isQuarantineTarget,
+        basePos: pos.clone(),
+        label:
+          idx === 0
+            ? "Alice (Leg 1 Source)"
+            : idx === 1
+            ? "Bob (Leg 2 Mule)"
+            : idx === 2
+            ? "Charlie (QUARANTINED AML INTERCEPT)"
+            : `Vault Node #${idx}`,
+      };
+      networkGroup.add(nodeMesh);
+      nodeMeshes.push(nodeMesh);
+
+      // Add rotating wireframe quarantine cage around Charlie #3
+      if (isQuarantineTarget) {
+        const cageGeo = new THREE.OctahedronGeometry(0.24, 0);
+        const cageMat = new THREE.MeshBasicMaterial({
+          color: 0xf43f5e,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.85,
+        });
+        const cageMesh = new THREE.Mesh(cageGeo, cageMat);
+        cageMesh.name = "quarantineCage";
+        nodeMesh.add(cageMesh);
+
+        // High-alert pulsing warning ring
+        const ringGeo = new THREE.RingGeometry(0.25, 0.28, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
