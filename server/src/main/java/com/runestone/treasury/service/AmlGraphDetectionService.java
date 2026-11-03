@@ -58,3 +58,63 @@ public class AmlGraphDetectionService {
       }
 
       // 2. Fan-out structuring check on source account
+      int maxFanOut = resolveIntConfig("AML_FAN_OUT_MAX_24H", 4);
+      long fanOut = postingLegRepository.countDistinctOutboundCounterparties24h(sourceAccountId);
+      if (fanOut >= maxFanOut) {
+        String reason = "STRUCTURING_FAN_OUT_DETECTED: distinctCounterparties=" + fanOut;
+        log.warn(
+            "AML fan-out structuring detected: sourceAccount={}, fanOut={}",
+            sourceAccountId,
+            fanOut);
+        return reason;
+      }
+
+      // 3. Fan-in mule aggregation check on destination account
+      int maxFanIn = resolveIntConfig("AML_FAN_IN_MAX_24H", 4);
+      long fanIn = postingLegRepository.countDistinctInboundCounterparties24h(destinationAccountId);
+      if (fanIn >= maxFanIn) {
+        String reason = "MULE_FAN_IN_DETECTED: distinctInboundCounterparties=" + fanIn;
+        log.warn(
+            "AML mule fan-in detected: destinationAccount={}, fanIn={}",
+            destinationAccountId,
+            fanIn);
+        return reason;
+      }
+
+      return null; // clean transfer
+    } catch (Exception e) {
+      log.error(
+          "AML graph detection failed for transfer {}->{}. Failing open: {}",
+          sourceAccountId,
+          destinationAccountId,
+          e.getMessage());
+      return null; // fail-open: don't block transfers on detection error
+    }
+  }
+
+  /**
+   * Returns the 5-hop subgraph analysis for an account including nodes, edges, cycle detection, and
+   * fan-out/fan-in metrics. Used by the compliance dashboard.
+   */
+  public Map<String, Object> getAccountSubgraph(Long accountId) {
+    Map<String, Object> result = new HashMap<>();
+    try {
+      List<Object[]> edgeRows = postingLegRepository.getThreeHopSubgraph(accountId);
+      Map<String, Map<String, Object>> edgeMap = new LinkedHashMap<>();
+      Set<Long> nodeSet = new HashSet<>();
+      if (accountId != null) {
+        nodeSet.add(accountId);
+      }
+
+      for (Object[] row : edgeRows) {
+        Long fromAccount = toLong(row[0]);
+        Long toAccount = toLong(row[1]);
+        if (fromAccount == null || toAccount == null) continue;
+
+        String key = fromAccount + "->" + toAccount;
+        Map<String, Object> edge = new HashMap<>();
+        edge.put("from", fromAccount);
+        edge.put("to", toAccount);
+        edge.put("source", fromAccount);
+        edge.put("target", toAccount);
+        edge.put("amount", row[2]);
