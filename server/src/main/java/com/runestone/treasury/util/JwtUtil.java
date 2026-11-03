@@ -18,3 +18,21 @@ public class JwtUtil {
 
   public String generateToken(String username, List<String> roles, List<Long> accountIds) {
     return jwtTokenService.generateToken(username, roles, accountIds);
+  }
+
+  public Claims validateAndParseToken(String token) {
+    return jwtTokenService.validateAndParseToken(token);
+  }
+
+  public String extractUsername(String token) {
+    return jwtTokenService.extractUsername(token);
+  }
+
+  public List<String> extractRoles(Claims claims) {
+    return jwtTokenService.extractRoles(claims);
+  }
+
+  public String extractEmail(Claims claims) {
+    return jwtTokenService.extractEmail(claims);
+  }
+}
