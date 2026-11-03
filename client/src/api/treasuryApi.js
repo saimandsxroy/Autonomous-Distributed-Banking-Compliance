@@ -298,3 +298,63 @@ export async function createJournalTransfer(entry, idempotencyKey) {
 
 /** GET /journal Returns journal entries for current user */
 export async function fetchUserJournalEntries() {
+  try {
+    return await treasuryFetch("/journal");
+  } catch (e) {
+    if (e?.status === 404) {
+      return [];
+    }
+    throw e;
+  }
+}
+
+/** GET /compliance/audit-logs Returns SHA-256 hash chained logs with verification */
+export async function fetchComplianceAuditLogs() {
+  return await treasuryFetch("/compliance/audit-logs");
+}
+
+/** POST /compliance/demo/seed-aml-scenarios Seeds 3-hop ring & triggers AI detective */
+export async function seedDemoAmlScenario() {
+  return await treasuryFetch("/compliance/demo/seed-aml-scenarios", {
+    method: "POST",
+  });
+}
+
+/** GET /compliance/investigations Returns all AI AML investigations */
+export async function fetchAmlInvestigations() {
+  return await treasuryFetch("/compliance/investigations");
+}
+
+/** GET /compliance/investigations/hold/{holdId} */
+export async function fetchAmlInvestigationByHold(holdId) {
+  return await treasuryFetch(`/compliance/investigations/hold/${holdId}`);
+}
+
+/** GET /compliance/approvals/pending Returns HITL approval queue */
+export async function fetchPendingApprovals() {
+  return await treasuryFetch("/compliance/approvals/pending");
+}
+
+/** POST /compliance/approvals/{id}/approve */
+export async function approveHitlRequest(
+  id,
+  reviewerUserName,
+  notes = "Approved by compliance lead",
+  action = "RELEASE"
+) {
+  return await treasuryFetch(`/compliance/approvals/${id}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ reviewerUserName, notes, action }),
+  });
+}
+
+/** POST /compliance/approvals/{id}/reject */
+export async function rejectHitlRequest(
+  id,
+  reviewerUserName,
+  notes = "Rejected after compliance review"
+) {
+  return await treasuryFetch(`/compliance/approvals/${id}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ reviewerUserName, notes }),
+  });
