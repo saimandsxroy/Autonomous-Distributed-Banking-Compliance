@@ -58,3 +58,53 @@ class MakerCheckerWireServiceTests {
 
     assertNotNull(wire);
     assertEquals("TIER_1_AUTO", wire.getPolicyTier());
+    assertEquals(0, wire.getRequiredApprovals());
+    assertEquals("SETTLED", wire.getStatus());
+    verify(journalEntryService).saveEntry(any(JournalEntry.class), eq("alice"), eq(false), any());
+  }
+
+  @Test
+  void testSubmitWire_Tier2SingleChecker() {
+    MakerCheckerWireRequestDto dto =
+        new MakerCheckerWireRequestDto(
+            "WIRE-T2", 1L, 2L, new BigDecimal("5500.00"), "USD", "Server Infrastructure");
+
+    MakerCheckerWire wire = makerCheckerWireService.submitWire(dto, "alice");
+
+    assertNotNull(wire);
+    assertEquals("TIER_2_SINGLE_CHECKER", wire.getPolicyTier());
+    assertEquals(1, wire.getRequiredApprovals());
+    assertEquals("PENDING_APPROVAL", wire.getStatus());
+    verify(journalEntryService, never()).saveEntry(any(), any(), eq(false), any());
+  }
+
+  @Test
+  void testSubmitWire_Tier3DualChecker() {
+    MakerCheckerWireRequestDto dto =
+        new MakerCheckerWireRequestDto(
+            "WIRE-T3", 1L, 2L, new BigDecimal("45000.00"), "USD", "Acquisition Wire");
+
+    MakerCheckerWire wire = makerCheckerWireService.submitWire(dto, "alice");
+
+    assertNotNull(wire);
+    assertEquals("TIER_3_DUAL_CHECKER", wire.getPolicyTier());
+    assertEquals(2, wire.getRequiredApprovals());
+    assertEquals("PENDING_APPROVAL", wire.getStatus());
+  }
+
+  @Test
+  void testApproveWire_SelfApprovalForbidden() {
+    MakerCheckerWire wire = new MakerCheckerWire();
+    wire.setId(88L);
+    wire.setMakerUserName("alice");
+    wire.setStatus("PENDING_APPROVAL");
+    wire.setRequiredApprovals(1);
+
+    when(makerCheckerWireRepository.findById(88L)).thenReturn(Optional.of(wire));
+
+    assertThrows(
+        SeparationOfDutiesViolationException.class,
+        () -> makerCheckerWireService.approveWire(88L, "alice", "Trying to approve own wire"));
+  }
+
+  @Test
