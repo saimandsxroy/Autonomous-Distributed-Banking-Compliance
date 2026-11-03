@@ -33,3 +33,23 @@ public class MakerCheckerController {
   public ResponseEntity<?> submitWire(@Valid @RequestBody MakerCheckerWireRequestDto dto) {
     try {
       Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      String makerUserName = (auth != null && auth.getName() != null) ? auth.getName() : "alice";
+
+      MakerCheckerWire wire = makerCheckerWireService.submitWire(dto, makerUserName);
+      return new ResponseEntity<>(wire, HttpStatus.CREATED);
+    } catch (IllegalArgumentException e) {
+      log.warn("Invalid corporate wire request: {}", e.getMessage());
+      return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.BAD_REQUEST);
+    } catch (Exception e) {
+      log.error("Failed submitting corporate wire: {}", e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @PostMapping("/id/{wireId}/approve")
+  public ResponseEntity<?> approveWire(
+      @PathVariable Long wireId, @RequestBody(required = false) Map<String, String> body) {
+    try {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      String checkerUserName =
