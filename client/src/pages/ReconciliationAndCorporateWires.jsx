@@ -898,3 +898,153 @@ export function ReconciliationAndCorporateWires() {
                                       {wire.checkerOneUserName || "Pending"}
                                     </span>
                                   </div>
+                                )}
+
+                                {/* Checker 2 */}
+                                {wire.requiredApprovals >= 2 && (
+                                  <>
+                                    <ArrowRight size={10} className="text-zinc-600" />
+                                    <div
+                                      className={`flex items-center gap-1 px-2 py-1 rounded border text-[10px] ${
+                                        wire.checkerTwoUserName
+                                          ? "bg-emerald-950/40 border-emerald-500 text-emerald-300"
+                                          : "bg-zinc-900 border-dashed border-zinc-700 text-zinc-500"
+                                      }`}
+                                    >
+                                      <ShieldCheck size={10} />
+                                      <span>Chk 2:</span>
+                                      <span className="font-bold">
+                                        {wire.checkerTwoUserName || "Pending"}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                  wire.status === "SETTLED"
+                                    ? "bg-emerald-950 text-emerald-300 border-emerald-500"
+                                    : "bg-amber-950 text-amber-300 border-amber-500"
+                                }`}
+                              >
+                                {wire.status}
+                              </span>
+                              {wire.settledJournalEntryId && (
+                                <div className="text-[10px] text-zinc-500">
+                                  Settled Jnl #{wire.settledJournalEntryId}
+                                </div>
+                              )}
+                            </td>
+
+                            <td className="p-3 text-right">
+                              {isPending ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  {isMaker && (
+                                    <span className="text-[10px] text-rose-400 font-bold border border-rose-900/50 bg-rose-950/30 px-2 py-0.5 rounded">
+                                      Self-Approval Forbidden
+                                    </span>
+                                  )}
+                                  <Button
+                                    onClick={() => handleApproveWire(wire)}
+                                    disabled={wireApprovingId === wire.id}
+                                    className={`text-[11px] px-3 py-1.5 rounded-lg shadow-brutal transition-all inline-flex items-center gap-1.5 font-black uppercase ${
+                                      isMaker
+                                        ? "bg-zinc-800 text-zinc-400 hover:bg-rose-950 hover:text-rose-300 border border-zinc-700"
+                                        : "bg-yellow-500 hover:bg-yellow-400 text-black"
+                                    }`}
+                                  >
+                                    {wireApprovingId === wire.id ? (
+                                      <RefreshCw size={12} className="animate-spin" />
+                                    ) : (
+                                      <UserCheck size={12} />
+                                    )}
+                                    Sign as {activePersonaKey}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-emerald-400 text-[11px] font-bold">
+                                  ✓ Settled on Double-Entry Ledger
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 3: REAL-TIME SRE & LEDGER TELEMETRY
+          ========================================================================= */}
+      {activeTab === "telemetry" && (
+        <div className="space-y-6">
+          <Card className="bg-zinc-900/90 border-2 border-zinc-800 shadow-brutal">
+            <CardHeader className="border-b-2 border-zinc-800 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-xl font-black uppercase tracking-wide flex items-center gap-2 text-white">
+                    <Activity className="text-yellow-500" size={20} />
+                    Live Supervisory SRE & Treasury Telemetry
+                  </CardTitle>
+                  <p className="text-xs text-zinc-400 mt-1 font-mono">
+                    Real-time aggregation from MySQL double-entry ledger, outbox relay, dead-letter queue, and cryptographic SHA-256 audit chain.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={refreshTelemetry}
+                    disabled={telemetryLoading}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase text-xs px-4 py-2.5 rounded-xl border-2 border-zinc-700 flex items-center gap-2"
+                  >
+                    <RefreshCw size={14} className={telemetryLoading ? "animate-spin" : ""} />
+                    Refresh Metrics
+                  </Button>
+                  <Button
+                    onClick={() => setAutoRefresh(!autoRefresh)}
+                    className={`font-bold uppercase text-xs px-4 py-2.5 rounded-xl border-2 transition-all ${
+                      autoRefresh
+                        ? "bg-emerald-950 text-emerald-300 border-emerald-500"
+                        : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white"
+                    }`}
+                  >
+                    Auto-Poll (3s): {autoRefresh ? "ON" : "OFF"}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {telemetry ? (
+                <div className="space-y-6">
+                  {/* Top Counters Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-zinc-950 p-5 rounded-2xl border-2 border-zinc-800 shadow-brutal">
+                      <span className="text-[11px] font-mono uppercase text-zinc-500 block mb-1">
+                        Total Posted Liquidity (USD)
+                      </span>
+                      <span className="text-2xl font-black text-white font-mono">
+                        ${parseFloat(telemetry.totalPostedLiquidityUsd || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-950 p-5 rounded-2xl border-2 border-zinc-800 shadow-brutal">
+                      <span className="text-[11px] font-mono uppercase text-zinc-500 block mb-1">
+                        Cryptographic SHA-256 Chain
+                      </span>
+                      <div className="flex items-center gap-2 mt-1">
+                        {telemetry.sha256ChainVerified ? (
+                          <>
+                            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-emerald-400 font-black font-mono text-lg uppercase">
+                              VERIFIED INTACT
