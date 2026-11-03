@@ -98,3 +98,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
     const rimLight = new THREE.DirectionalLight(0xffffff, 4.2);
     rimLight.position.set(3, 6, -2);
     scene.add(rimLight);
+
+    // High-alert crimson accent light (reflects the AML quarantine node)
+    const crimsonLight = new THREE.PointLight(0xf43f5e, 5.0, 4.5, 2.0);
+    crimsonLight.position.set(1.3, -0.6, 0.8);
+    scene.add(crimsonLight);
+
+    // Radiant blue ledger heart light
+    const ledgerCoreLight = new THREE.PointLight(0x2563eb, 4.0, 3.5, 2.0);
+    ledgerCoreLight.position.set(0, 0, 0);
+    scene.add(ledgerCoreLight);
+
+    // --- Master Pivot Group ---
+    const masterGroup = new THREE.Group();
+    scene.add(masterGroup);
+
+    // =========================================================================
+    // LAYER 1: CENTRAL DOUBLE-ENTRY LEDGER CORE (coreGroup)
+    // =========================================================================
+    const coreGroup = new THREE.Group();
+    masterGroup.add(coreGroup);
+
+    // Dark titanium faceted icosahedron core
+    const titaniumMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.92,
+      roughness: 0.18,
+      flatShading: true,
+    });
+    const coreGeo = new THREE.IcosahedronGeometry(0.52, 0);
+    const coreMesh = new THREE.Mesh(coreGeo, titaniumMat);
+    coreGroup.add(coreMesh);
+
+    // Wireframe cage around inner core
+    const coreWireMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const coreWire = new THREE.Mesh(new THREE.IcosahedronGeometry(0.56, 1), coreWireMat);
+    coreGroup.add(coreWire);
+
+    // Outer refractive sapphire glass shell
+    const sapphireShellMat = new THREE.MeshPhysicalMaterial({
+      color: 0x1d4ed8,
+      transmission: 0.72,
+      opacity: 0.88,
+      transparent: true,
+      metalness: 0.15,
+      roughness: 0.1,
