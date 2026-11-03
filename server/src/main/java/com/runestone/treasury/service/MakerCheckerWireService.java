@@ -163,3 +163,18 @@ public class MakerCheckerWireService {
       wire.setStatus("SETTLED");
       wire.setSettledJournalEntryId(je.getId());
       log.info(
+          "Corporate wire #{} fully approved (approvals={}/{}) and settled as journal entry #{}",
+          wire.getId(),
+          wire.getCurrentApprovals(),
+          wire.getRequiredApprovals(),
+          je.getId());
+    }
+
+    MakerCheckerWire saved = makerCheckerWireRepository.save(wire);
+
+    complianceAuditLogService.recordAuditEvent(
+        approver, "CORPORATE_WIRE_APPROVED", saved.getId(), saved);
+
+    return saved;
+  }
+}
