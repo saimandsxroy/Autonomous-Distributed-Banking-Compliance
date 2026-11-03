@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ShieldAlert, CheckCircle2, RefreshCw } from "lucide-react";
+import { ShieldAlert, CheckCircle2, RefreshCw, Info } from "lucide-react";
 
 export function AmlGraphVisualizer({
   analysis,
@@ -7,37 +7,49 @@ export function AmlGraphVisualizer({
   onRefresh,
   title = "5-Hop Recursive Money-Flow Subgraph",
 }) {
-  // Compute positions of nodes in circular/layout arrangement
-  const { nodePositions, edgesToRender } = useMemo(() => {
+  // Compute positions of nodes in circular dynamic arrangement
+  const { nodePositions, edgesToRender, hasData } = useMemo(() => {
     if (!analysis) {
-      return { nodePositions: [], edgesToRender: [] };
+      return { nodePositions: [], edgesToRender: [], hasData: false };
     }
 
-    // Default demo ring nodes if graph nodes are empty
-    let nodes = analysis.nodes || [];
-    let edges = analysis.edges || [];
+    const rawNodes = analysis.nodes || [];
+    const rawEdges = analysis.edges || [];
 
-    if (nodes.length === 0) {
-      nodes = [
-        { id: 1, label: "Alice (#1)", balance: 4250, status: "ACTIVE" },
-        { id: 2, label: "Bob (#2)", balance: 2635, status: "ACTIVE" },
-        { id: 3, label: "Charlie (#3)", balance: 95, status: "FROZEN_AML" },
-      ];
-      edges = [
-        { source: 1, target: 2, amount: 120, label: "$120.00" },
-        { source: 2, target: 3, amount: 110, label: "$110.00" },
-        { source: 3, target: 1, amount: 100, label: "$100.00 (Loop)" },
-      ];
+    if (rawNodes.length === 0 && rawEdges.length === 0) {
+      return { nodePositions: [], edgesToRender: [], hasData: false };
     }
 
-    const width = 500;
-    const height = 300;
+    const width = 560;
+    const height = 340;
     const centerX = width / 2;
     const centerY = height / 2;
     const radius = Math.min(width, height) * 0.35;
 
+    // Normalize nodes extracting id, label, balance, status
+    const nodes = rawNodes.map((n) => {
+      const id = n.id ?? n.accountId;
+      const ownerLabel = n.ownerName || n.label;
+      const accountNum = n.accountNumber ? `(${n.accountNumber})` : "";
+      return {
+        id,
+        label: ownerLabel ? `${ownerLabel} ${accountNum}`.trim() : `Account #${id}`,
+        balance: n.balance != null ? Number(n.balance) : null,
+        status: n.status || "ACTIVE",
+        isOrigin: Boolean(n.isOrigin || (id === analysis.accountId)),
+      };
+    });
+
     const count = nodes.length;
     const positions = nodes.map((n, i) => {
+      if (count === 1) {
+        return {
+          ...n,
+          x: centerX,
+          y: centerY,
+          isFocus: true,
+        };
+      }
       const angle = (2 * Math.PI * i) / count - Math.PI / 2;
       const x = centerX + radius * Math.cos(angle);
       const y = centerY + radius * Math.sin(angle);
@@ -45,31 +57,67 @@ export function AmlGraphVisualizer({
         ...n,
         x,
         y,
-        isFocus: n.id === analysis.accountId,
+        isFocus: n.id === analysis.accountId || n.isOrigin,
       };
     });
 
     const posMap = new Map();
     positions.forEach((p) => posMap.set(p.id, { x: p.x, y: p.y }));
 
-    const resolvedEdges = edges.map((e, idx) => {
-      const s = posMap.get(e.source) || { x: centerX - 80, y: centerY };
-      const t = posMap.get(e.target) || { x: centerX + 80, y: centerY };
-      return {
-        ...e,
-        idx,
-        x1: s.x,
-        y1: s.y,
-        x2: t.x,
-        y2: t.y,
-      };
-    });
+    // Normalize edges extracting source, target, amount, label, isCycle
+    const cyclePaths = analysis.cyclePaths || [];
+    const resolvedEdges = rawEdges
+      .map((e, idx) => {
+        const sourceId = e.source ?? e.from ?? e.sourceAccountId;
+        const targetId = e.target ?? e.to ?? e.destinationAccountId;
+        const s = posMap.get(sourceId);
+        const t = posMap.get(targetId);
 
-    return { nodePositions: positions, edgesToRender: resolvedEdges };
+        if (!s || !t) return null;
+
+        const amount = e.amount != null ? Number(e.amount) : 0;
+        const isCycleEdge = Boolean(
+          e.isCycle ||
+            cyclePaths.some((p) => p && p.includes(`${sourceId}->${targetId}`))
+        );
+
+        let labelText = e.label;
+        if (!labelText && amount > 0) {
+          labelText = `$${amount.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`;
+          if (isCycleEdge) {
+            labelText += " (Loop)";
+          }
+        }
+
+        return {
+          idx,
+          source: sourceId,
+          target: targetId,
+          amount,
+          label: labelText,
+          isCycle: isCycleEdge,
+          x1: s.x,
+          y1: s.y,
+          x2: t.x,
+          y2: t.y,
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      nodePositions: positions,
+      edgesToRender: resolvedEdges,
+      hasData: positions.length > 0,
+    };
   }, [analysis]);
 
-  const isCycle = analysis?.cycleDetected ?? true;
-  const risk = analysis?.riskLevel ?? (isCycle ? "CRITICAL" : "LOW");
+  const isCycle = Boolean(analysis?.cycleDetected);
+  const risk =
+    analysis?.riskLevel ??
+    (isCycle ? "CRITICAL" : (analysis?.fanOutCount24h || 0) > 3 ? "HIGH" : "LOW");
 
   return (
     <div className="bg-zinc-950 border-2 border-zinc-800 rounded-xl overflow-hidden shadow-2xl flex flex-col">
@@ -111,7 +159,7 @@ export function AmlGraphVisualizer({
             <button
               onClick={onRefresh}
               className={`p-1 text-zinc-400 hover:text-white transition-colors ${loading ? "animate-spin" : ""}`}
-              title="Refresh Graph"
+              title="Refresh Graph from MySQL"
             >
               <RefreshCw size={14} />
             </button>
@@ -120,17 +168,29 @@ export function AmlGraphVisualizer({
       </div>
 
       {/* SVG Canvas */}
-      <div className="relative w-full h-72 bg-gradient-to-b from-zinc-950 to-zinc-900/60 flex items-center justify-center p-4">
+      <div className="relative w-full h-80 bg-gradient-to-b from-zinc-950 to-zinc-900/60 flex items-center justify-center p-4">
         {loading ? (
           <div className="flex flex-col items-center gap-2 text-zinc-500 text-xs font-mono">
             <RefreshCw size={24} className="animate-spin text-ochre-800" />
-            <span>Traversing 5-hop graph recursive CTE...</span>
+            <span>Traversing recursive CTE money trail...</span>
+          </div>
+        ) : !hasData ? (
+          <div className="flex flex-col items-center justify-center gap-2 text-center p-6">
+            <div className="p-3 bg-zinc-900 rounded-full border border-zinc-800 text-zinc-500">
+              <Info size={24} />
+            </div>
+            <p className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+              No Money-Flow Edges Detected
+            </p>
+            <p className="text-[11px] text-zinc-500 font-mono max-w-sm">
+              Account #{analysis?.accountId || "—"} has no recorded multi-hop transfer history in the journal ledger.
+            </p>
           </div>
         ) : (
-          <svg className="w-full h-full" viewBox="0 0 500 300">
+          <svg className="w-full h-full" viewBox="0 0 560 340">
             <defs>
               <marker
-                id="arrow"
+                id="arrow-cycle"
                 viewBox="0 0 10 10"
                 refX="22"
                 refY="5"
@@ -141,7 +201,7 @@ export function AmlGraphVisualizer({
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="#e11d48" />
               </marker>
               <marker
-                id="arrow-cyan"
+                id="arrow-clean"
                 viewBox="0 0 10 10"
                 refX="22"
                 refY="5"
@@ -167,12 +227,12 @@ export function AmlGraphVisualizer({
                   <path
                     d={pathData}
                     fill="none"
-                    stroke={isCycle ? "#e11d48" : "#06b6d4"}
-                    strokeWidth={isCycle ? "2.5" : "1.8"}
-                    strokeDasharray={isCycle ? "5 3" : "none"}
-                    markerEnd={isCycle ? "url(#arrow)" : "url(#arrow-cyan)"}
+                    stroke={edge.isCycle ? "#e11d48" : "#06b6d4"}
+                    strokeWidth={edge.isCycle ? "2.5" : "1.8"}
+                    strokeDasharray={edge.isCycle ? "5 3" : "none"}
+                    markerEnd={edge.isCycle ? "url(#arrow-cycle)" : "url(#arrow-clean)"}
                     className={
-                      isCycle ? "animate-pulse opacity-90" : "opacity-75"
+                      edge.isCycle ? "animate-pulse opacity-90" : "opacity-75"
                     }
                   />
                   {/* Flow label */}
@@ -180,7 +240,7 @@ export function AmlGraphVisualizer({
                     <text
                       x={cx}
                       y={cy}
-                      fill={isCycle ? "#fca5a5" : "#67e8f9"}
+                      fill={edge.isCycle ? "#fca5a5" : "#67e8f9"}
                       fontSize="9"
                       fontWeight="bold"
                       fontFamily="monospace"
@@ -213,16 +273,18 @@ export function AmlGraphVisualizer({
                   key={`node-${node.id}`}
                   className="transition-transform duration-300"
                 >
-                  {/* Outer pulse ring */}
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={22}
-                    fill="none"
-                    stroke={strokeColor}
-                    strokeWidth="1.5"
-                    className="opacity-40 animate-ping"
-                  />
+                  {/* Outer pulse ring for focus or frozen nodes */}
+                  {(node.isFocus || isFrozen) && (
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={22}
+                      fill="none"
+                      stroke={strokeColor}
+                      strokeWidth="1.5"
+                      className="opacity-40 animate-ping"
+                    />
+                  )}
                   {/* Main Node Circle */}
                   <circle
                     cx={node.x}
@@ -269,6 +331,23 @@ export function AmlGraphVisualizer({
                       [FROZEN_AML]
                     </text>
                   )}
+                  {node.balance != null && (
+                    <text
+                      x={node.x}
+                      y={node.y + (isFrozen ? 52 : 43)}
+                      fill="#34d399"
+                      fontSize="8.5"
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                      textAnchor="middle"
+                      className="select-none"
+                    >
+                      ${Number(node.balance).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </text>
+                  )}
                 </g>
               );
             })}
@@ -283,7 +362,7 @@ export function AmlGraphVisualizer({
             24h Fan-Out
           </span>
           <span className="font-bold text-zinc-200">
-            {analysis?.fanOutCount24h ?? 2} counterparties
+            {analysis?.fanOutCount24h ?? 0} counterparties
           </span>
         </div>
         <div className="px-3">
@@ -291,7 +370,7 @@ export function AmlGraphVisualizer({
             24h Fan-In
           </span>
           <span className="font-bold text-zinc-200">
-            {analysis?.fanInCount24h ?? 1} counterparties
+            {analysis?.fanInCount24h ?? 0} counterparties
           </span>
         </div>
         <div className="pl-3">
@@ -310,4 +389,3 @@ export function AmlGraphVisualizer({
     </div>
   );
 }
-
