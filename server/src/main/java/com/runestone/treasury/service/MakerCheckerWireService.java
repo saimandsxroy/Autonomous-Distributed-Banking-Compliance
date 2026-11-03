@@ -138,3 +138,28 @@ public class MakerCheckerWireService {
 
     if (wire.getCheckerOneUserName() == null) {
       wire.setCheckerOneUserName(approver);
+      wire.setCurrentApprovals(wire.getCurrentApprovals() + 1);
+    } else if (wire.getCheckerTwoUserName() == null) {
+      wire.setCheckerTwoUserName(approver);
+      wire.setCurrentApprovals(wire.getCurrentApprovals() + 1);
+    }
+
+    // Check if fully approved
+    if (wire.getCurrentApprovals() >= wire.getRequiredApprovals()) {
+      JournalEntry je = new JournalEntry();
+      je.setIdempotencyKey(wire.getIdempotencyKey());
+      je.setSourceAccountId(wire.getSourceAccountId());
+      je.setDestinationAccountId(wire.getDestinationAccountId());
+      je.setAmount(wire.getAmount());
+      je.setCurrency(wire.getCurrency());
+      je.setReferenceType("CORPORATE_WIRE");
+      je.setTitle("Multi-Tier Corporate Wire Settled (" + wire.getPolicyTier() + ")");
+      je.setContent(
+          wire.getDescription() != null
+              ? wire.getDescription()
+              : "Settled with multi-signature checker signoff");
+
+      journalEntryService.saveEntry(je, approver, false, null);
+      wire.setStatus("SETTLED");
+      wire.setSettledJournalEntryId(je.getId());
+      log.info(
