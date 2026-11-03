@@ -748,3 +748,153 @@ export function ReconciliationAndCorporateWires() {
                   </Button>
                 </form>
               </CardContent>
+            </Card>
+
+            {/* Policy Reference Card */}
+            <Card className="bg-zinc-900/90 border-2 border-zinc-800 shadow-brutal flex flex-col justify-between">
+              <CardHeader className="border-b-2 border-zinc-800 pb-4">
+                <CardTitle className="text-sm font-black uppercase tracking-wide text-zinc-300 flex items-center gap-2">
+                  <ShieldCheck className="text-yellow-500" size={18} />
+                  Corporate Governance Thresholds
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3 font-mono text-xs">
+                <div className="p-3 rounded-lg bg-zinc-950 border border-emerald-900/50">
+                  <div className="text-emerald-400 font-bold uppercase">Tier 1: Under $1,000.00</div>
+                  <div className="text-zinc-400 text-[11px] mt-0.5">0 Approvals Required • Settles immediately upon submission.</div>
+                </div>
+                <div className="p-3 rounded-lg bg-zinc-950 border border-amber-900/50">
+                  <div className="text-amber-400 font-bold uppercase">Tier 2: $1,000 to $9,999.99</div>
+                  <div className="text-zinc-400 text-[11px] mt-0.5">1 Checker Approval • Requires independent supervisor signoff.</div>
+                </div>
+                <div className="p-3 rounded-lg bg-zinc-950 border border-rose-900/50">
+                  <div className="text-rose-400 font-bold uppercase">Tier 3: $10,000.00 and Above</div>
+                  <div className="text-zinc-400 text-[11px] mt-0.5">2 Distinct Checker Approvals • Requires dual multi-signature signoff before ledger settlement.</div>
+                </div>
+                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 text-[11px] text-zinc-400">
+                  <strong className="text-white block mb-0.5">FINRA Rule 3110 4-Eyes Rule:</strong>
+                  The Maker (submitter) cannot approve their own wire. Checkers must be independent distinct personas.
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {wireAlert && (
+            <div
+              className={`p-4 rounded-xl border-2 flex items-start gap-3 font-mono text-xs ${
+                wireAlert.type === "success"
+                  ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-300"
+                  : "bg-rose-950/40 border-rose-500/50 text-rose-300"
+              }`}
+            >
+              {wireAlert.type === "success" ? (
+                <CheckCircle2 size={18} className="shrink-0 text-emerald-400 mt-0.5" />
+              ) : (
+                <AlertTriangle size={18} className="shrink-0 text-rose-400 mt-0.5" />
+              )}
+              <div className="flex-1 font-bold">{wireAlert.message}</div>
+              <button onClick={() => setWireAlert(null)} className="text-zinc-500 hover:text-white font-bold">
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Corporate Wires Ledger Table & Multi-Sig Tracker */}
+          <Card className="bg-zinc-900/90 border-2 border-zinc-800 shadow-brutal">
+            <CardHeader className="border-b-2 border-zinc-800 pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl font-black uppercase tracking-wide flex items-center gap-2 text-white">
+                  <Layers className="text-yellow-500" size={20} />
+                  Corporate Wire Multi-Signature Audit Queue ({corporateWires.length})
+                </CardTitle>
+                <Button
+                  onClick={async () => {
+                    const w = await fetchCorporateWires();
+                    setCorporateWires(w);
+                  }}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-lg border border-zinc-700"
+                >
+                  <RefreshCw size={14} />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-zinc-900/80 border-b border-zinc-800 text-zinc-400 uppercase text-[11px]">
+                    <tr>
+                      <th className="p-3">Wire Key</th>
+                      <th className="p-3">Amount</th>
+                      <th className="p-3">Tier</th>
+                      <th className="p-3">Multi-Signature Signoffs</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3 text-right">Supervisory Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800">
+                    {corporateWires.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="p-8 text-center text-zinc-500">
+                          No corporate wires registered yet. Submit a wire above to test multi-signature approval.
+                        </td>
+                      </tr>
+                    ) : (
+                      corporateWires.map((wire) => {
+                        const isPending = wire.status === "PENDING_APPROVAL";
+                        const isMaker = activePersonaKey.toLowerCase() === wire.makerUserName?.toLowerCase();
+                        const isCheckerOne =
+                          wire.checkerOneUserName &&
+                          activePersonaKey.toLowerCase() === wire.checkerOneUserName.toLowerCase();
+
+                        return (
+                          <tr key={wire.id} className="hover:bg-zinc-900/50 transition-colors">
+                            <td className="p-3 font-bold text-white">
+                              <div>{wire.idempotencyKey}</div>
+                              <div className="text-[10px] text-zinc-500 font-normal truncate max-w-[180px]">
+                                {wire.description}
+                              </div>
+                            </td>
+                            <td className="p-3 text-white font-black text-sm">
+                              ${parseFloat(wire.amount).toFixed(2)} USD
+                            </td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                  wire.policyTier === "TIER_1_AUTO"
+                                    ? "bg-emerald-950 text-emerald-300 border-emerald-700"
+                                    : wire.policyTier === "TIER_2_SINGLE_CHECKER"
+                                    ? "bg-amber-950 text-amber-300 border-amber-700"
+                                    : "bg-rose-950 text-rose-300 border-rose-700"
+                                }`}
+                              >
+                                {wire.policyTier}
+                              </span>
+                            </td>
+
+                            {/* Multi-Signature Visual Tracker */}
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                {/* Maker */}
+                                <div className="flex items-center gap-1 px-2 py-1 rounded bg-zinc-900 border border-zinc-700 text-[10px]">
+                                  <UserCheck size={10} className="text-emerald-400" />
+                                  <span className="text-zinc-400">Maker:</span>
+                                  <span className="font-bold text-white">{wire.makerUserName}</span>
+                                </div>
+
+                                <ArrowRight size={10} className="text-zinc-600" />
+
+                                {/* Checker 1 */}
+                                {wire.requiredApprovals >= 1 && (
+                                  <div
+                                    className={`flex items-center gap-1 px-2 py-1 rounded border text-[10px] ${
+                                      wire.checkerOneUserName
+                                        ? "bg-emerald-950/40 border-emerald-500 text-emerald-300"
+                                        : "bg-zinc-900 border-dashed border-zinc-700 text-zinc-500"
+                                    }`}
+                                  >
+                                    <ShieldCheck size={10} />
+                                    <span>Chk 1:</span>
+                                    <span className="font-bold">
+                                      {wire.checkerOneUserName || "Pending"}
+                                    </span>
+                                  </div>
