@@ -53,3 +53,48 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
+      powerPreference: "high-performance",
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    renderer.domElement.style.pointerEvents = "auto";
+    renderer.domElement.style.touchAction = "pan-y";
+    container.appendChild(renderer.domElement);
+
+    // --- Raycasting & Hover State Setup ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(-999, -999);
+    let hoveredObject = null;
+
+    const handleMouseMove = (event) => {
+      if (!renderer.domElement) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      }
+    };
+
+    const handleMouseLeave = () => {
+      mouse.x = -999;
+      mouse.y = -999;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("mouseout", handleMouseLeave, { passive: true });
+
+    // --- Studio Lighting Setup ---
+    const ambientLight = new THREE.AmbientLight(0x0a101d, 1.8);
+    scene.add(ambientLight);
+
+    // Cool sapphire key light (front-left)
+    const keyLight = new THREE.DirectionalLight(0x38bdf8, 3.5);
+    keyLight.position.set(-4, 3, 5);
+    scene.add(keyLight);
+
+    // Crisp white top-rim light to catch metallic gimbal bevels
+    const rimLight = new THREE.DirectionalLight(0xffffff, 4.2);
+    rimLight.position.set(3, 6, -2);
+    scene.add(rimLight);
