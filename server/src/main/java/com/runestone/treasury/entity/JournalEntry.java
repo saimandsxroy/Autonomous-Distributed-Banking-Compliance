@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -40,6 +41,8 @@ public class JournalEntry {
 
   @Column(name = "currency", nullable = false, length = 3)
   private String currency = "USD";
+
+  @Transient private String targetCurrency;
 
   @Column(name = "reference_type", nullable = false, length = 40)
   private String referenceType = "TRANSFER";
@@ -143,6 +146,14 @@ public class JournalEntry {
 
   public void setCurrency(String currency) {
     this.currency = currency;
+  }
+
+  public String getTargetCurrency() {
+    return targetCurrency;
+  }
+
+  public void setTargetCurrency(String targetCurrency) {
+    this.targetCurrency = targetCurrency;
   }
 
   public String getReferenceType() {
