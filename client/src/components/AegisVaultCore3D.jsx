@@ -448,3 +448,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
 
       const now = performance.now();
       const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      const elapsedTime = clock.getElapsedTime();
+
+      // Delta-time damping exponential smoothing:
+      // damp = 1 - Math.exp(-5.5 * dt)
+      const damp = 1 - Math.exp(-5.5 * dt);
+      smoothProgress += (scrollProgressRef.current - smoothProgress) * damp;
+
+      // Smooth cubic ease-in-out curve
+      const ease =
+        smoothProgress < 0.5
+          ? 4 * smoothProgress ** 3
+          : 1 - Math.pow(-2 * smoothProgress + 2, 3) / 2;
+
+      // Inertia decay for dragging
+      if (!isDraggingRef.current) {
+        dragRotationRef.current.x += currentDragVelocityRef.current.x;
+        dragRotationRef.current.y += currentDragVelocityRef.current.y;
+        currentDragVelocityRef.current.x *= 0.94;
+        currentDragVelocityRef.current.y *= 0.94;
+      }
+
+      // Root rotation: continuous gentle autonomous spin + drag + subtle scroll ease
+      masterGroup.rotation.x =
+        dragRotationRef.current.x + Math.sin(elapsedTime * 0.35) * 0.08 + ease * 0.2;
+      masterGroup.rotation.y += dt * 0.22 + ease * 0.02;
+      masterGroup.rotation.z = Math.cos(elapsedTime * 0.25) * 0.05;
+
+      // Opposing gimbal ring rotations
+      gimbalRing1.rotation.z = elapsedTime * 0.25;
+      gimbalRing2.rotation.z = -elapsedTime * 0.2;
+
+      // Smooth WebGL space glide: from dead-center (0) to right column (+1.95) on desktop; stay centered on mobile
+      const isMobileScreen = (container.clientWidth || window.innerWidth) < 768;
+      masterGroup.position.x = isMobileScreen ? 0 : ease * 1.95;
+      masterGroup.position.y = isMobileScreen ? ease * -0.45 : ease * -0.15;
+
+      // Smoothly expand outer node/gimbal radius by (1 + ease * 0.14) in Section 2
+      const scaleMultiplier = 1 + ease * 0.14;
+      gimbalGroup.scale.set(scaleMultiplier, scaleMultiplier, scaleMultiplier);
+      networkGroup.scale.set(scaleMultiplier, scaleMultiplier, scaleMultiplier);
+
+      // Ledger core gentle breathing pulse
+      const corePulse = 1.0 + Math.sin(elapsedTime * 2.5) * 0.035;
+      coreGroup.scale.set(corePulse, corePulse, corePulse);
+      coreWire.rotation.y = elapsedTime * 0.3;
+      coreWire.rotation.x = elapsedTime * 0.2;
+
+      // Animate quarantine cage around Charlie #3
+      const quarantineNode = nodeMeshes[2];
