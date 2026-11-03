@@ -108,3 +108,53 @@ class MakerCheckerWireServiceTests {
   }
 
   @Test
+  void testApproveWire_DualApprovalSameCheckerForbidden() {
+    MakerCheckerWire wire = new MakerCheckerWire();
+    wire.setId(89L);
+    wire.setMakerUserName("alice");
+    wire.setCheckerOneUserName("bob");
+    wire.setCurrentApprovals(1);
+    wire.setRequiredApprovals(2);
+    wire.setStatus("PENDING_APPROVAL");
+
+    when(makerCheckerWireRepository.findById(89L)).thenReturn(Optional.of(wire));
+
+    assertThrows(
+        SeparationOfDutiesViolationException.class,
+        () -> makerCheckerWireService.approveWire(89L, "bob", "Bob approving a second time"));
+  }
+
+  @Test
+  void testApproveWire_DualApprovalSuccessfulSettlement() {
+    MakerCheckerWire wire = new MakerCheckerWire();
+    wire.setId(90L);
+    wire.setIdempotencyKey("CORP-WIRE-90");
+    wire.setSourceAccountId(1L);
+    wire.setDestinationAccountId(2L);
+    wire.setAmount(new BigDecimal("25000.00"));
+    wire.setCurrency("USD");
+    wire.setPolicyTier("TIER_3_DUAL_CHECKER");
+    wire.setMakerUserName("alice");
+    wire.setRequiredApprovals(2);
+    wire.setCurrentApprovals(0);
+    wire.setStatus("PENDING_APPROVAL");
+
+    when(makerCheckerWireRepository.findById(90L)).thenReturn(Optional.of(wire));
+
+    // First checker approval (bob)
+    MakerCheckerWire step1 = makerCheckerWireService.approveWire(90L, "bob", "Checker 1 signoff");
+    assertEquals(1, step1.getCurrentApprovals());
+    assertEquals("bob", step1.getCheckerOneUserName());
+    assertEquals("PENDING_APPROVAL", step1.getStatus());
+
+    // Second checker approval (sarah_compliance)
+    MakerCheckerWire step2 =
+        makerCheckerWireService.approveWire(90L, "sarah_compliance", "Supervisory signoff");
+    assertEquals(2, step2.getCurrentApprovals());
+    assertEquals("sarah_compliance", step2.getCheckerTwoUserName());
+    assertEquals("SETTLED", step2.getStatus());
+
+    verify(journalEntryService)
+        .saveEntry(any(JournalEntry.class), eq("sarah_compliance"), eq(false), any());
+  }
+}
