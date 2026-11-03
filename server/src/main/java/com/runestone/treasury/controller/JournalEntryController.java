@@ -52,11 +52,11 @@ public class JournalEntryController {
     User user = userService.findByUserName(userName);
     if (user != null) {
       List<JournalEntry> all = user.getJournalEntries();
-      if (all != null && !all.isEmpty()) {
+      if (all != null) {
         return new ResponseEntity<>(all, HttpStatus.OK);
       }
     }
-    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(java.util.Collections.emptyList(), HttpStatus.OK);
   }
 
   @PostMapping
@@ -77,10 +77,24 @@ public class JournalEntryController {
     myEntry.setSourceAccountId(dto.getSourceAccountId());
     myEntry.setDestinationAccountId(dto.getDestinationAccountId());
     myEntry.setAmount(dto.getAmount());
-    myEntry.setCurrency(dto.getCurrency() != null ? dto.getCurrency() : "USD");
-    myEntry.setReferenceType("TRANSFER");
-    if (dto.getNotes() != null) {
+    myEntry.setCurrency(
+        dto.getCurrency() != null && !dto.getCurrency().isBlank() ? dto.getCurrency() : "USD");
+    if (dto.getTargetCurrency() != null && !dto.getTargetCurrency().isBlank()) {
+      myEntry.setTargetCurrency(dto.getTargetCurrency().trim().toUpperCase());
+    }
+    myEntry.setReferenceType(
+        dto.getReferenceType() != null && !dto.getReferenceType().isBlank()
+            ? dto.getReferenceType()
+            : "TRANSFER");
+    if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
+      myEntry.setTitle(dto.getTitle());
+    } else {
+      myEntry.setTitle("Treasury Transfer #" + (idempotencyKey != null ? idempotencyKey : ""));
+    }
+    if (dto.getNotes() != null && !dto.getNotes().isBlank()) {
       myEntry.setContent(dto.getNotes());
+    } else if (dto.getContent() != null && !dto.getContent().isBlank()) {
+      myEntry.setContent(dto.getContent());
     }
 
     try {
