@@ -48,3 +48,44 @@ public class JwtTokenService {
         Jwts.builder()
             .setSubject(username)
             .claim("roles", normalizedRoles)
+            .claim("accountIds", accountIds != null ? accountIds : List.of())
+            .setIssuedAt(now)
+            .setExpiration(expiry)
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256);
+
+    if (email != null && !email.isBlank()) {
+      builder.claim("email", email);
+    }
+
+    return builder.compact();
+  }
+
+  public String generateToken(String username, List<String> roles, List<Long> accountIds) {
+    return generateToken(username, null, roles, accountIds);
+  }
+
+  public Claims validateAndParseToken(String token) {
+    return Jwts.parserBuilder()
+        .setSigningKey(getSigningKey())
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
+  }
+
+  public String extractUsername(String token) {
+    return validateAndParseToken(token).getSubject();
+  }
+
+  @SuppressWarnings("unchecked")
+  public List<String> extractRoles(Claims claims) {
+    return (List<String>) claims.get("roles", List.class);
+  }
+
+  public String extractEmail(Claims claims) {
+    return claims.get("email", String.class);
+  }
+
+  public long getExpirySeconds() {
+    return EXPIRY_SECONDS;
+  }
+}
