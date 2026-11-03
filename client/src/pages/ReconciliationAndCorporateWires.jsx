@@ -448,3 +448,153 @@ export function ReconciliationAndCorporateWires() {
                 }`}
               >
                 {reconAlert.type === "success" ? (
+                  <CheckCircle2 size={18} className="shrink-0 text-emerald-400 mt-0.5" />
+                ) : (
+                  <AlertTriangle size={18} className="shrink-0 text-rose-400 mt-0.5" />
+                )}
+                <div className="flex-1 font-bold">{reconAlert.message}</div>
+                <button
+                  onClick={() => setReconAlert(null)}
+                  className="text-zinc-500 hover:text-white font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Run KPI Cards */}
+            {selectedRun ? (
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-800">
+                  <div>
+                    <span className="text-xs uppercase font-mono text-zinc-400">Statement Reference: </span>
+                    <span className="text-sm font-mono font-black text-yellow-400 ml-1">
+                      {selectedRun.statementReference}
+                    </span>
+                    <span className="text-xs text-zinc-500 ml-3">
+                      (Run #{selectedRun.id} • Executed by {selectedRun.executedBy})
+                    </span>
+                  </div>
+
+                  {/* Previous Runs Selector */}
+                  {reconRuns.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-zinc-400 font-mono">History:</span>
+                      <select
+                        value={selectedRun.id}
+                        onChange={(e) => {
+                          const r = reconRuns.find((x) => x.id === parseInt(e.target.value, 10));
+                          if (r) {
+                            setSelectedRun(r);
+                            loadDiscrepancies(r.id);
+                          }
+                        }}
+                        className="bg-zinc-800 border border-zinc-700 text-xs rounded px-2.5 py-1 text-white font-mono"
+                      >
+                        {reconRuns.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            #{r.id} ({r.statementReference.slice(-10)}) — {r.status}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                  <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+                    <span className="text-[10px] font-mono uppercase text-zinc-500 block">Total Records</span>
+                    <span className="text-2xl font-black text-white">{selectedRun.totalExternalRecords}</span>
+                  </div>
+                  <div className="bg-emerald-950/20 p-4 rounded-xl border border-emerald-900/40">
+                    <span className="text-[10px] font-mono uppercase text-emerald-400 block">Matched (Clean)</span>
+                    <span className="text-2xl font-black text-emerald-400">{selectedRun.matchedCount}</span>
+                  </div>
+                  <div className="bg-rose-950/20 p-4 rounded-xl border border-rose-900/40">
+                    <span className="text-[10px] font-mono uppercase text-rose-400 block">Missing Internal</span>
+                    <span className="text-2xl font-black text-rose-400">{selectedRun.missingInternalCount}</span>
+                  </div>
+                  <div className="bg-amber-950/20 p-4 rounded-xl border border-amber-900/40">
+                    <span className="text-[10px] font-mono uppercase text-amber-400 block">Missing External</span>
+                    <span className="text-2xl font-black text-amber-400">{selectedRun.missingExternalCount}</span>
+                  </div>
+                  <div className="bg-orange-950/20 p-4 rounded-xl border border-orange-900/40">
+                    <span className="text-[10px] font-mono uppercase text-orange-400 block">Amount Mismatch</span>
+                    <span className="text-2xl font-black text-orange-400">{selectedRun.amountMismatchCount}</span>
+                  </div>
+                </div>
+
+                {/* Status Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+                    <Scale size={16} className="text-yellow-500" />
+                    Discrepancy Audit & Compensating Adjustment Table ({discrepancies.length} Items)
+                  </h3>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-mono font-bold uppercase border ${
+                      selectedRun.status === "RECONCILED_CLEAN"
+                        ? "bg-emerald-950 text-emerald-300 border-emerald-500"
+                        : selectedRun.status === "RESOLVED"
+                        ? "bg-blue-950 text-blue-300 border-blue-500"
+                        : "bg-rose-950 text-rose-300 border-rose-500"
+                    }`}
+                  >
+                    {selectedRun.status}
+                  </span>
+                </div>
+
+                {/* Discrepancies Table */}
+                <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-950">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-zinc-900/80 border-b border-zinc-800 text-zinc-400 uppercase text-[11px]">
+                      <tr>
+                        <th className="p-3">#ID</th>
+                        <th className="p-3">Discrepancy Type</th>
+                        <th className="p-3">Idempotency Key</th>
+                        <th className="p-3">External Amount</th>
+                        <th className="p-3">Internal Amount</th>
+                        <th className="p-3">Resolution Status</th>
+                        <th className="p-3 text-right">Compensating Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800">
+                      {discrepancies.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="p-8 text-center text-zinc-500">
+                            No discrepancies in this run — 100% ledger parity achieved.
+                          </td>
+                        </tr>
+                      ) : (
+                        discrepancies.map((disc) => (
+                          <tr key={disc.id} className="hover:bg-zinc-900/50 transition-colors">
+                            <td className="p-3 font-bold text-white">#{disc.id}</td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                  disc.discrepancyType === "MISSING_INTERNAL"
+                                    ? "bg-rose-950 text-rose-300 border-rose-700"
+                                    : disc.discrepancyType === "AMOUNT_MISMATCH"
+                                    ? "bg-orange-950 text-orange-300 border-orange-700"
+                                    : "bg-amber-950 text-amber-300 border-amber-700"
+                                }`}
+                              >
+                                {disc.discrepancyType}
+                              </span>
+                            </td>
+                            <td className="p-3 text-zinc-300 font-bold truncate max-w-[140px]">
+                              {disc.idempotencyKey}
+                            </td>
+                            <td className="p-3 text-white font-bold">
+                              {disc.externalAmount != null ? `$${parseFloat(disc.externalAmount).toFixed(2)}` : "—"}
+                            </td>
+                            <td className="p-3 text-zinc-400">
+                              {disc.internalAmount != null ? `$${parseFloat(disc.internalAmount).toFixed(2)}` : "—"}
+                            </td>
+                            <td className="p-3">
+                              {disc.resolutionStatus === "OPEN" ? (
+                                <span className="inline-flex items-center gap-1 text-rose-400 font-bold">
+                                  <AlertTriangle size={12} /> OPEN
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
+                                  <CheckCircle2 size={12} /> COMPENSATED
