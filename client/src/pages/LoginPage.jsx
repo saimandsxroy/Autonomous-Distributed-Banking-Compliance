@@ -98,3 +98,103 @@ export function LoginPage() {
     } catch (err) {
       setError(
         err instanceof Error
+          ? err.message
+          : "Authentication failed. Please verify credentials."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Sign Up & Automatic Vault Provisioning
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+
+    const cleanUsername = signupUsername.trim().toLowerCase();
+    const cleanEmail = signupEmail.trim();
+
+    if (!cleanUsername || cleanUsername.length < 3) {
+      setError("Corporate username must be at least 3 characters.");
+      return;
+    }
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      setError("Please provide a valid corporate email address.");
+      return;
+    }
+    if (!signupPassword || signupPassword.length < 6) {
+      setError("Master passphrase must be at least 6 characters.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Step 1: Register User in MySQL via Public API
+      await registerUser({
+        userName: cleanUsername,
+        email: cleanEmail,
+        password: signupPassword,
+      });
+
+      // Step 2: Mint stateless JWT for the new user
+      const loginData = await loginWithCredentials(cleanUsername, signupPassword);
+
+      // Step 3: Automatically provision initial funded Treasury Vault
+      const chosenVault = CURRENCY_OPTIONS[selectedCurrencyIndex];
+      await createTreasuryAccount({
+        currency: chosenVault.code,
+        availableBalance: chosenVault.amount,
+        heldBalance: 0,
+        postedBalance: chosenVault.amount,
+        status: "ACTIVE",
+      }).catch((accountErr) => {
+        console.warn("Vault initialization note:", accountErr.message);
+      });
+
+      if (login) {
+        await login(cleanUsername, signupPassword).catch(() => {});
+      }
+
+      setSuccessMsg(`Vault provisioned with ${chosenVault.formatted} (${chosenVault.code}). Directing to Treasury Terminal...`);
+      setTimeout(() => {
+        navigate(loginData.portalTarget || "/dashboard", { replace: true });
+      }, 700);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration or vault provisioning failed."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle 1-Click Institutional Demo Clearance
+  const handleInstantDemoLogin = async (personaUsername, defaultPortal) => {
+    setError("");
+    setSuccessMsg("");
+    setDemoLoggingIn(personaUsername);
+    try {
+      const data = await switchDemoPersonaJwt(personaUsername);
+      if (login) {
+        await login(personaUsername, "password123").catch(() => {});
+      }
+      navigate(defaultPortal || data.portalTarget || "/dashboard", { replace: true });
+    } catch (err) {
+      setError(err.message || "Failed instant demo clearance switch.");
+    } finally {
+      setDemoLoggingIn(null);
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen w-full bg-[#08090A] text-[#E8E5DE] selection:bg-[#8CB0DB] selection:text-black flex flex-col justify-between overflow-x-hidden">
+      {/* =====================================================================
+          ATMOSPHERIC LAYERS
+          ===================================================================== */}
+      {/* Radial Sapphire Backlight */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
