@@ -48,3 +48,33 @@ public class SpringSecurity {
                         "/error",
                         "/webhooks/inbound/**",
                         "/webhooks/**",
+                        "/auth/**")
+                    .permitAll()
+                    .requestMatchers("/admin/**")
+                    .hasAnyRole("ADMIN", "COMPLIANCE_OFFICER")
+                    .requestMatchers(
+                        org.springframework.http.HttpMethod.POST,
+                        "/compliance/approvals/id/*/approve",
+                        "/compliance/approvals/*/approve")
+                    .authenticated()
+                    .requestMatchers("/compliance/**")
+                    .hasAnyRole("COMPLIANCE_OFFICER", "ADMIN")
+                    .requestMatchers("/reconciliation/**", "/corporate-wires/**")
+                    .authenticated()
+                    .requestMatchers("/stream/**")
+                    .authenticated()
+                    .anyRequest()
+                    .authenticated())
+        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .addFilterBefore(
+            new JwtAuthenticationFilter(jwtTokenService),
+            UsernamePasswordAuthenticationFilter.class)
+        .httpBasic(Customizer.withDefaults());
+
+    return http.build();
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
