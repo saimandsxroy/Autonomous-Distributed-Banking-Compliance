@@ -13,3 +13,5 @@ public interface MakerCheckerWireRepository extends JpaRepository<MakerCheckerWi
 
   List<MakerCheckerWire> findAllByOrderByCreatedAtDesc();
 
+  long countByStatus(String status);
+}
