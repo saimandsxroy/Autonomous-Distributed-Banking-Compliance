@@ -26,6 +26,7 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
     accountNumber: user?.accountNumber || "...",
   });
   const [treasuryAccount, setTreasuryAccount] = useState(null);
+  const [allUserAccounts, setAllUserAccounts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadBalance = useCallback(async () => {
@@ -39,8 +40,15 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
       }
 
       const accounts = await fetchUserAccounts().catch(() => []);
+      setAllUserAccounts(accounts || []);
       if (accounts && accounts.length > 0) {
-        setTreasuryAccount(accounts[0]);
+        setTreasuryAccount((prev) => {
+          if (prev) {
+            const found = accounts.find((a) => a.id === prev.id);
+            if (found) return found;
+          }
+          return accounts[0];
+        });
       }
     } catch (error) {
       console.error("Failed to fetch balance:", error);
@@ -98,6 +106,24 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
           </div>
 
           <div className="flex items-center gap-2">
+            {allUserAccounts.length > 1 && (
+              <select
+                value={treasuryAccount?.id}
+                onChange={(e) => {
+                  const chosen = allUserAccounts.find(
+                    (a) => a.id === Number(e.target.value)
+                  );
+                  if (chosen) setTreasuryAccount(chosen);
+                }}
+                className="px-2 py-0.5 bg-zinc-950 border border-zinc-700 text-xs text-white font-mono rounded focus:outline-none"
+              >
+                {allUserAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    Acc #{a.id} ({a.accountNumber})
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               onClick={() => setIsRevealed(!isRevealed)}
               className="p-1 hover:text-white transition-colors"
