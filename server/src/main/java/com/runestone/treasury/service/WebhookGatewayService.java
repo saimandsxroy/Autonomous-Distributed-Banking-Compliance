@@ -48,3 +48,53 @@ public class WebhookGatewayService {
       return MessageDigest.isEqual(
           computedHex.getBytes(StandardCharsets.UTF_8),
           providedSignature.getBytes(StandardCharsets.UTF_8));
+    } catch (Exception e) {
+      log.error("HMAC verification error", e);
+      return false;
+    }
+  }
+
+  public Map<String, Object> processInboundWebhook(
+      String timestamp, String signature, String rawPayload) {
+    Map<String, Object> result = new HashMap<>();
+
+    // 1. Check replay window: parse timestamp (epoch seconds), reject if > 300s old
+    if (timestamp == null || signature == null) {
+      result.put("status", "REJECTED");
+      result.put("reason", "Missing required headers");
+      return result;
+    }
+
+    long nowEpoch = Instant.now().getEpochSecond();
+    long msgEpoch;
+    try {
+      msgEpoch = Long.parseLong(timestamp.trim());
+    } catch (NumberFormatException e) {
+      result.put("status", "REJECTED");
+      result.put("reason", "Invalid timestamp format");
+      return result;
+    }
+
+    if (Math.abs(nowEpoch - msgEpoch) > REPLAY_WINDOW_SECONDS) {
+      log.warn(
+          "Webhook rejected: timestamp too old or too future. msg={}, now={}", msgEpoch, nowEpoch);
+      result.put("status", "REJECTED");
+      result.put("reason", "Timestamp outside replay window");
+      return result;
+    }
+
+    // 2. Get secret from appCache
+    String secret = appCache.get("WEBHOOK_INBOUND_SECRET");
+    if (secret == null || secret.isBlank()) {
+      secret = "whsec_runestone_swift_rail_2024_prod";
+    }
+
+    // 3. Verify HMAC
+    boolean valid = verifyHmacSignature(timestamp, rawPayload, signature, secret);
+    if (!valid) {
+      log.warn("Webhook HMAC signature verification failed");
+      String failedEventId = "UNKNOWN";
+      String failedEventType = "UNKNOWN";
+      try {
+        JsonNode root = objectMapper.readTree(rawPayload);
+        failedEventId = root.path("event_id").asText("UNKNOWN");
