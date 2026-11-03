@@ -398,3 +398,103 @@ export function LoginPage() {
           <div className="relative rounded-2xl bg-[#0B0E13]/90 backdrop-blur-xl border border-white/12 p-5 sm:p-7 lg:p-8 shadow-2xl overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent">
             {/* Ambient Sapphire Glow in Corner */}
             <div className="absolute -top-24 -right-24 w-60 h-60 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Mode Switcher Tabs */}
+            <div className="relative grid grid-cols-2 p-1 rounded-xl bg-white/[0.03] border border-white/10 mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("signin");
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                className={`min-h-[44px] py-2.5 text-xs font-tech-mono tracking-wider uppercase rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  authMode === "signin"
+                    ? "bg-white/[0.08] text-white shadow-sm border border-white/15"
+                    : "text-[#7A7D82] hover:text-[#C5C8CD]"
+                }`}
+              >
+                <LogIn size={14} className={authMode === "signin" ? "text-[#38BDF8]" : ""} />
+                <span>[01] Sign In</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("signup");
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                className={`min-h-[44px] py-2.5 text-xs font-tech-mono tracking-wider uppercase rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  authMode === "signup"
+                    ? "bg-white/[0.08] text-white shadow-sm border border-white/15"
+                    : "text-[#7A7D82] hover:text-[#C5C8CD]"
+                }`}
+              >
+                <Coins size={14} className={authMode === "signup" ? "text-emerald-400" : ""} />
+                <span>[02] Create Account</span>
+              </button>
+            </div>
+
+            {/* Error Notification Banner */}
+            {error && (
+              <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-300 flex items-start gap-2.5 animate-fadeIn">
+                <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                <p className="text-xs font-tech-mono leading-relaxed">{error}</p>
+              </div>
+            )}
+
+            {/* Success Notification Banner */}
+            {successMsg && (
+              <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 flex items-start gap-2.5 animate-fadeIn">
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                <p className="text-xs font-tech-mono leading-relaxed">{successMsg}</p>
+              </div>
+            )}
+
+            {/* =============================================================
+                MODE A: SIGN IN FORM
+                ============================================================= */}
+            {authMode === "signin" && (
+              <form onSubmit={handleSignIn} className="space-y-4">
+                {/* Identifier */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="signin-identifier"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Identifier
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signin-identifier"
+                      type="text"
+                      autoComplete="username"
+                      placeholder="sarah_compliance or alice"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-3 min-h-[44px] text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Master Passphrase with Toggle */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="signin-password"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Master Passphrase
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      placeholder="••••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
