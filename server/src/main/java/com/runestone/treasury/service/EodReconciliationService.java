@@ -158,3 +158,257 @@ public class EodReconciliationService {
         }
       }
     }
+
+    Set<String> matchedKeys = new HashSet<>();
+    List<ReconciliationDiscrepancy> discrepancies = new ArrayList<>();
+
+    int matchedCount = 0;
+    int missingInternalCount = 0;
+    int amountMismatchCount = 0;
+
+    int totalExternal = (externalLines != null) ? externalLines.size() : 0;
+
+    if (externalLines != null) {
+      for (EodStatementLineDto line : externalLines) {
+        String key = line.getIdempotencyKey();
+        if (key == null) continue;
+
+        JournalEntry internal = internalMap.get(key);
+        if (internal == null) {
+          // Missing in internal ledger
+          missingInternalCount++;
+          ReconciliationDiscrepancy disc = new ReconciliationDiscrepancy();
+          disc.setIdempotencyKey(key);
+          disc.setSourceAccountId(line.getSourceAccountId());
+          disc.setDestinationAccountId(line.getDestinationAccountId());
+          disc.setDiscrepancyType("MISSING_INTERNAL");
+          disc.setExternalAmount(line.getAmount());
+          disc.setInternalAmount(null);
+          disc.setCurrency(line.getCurrency() != null ? line.getCurrency() : "USD");
+          disc.setResolutionStatus("OPEN");
+          discrepancies.add(disc);
+        } else {
+          matchedKeys.add(key);
+          BigDecimal extAmt = line.getAmount() != null ? line.getAmount() : BigDecimal.ZERO;
+          BigDecimal intAmt = internal.getAmount() != null ? internal.getAmount() : BigDecimal.ZERO;
+
+          if (extAmt.compareTo(intAmt) == 0) {
+            matchedCount++;
+          } else {
+            amountMismatchCount++;
+            ReconciliationDiscrepancy disc = new ReconciliationDiscrepancy();
+            disc.setIdempotencyKey(key);
+            disc.setSourceAccountId(internal.getSourceAccountId());
+            disc.setDestinationAccountId(internal.getDestinationAccountId());
+            disc.setDiscrepancyType("AMOUNT_MISMATCH");
+            disc.setExternalAmount(line.getAmount());
+            disc.setInternalAmount(internal.getAmount());
+            disc.setCurrency(
+                line.getCurrency() != null ? line.getCurrency() : internal.getCurrency());
+            disc.setResolutionStatus("OPEN");
+            discrepancies.add(disc);
+          }
+        }
+      }
+    }
+
+    // Check for internal entries missing from external statement
+    int missingExternalCount = 0;
+    for (Map.Entry<String, JournalEntry> entry : internalMap.entrySet()) {
+      if (!matchedKeys.contains(entry.getKey())) {
+        missingExternalCount++;
+        JournalEntry internal = entry.getValue();
+        ReconciliationDiscrepancy disc = new ReconciliationDiscrepancy();
+        disc.setIdempotencyKey(internal.getIdempotencyKey());
+        disc.setSourceAccountId(internal.getSourceAccountId());
+        disc.setDestinationAccountId(internal.getDestinationAccountId());
+        disc.setDiscrepancyType("MISSING_EXTERNAL");
+        disc.setExternalAmount(null);
+        disc.setInternalAmount(internal.getAmount());
+        disc.setCurrency(internal.getCurrency());
+        disc.setResolutionStatus("OPEN");
+        discrepancies.add(disc);
+      }
+    }
+
+    String status =
+        (missingInternalCount == 0 && amountMismatchCount == 0 && missingExternalCount == 0)
+            ? "RECONCILED_CLEAN"
+            : "DISCREPANCIES_FOUND";
+
+    ReconciliationRun run = new ReconciliationRun();
+    run.setStatementReference(statementRef);
+    run.setTotalExternalRecords(totalExternal);
+    run.setMatchedCount(matchedCount);
+    run.setMissingInternalCount(missingInternalCount);
+    run.setMissingExternalCount(missingExternalCount);
+    run.setAmountMismatchCount(amountMismatchCount);
+    run.setStatus(status);
+    run.setExecutedBy(operator);
+    run.setCreatedAt(LocalDateTime.now());
+
+    ReconciliationRun savedRun = reconciliationRunRepository.save(run);
+
+    for (ReconciliationDiscrepancy disc : discrepancies) {
+      disc.setRunId(savedRun.getId());
+      reconciliationDiscrepancyRepository.save(disc);
+    }
+
+    complianceAuditLogService.recordAuditEvent(
+        operator, "RECONCILIATION_RUN_COMPLETED", savedRun.getId(), savedRun);
+
+    log.info(
+        "Reconciliation run #{} ({}) completed by {}: matched={}, missingInt={}, missingExt={}, mismatch={}",
+        savedRun.getId(),
+        savedRun.getStatementReference(),
+        operator,
+        matchedCount,
+        missingInternalCount,
+        missingExternalCount,
+        amountMismatchCount);
+
+    return savedRun;
+  }
+
+  @Transactional
+  public ReconciliationDiscrepancy resolveDiscrepancy(
+      Long discrepancyId, String resolvedBy, String notes) {
+    ReconciliationDiscrepancy discrepancy =
+        reconciliationDiscrepancyRepository
+            .findById(discrepancyId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Discrepancy not found: " + discrepancyId));
+
+    if (!"OPEN".equalsIgnoreCase(discrepancy.getResolutionStatus())) {
+      throw new IllegalStateException(
+          "Discrepancy is already resolved: " + discrepancy.getResolutionStatus());
+    }
+
+    String operator =
+        (resolvedBy != null && !resolvedBy.isBlank()) ? resolvedBy : "sarah_compliance";
+
+    // Institutional Nostro Suspense Account
+    TreasuryAccount nostro =
+        treasuryAccountRepository
+            .findByAccountNumber("AC-SYS-NOSTRO-USD")
+            .orElseGet(
+                () -> {
+                  TreasuryAccount newNostro = new TreasuryAccount();
+                  newNostro.setAccountNumber("AC-SYS-NOSTRO-USD");
+                  newNostro.setCurrency("USD");
+                  newNostro.setStatus("ACTIVE");
+                  newNostro.setPostedBalance(new BigDecimal("10000000.0000"));
+                  newNostro.setAvailableBalance(new BigDecimal("10000000.0000"));
+                  newNostro.setHeldBalance(BigDecimal.ZERO);
+                  newNostro.setVersion(0L);
+                  return treasuryAccountRepository.save(newNostro);
+                });
+
+    JournalEntry compensatingEntry = new JournalEntry();
+    compensatingEntry.setIdempotencyKey(
+        "COMP-ADJ-" + discrepancy.getId() + "-" + UUID.randomUUID().toString().substring(0, 8));
+    compensatingEntry.setCurrency(
+        discrepancy.getCurrency() != null ? discrepancy.getCurrency() : "USD");
+    compensatingEntry.setReferenceType("COMPENSATING_ADJUSTMENT");
+
+    if ("MISSING_INTERNAL".equalsIgnoreCase(discrepancy.getDiscrepancyType())) {
+      // External statement has credit that was not posted internally.
+      // Settle from Nostro suspense into target user account (defaulting to account 1 if null)
+      Long destId =
+          discrepancy.getDestinationAccountId() != null
+              ? discrepancy.getDestinationAccountId()
+              : 1L;
+      compensatingEntry.setSourceAccountId(nostro.getId());
+      compensatingEntry.setDestinationAccountId(destId);
+      compensatingEntry.setAmount(discrepancy.getExternalAmount());
+      compensatingEntry.setTitle(
+          "Compensating Adjustment: Inbound SWIFT Deposit #" + discrepancy.getId());
+      compensatingEntry.setContent(
+          notes != null
+              ? notes
+              : "Healed MISSING_INTERNAL ledger drift via Nostro suspense credit");
+    } else if ("AMOUNT_MISMATCH".equalsIgnoreCase(discrepancy.getDiscrepancyType())) {
+      // Calculate difference between external and internal amount
+      BigDecimal ext =
+          discrepancy.getExternalAmount() != null
+              ? discrepancy.getExternalAmount()
+              : BigDecimal.ZERO;
+      BigDecimal internal =
+          discrepancy.getInternalAmount() != null
+              ? discrepancy.getInternalAmount()
+              : BigDecimal.ZERO;
+      BigDecimal diff = ext.subtract(internal);
+
+      Long customerAccountId =
+          discrepancy.getDestinationAccountId() != null
+              ? discrepancy.getDestinationAccountId()
+              : 1L;
+      if (diff.compareTo(BigDecimal.ZERO) > 0) {
+        // External credited more than internal ledger: compensate customer from Nostro
+        compensatingEntry.setSourceAccountId(nostro.getId());
+        compensatingEntry.setDestinationAccountId(customerAccountId);
+        compensatingEntry.setAmount(diff);
+      } else {
+        // External credited less: customer was over-credited internally, adjust back to Nostro
+        compensatingEntry.setSourceAccountId(customerAccountId);
+        compensatingEntry.setDestinationAccountId(nostro.getId());
+        compensatingEntry.setAmount(diff.abs());
+      }
+      compensatingEntry.setTitle(
+          "Compensating Adjustment: Fee/Amount Drift #" + discrepancy.getId());
+      compensatingEntry.setContent(
+          notes != null ? notes : "Healed AMOUNT_MISMATCH fee drift via Nostro suspense");
+    } else { // MISSING_EXTERNAL
+      // Internal transfer posted, but external SWIFT clearance never occurred
+      // Compensate from destination back to source or through Nostro
+      Long src = discrepancy.getSourceAccountId() != null ? discrepancy.getSourceAccountId() : 1L;
+      compensatingEntry.setSourceAccountId(nostro.getId());
+      compensatingEntry.setDestinationAccountId(src);
+      compensatingEntry.setAmount(
+          discrepancy.getInternalAmount() != null
+              ? discrepancy.getInternalAmount()
+              : new BigDecimal("100.0000"));
+      compensatingEntry.setTitle(
+          "Compensating Adjustment: Unconfirmed Wire Void #" + discrepancy.getId());
+      compensatingEntry.setContent(
+          notes != null ? notes : "Healed MISSING_EXTERNAL unconfirmed wire via Nostro reversal");
+    }
+
+    journalEntryService.saveEntry(compensatingEntry, operator, false, null);
+
+    discrepancy.setResolutionStatus("COMPENSATING_JOURNAL_POSTED");
+    discrepancy.setCompensatingJournalId(compensatingEntry.getId());
+    discrepancy.setResolvedBy(operator);
+    discrepancy.setResolutionNotes(
+        notes != null
+            ? notes
+            : "Compensating journal #" + compensatingEntry.getId() + " posted successfully.");
+    ReconciliationDiscrepancy updated = reconciliationDiscrepancyRepository.save(discrepancy);
+
+    // If all discrepancies in this run are resolved, mark run as RESOLVED
+    List<ReconciliationDiscrepancy> runDiscrepancies =
+        reconciliationDiscrepancyRepository.findByRunId(discrepancy.getRunId());
+    boolean allResolved =
+        runDiscrepancies.stream().allMatch(d -> !"OPEN".equalsIgnoreCase(d.getResolutionStatus()));
+    if (allResolved) {
+      reconciliationRunRepository
+          .findById(discrepancy.getRunId())
+          .ifPresent(
+              run -> {
+                run.setStatus("RESOLVED");
+                reconciliationRunRepository.save(run);
+              });
+    }
+
+    complianceAuditLogService.recordAuditEvent(
+        operator, "RECONCILIATION_DISCREPANCY_RESOLVED", updated.getId(), updated);
+
+    log.info(
+        "Discrepancy #{} resolved by {} with compensating journal #{}",
+        updated.getId(),
+        operator,
+        compensatingEntry.getId());
+
+    return updated;
+  }
+}
