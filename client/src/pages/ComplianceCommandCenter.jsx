@@ -298,3 +298,153 @@ export function ComplianceCommandCenter() {
       setActionError(`SAR PDF Download failed: ${err.message}`);
     } finally {
       setIsDownloadingPdf(false);
+    }
+  };
+
+  // Test Webhook Gateway with Signed Payload
+  const handleSendTestWebhook = async (customOptions) => {
+    setIsWebhookLoading(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const opts = customOptions || {
+        tamper: webhookTamperSignature,
+        expired: webhookExpiredTimestamp,
+        eventId: webhookEventId,
+        eventType: webhookEventType,
+        targetAccountId: webhookTargetAccountId,
+        amount: webhookAmount,
+        currency: webhookCurrency,
+      };
+      const res = await sendTestWebhook(opts);
+      setLastWebhookResult(res);
+      const updatedDeliveries = await fetchWebhookDeliveries().catch(() => []);
+      setWebhookDeliveries(updatedDeliveries);
+      if (res.httpStatus === 200) {
+        setActionSuccess(
+          `✓ Webhook Accepted (200 OK): Event '${opts.eventId || "deposit"}' signature verified! Target account #${opts.targetAccountId || "1"} credited with $${Number(opts.amount || 5000).toLocaleString(undefined, { minimumFractionDigits: 2 })} ${opts.currency || "USD"}. Logged as VERIFIED_AND_PROCESSED.`
+        );
+      } else if (res.httpStatus === 401) {
+        setActionError(
+          `⚠️ Webhook Rejected (401 Unauthorized): Cryptographic HMAC signature mismatch or replay drift outside 300s window. Logged as REJECTED_SIGNATURE_MISMATCH.`
+        );
+      } else {
+        setActionError(`Webhook response HTTP ${res.httpStatus}: ${JSON.stringify(res.response)}`);
+      }
+    } catch (err) {
+      setActionError(`Webhook test error: ${err.message}`);
+    } finally {
+      setIsWebhookLoading(false);
+    }
+  };
+
+  // Subgraph parsing helper
+  const parsedSubgraph = selectedInvestigation
+    ? (() => {
+        try {
+          return JSON.parse(selectedInvestigation.subgraphSnapshotJson);
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
+  const currentApproval = pendingApprovals.find(
+    (a) => a.investigationId === selectedInvestigation?.id
+  );
+
+  return (
+    <div className="space-y-8 max-w-7xl mx-auto pb-16">
+      {/* Top Banner & Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b-4 border-zinc-800">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-rose-950 border border-rose-800 text-rose-400 rounded-lg">
+              <ShieldAlert size={26} />
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white">
+              Compliance Command Center
+            </h1>
+          </div>
+          <p className="text-sm md:text-base text-zinc-400 font-mono">
+            Autonomous Gemini AML Detective • Model Context Protocol • 4-Eyes
+            HITL Approval Engine
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="w-full sm:w-72">
+            <PersonaSwitcher />
+          </div>
+
+          <button
+            onClick={handleSeedScenario}
+            disabled={isSeeding}
+            className={`px-5 py-3.5 bg-ochre-800 hover:bg-ochre-700 active:scale-95 text-white font-black uppercase tracking-wider text-xs md:text-sm rounded-lg shadow-brutal border-2 border-ochre-600 flex items-center justify-center gap-2 transition-all ${
+              isSeeding ? "opacity-60 cursor-not-allowed" : ""
+            }`}
+          >
+            <Zap
+              size={18}
+              className={isSeeding ? "animate-spin" : "text-amber-300"}
+            />
+            <span>
+              {isSeeding
+                ? "Seeding 3-Hop Ring..."
+                : "⚡ Seed 3-Hop AML Ring Scenario"}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Alert Banners */}
+      {actionSuccess && (
+        <div className="p-4 bg-emerald-950/70 border-2 border-emerald-600 rounded-lg text-emerald-300 text-sm font-bold flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={18} />
+            <span>{actionSuccess}</span>
+          </div>
+          <button
+            onClick={() => setActionSuccess(null)}
+            className="text-emerald-400 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="p-4 bg-rose-950/80 border-2 border-rose-600 rounded-lg text-rose-200 text-sm font-semibold flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <AlertTriangle size={22} className="shrink-0 text-rose-400" />
+            <span>{actionError}</span>
+          </div>
+          <button
+            onClick={() => setActionError(null)}
+            className="text-rose-400 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* KPI Stats Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 bg-zinc-900 border-2 border-zinc-800 rounded-lg shadow-brutal">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+            HITL Approval Queue
+          </div>
+          <div className="text-3xl font-black text-amber-400 mt-1 flex items-center gap-2">
+            <span>{pendingApprovals.length}</span>
+            {pendingApprovals.length > 0 && (
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-950 border border-amber-700 text-amber-300">
+                Action Req
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 bg-zinc-900 border-2 border-zinc-800 rounded-lg shadow-brutal">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+            AI Investigations
+          </div>
