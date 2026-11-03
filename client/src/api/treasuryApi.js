@@ -358,3 +358,258 @@ export async function rejectHitlRequest(
     method: "POST",
     body: JSON.stringify({ reviewerUserName, notes }),
   });
+}
+
+/** GET /compliance/mcp/invocations/{investigationId} */
+export async function fetchMcpInvocations(investigationId) {
+  return await treasuryFetch(
+    `/compliance/mcp/invocations/${investigationId}`
+  );
+}
+
+/** GET /compliance/graph/account/{accountId} 5-hop recursive CTE subgraph */
+export async function fetchAccountGraph(accountId) {
+  return await treasuryFetch(`/compliance/graph/account/${accountId}`);
+}
+
+/** GET /compliance/policies Returns all regulatory policy chunks */
+export async function fetchAllPolicies() {
+  return await treasuryFetch("/compliance/policies");
+}
+
+/** GET /compliance/policies/search?query=...&topK=... RAG semantic search */
+export async function searchPolicies(query, topK = 4) {
+  const encoded = encodeURIComponent(query);
+  return await treasuryFetch(
+    `/compliance/policies/search?query=${encoded}&topK=${topK}`
+  );
+}
+
+/** GET /admin/dlq Quarantined DLQ events */
+export async function fetchDlqEvents() {
+  return await treasuryFetch("/admin/dlq");
+}
+
+/** POST /admin/dlq/replay/{id} SRE DLQ replay */
+export async function replayDlqEvent(id) {
+  return await treasuryFetch(`/admin/dlq/replay/${id}`, {
+    method: "POST",
+  });
+}
+
+/* =====================================================================
+   Phase 7: Multi-Currency FX & Bulk Settlement Batch Endpoints
+   ===================================================================== */
+
+/** GET /fx/rates Returns list of supported FX rate pairs and spread bps */
+export async function fetchFxRates() {
+  return await treasuryFetch("/fx/rates");
+}
+
+/** GET /fx/quote?from=...&to=...&amount=... Calculates live FX quote with fee */
+export async function fetchFxQuote(from, to, amount) {
+  return await treasuryFetch(
+    `/fx/quote?from=${encodeURIComponent(from)}&to=${encodeURIComponent(
+      to
+    )}&amount=${encodeURIComponent(amount)}`
+  );
+}
+
+/** GET /batch Returns historical settlement batches */
+export async function fetchSettlementBatches() {
+  return await treasuryFetch("/batch");
+}
+
+/** GET /batch/id/{batchId} Returns batch details and reconciliation items */
+export async function fetchSettlementBatchById(batchId) {
+  return await treasuryFetch(`/batch/id/${batchId}`);
+}
+
+/** POST /batch/upload Accepts JSON payload with fileName, sourceAccountId, csvContent or items */
+export async function uploadBatchJson(payload) {
+  return await treasuryFetch("/batch/upload", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** POST /batch/upload Accepts multipart file upload */
+export async function uploadBatchFile(file, sourceAccountId) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (sourceAccountId) {
+    formData.append("sourceAccountId", sourceAccountId.toString());
+  }
+
+  const headers = {
+    Authorization: getAuthHeader(),
+  };
+
+  const response = await fetch(`${API_BASE_URL}/batch/upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    let errorDetail = `HTTP ${response.status}: ${text}`;
+    if (response.status === 409) {
+      errorDetail = "Duplicate batch upload rejected: File hash has already been processed.";
+    }
+    const err = new Error(errorDetail);
+    err.status = response.status;
+    throw err;
+  }
+  return await response.json();
+}
+
+/** POST /batch/demo/generate-sample-batch 1-click execution of 15-row payroll batch */
+export async function runSampleBatch() {
+  return await treasuryFetch("/batch/demo/generate-sample-batch", {
+    method: "POST",
+  });
+}
+
+/* =====================================================================
+   Phase 8: FinCEN SAR PDF, Webhook Gateway & Live SSE Endpoints
+   ===================================================================== */
+
+/** GET /compliance/investigations/hold/{holdId}/export-sar-pdf Downloads official FinCEN SAR filing PDF */
+export async function downloadSarPdf(holdId) {
+  const headers = {
+    Authorization: getAuthHeader(),
+  };
+  const response = await fetch(`${API_BASE_URL}/compliance/investigations/hold/${holdId}/export-sar-pdf`, {
+    headers,
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`PDF Export failed (${response.status}): ${text}`);
+  }
+  return await response.blob();
+}
+
+/** Generates signed test payload and submits to POST /webhooks/inbound/swift-rail */
+export async function sendTestWebhook(options = {}) {
+  const opts = typeof options === "boolean" ? { tamper: options } : options;
+  const {
+    tamper = false,
+    expired = false,
+    eventId = "evt-swift-rail-test-99",
+    eventType = "WIRE_DEPOSIT",
+    targetAccountId = "1",
+    amount = "5000.00",
+    currency = "USD",
+  } = opts;
+
+  const testSigned = await treasuryFetch("/webhooks/test-inbound-signed", {
+    method: "POST",
+    body: JSON.stringify({
+      tamper,
+      expired,
+      eventId,
+      eventType,
+      targetAccountId,
+      amount,
+      currency,
+    }),
+  });
+
+  const headers = {
+    "Content-Type": "application/json",
+    "X-RuneStone-Timestamp": String(testSigned.timestamp),
+    "X-RuneStone-Signature": testSigned.signature,
+  };
+
+  const inboundRes = await fetch(`${API_BASE_URL}/webhooks/inbound/swift-rail`, {
+    method: "POST",
+    headers,
+    body: testSigned.payload,
+  });
+
+  let data;
+  try {
+    data = await inboundRes.json();
+  } catch {
+    data = { statusText: inboundRes.statusText };
+  }
+
+  return {
+    httpStatus: inboundRes.status,
+    response: data,
+    signedPayload: testSigned,
+  };
+}
+
+/** GET /webhooks/deliveries Returns log of webhook inbound/outbound deliveries */
+export async function fetchWebhookDeliveries() {
+  return await treasuryFetch("/webhooks/deliveries");
+}
+
+/** Connects to live SSE stream GET /stream/events */
+export function createEventSource() {
+  return new EventSource("/stream/events");
+}
+
+/* =====================================================================
+   Phase 11 & 12: EOD Reconciliation & Maker-Checker Corporate Wires
+   ===================================================================== */
+
+/** POST /reconciliation/run-statement?simulateAnomalies=... */
+export async function runEodStatement(simulateAnomalies = false, externalLines = null) {
+  const url = `/reconciliation/run-statement?simulateAnomalies=${simulateAnomalies}`;
+  return await treasuryFetch(url, {
+    method: "POST",
+    body: externalLines ? JSON.stringify(externalLines) : undefined,
+  });
+}
+
+/** GET /reconciliation/runs */
+export async function fetchReconciliationRuns() {
+  return await treasuryFetch("/reconciliation/runs");
+}
+
+/** GET /reconciliation/runs/{runId}/discrepancies */
+export async function fetchReconciliationDiscrepancies(runId) {
+  return await treasuryFetch(`/reconciliation/runs/${runId}/discrepancies`);
+}
+
+/** POST /reconciliation/discrepancies/id/{discrepancyId}/resolve */
+export async function resolveDiscrepancy(discrepancyId, notes = "") {
+  return await treasuryFetch(`/reconciliation/discrepancies/id/${discrepancyId}/resolve`, {
+    method: "POST",
+    body: JSON.stringify({ notes }),
+  });
+}
+
+/** POST /corporate-wires */
+export async function submitCorporateWire(wireDto) {
+  return await treasuryFetch("/corporate-wires", {
+    method: "POST",
+    body: JSON.stringify(wireDto),
+  });
+}
+
+/** POST /corporate-wires/id/{wireId}/approve */
+export async function approveCorporateWire(wireId, notes = "") {
+  return await treasuryFetch(`/corporate-wires/id/${wireId}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ notes }),
+  });
+}
+
+/** GET /corporate-wires */
+export async function fetchCorporateWires() {
+  return await treasuryFetch("/corporate-wires");
+}
+
+/** GET /compliance/metrics/telemetry */
+export async function fetchTelemetryMetrics() {
+  return await treasuryFetch("/compliance/metrics/telemetry");
+}
+
+
+
+
+
