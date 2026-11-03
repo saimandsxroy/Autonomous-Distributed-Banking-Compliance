@@ -178,3 +178,63 @@ export async function switchDemoPersonaJwt(personaUsername) {
     window.dispatchEvent(
       new CustomEvent("runestone_persona_changed", { detail: data.username })
     );
+  }
+  return data;
+}
+
+/** POST /auth/login — legacy alias for backward compatibility */
+export async function login(username, password) {
+  return loginWithCredentials(username, password);
+}
+
+/** POST /public/create-user — registers a new corporate user with BCrypt password hashing */
+export async function registerUser({ userName, email, password }) {
+  const response = await fetch(`${API_BASE_URL}/public/create-user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userName, username: userName, email, password }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Registration failed. User may already exist.");
+  }
+  return await response.json();
+}
+
+/* =====================================================================
+   Base Fetch Wrapper with Error Handling
+   ===================================================================== */
+
+async function treasuryFetch(url, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: getAuthHeader(),
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorDetail = `HTTP ${response.status} ${response.statusText}`;
+    try {
+      const errJson = await response.json();
+      if (errJson?.message) {
+        errorDetail = errJson.message;
+      } else if (errJson?.error) {
+        errorDetail = errJson.error;
+      }
+    } catch {
+      const text = await response.text().catch(() => "");
+      if (text) errorDetail = text;
+    }
+    const err = new Error(errorDetail);
+    err.status = response.status;
+    throw err;
+  }
+
+  // Handle 204 or empty bodies
+  if (response.status === 204) {
+    return {};
