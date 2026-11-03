@@ -58,3 +58,63 @@ public class AuthController {
       }
 
       if (userOpt.isEmpty()
+          || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPassword())) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("errorCode", "INVALID_CREDENTIALS");
+        error.put("message", "Invalid username or password");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+      }
+
+      User user = userOpt.get();
+      List<String> roles =
+          user.getRoles().stream()
+              .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+              .collect(Collectors.toList());
+
+      List<TreasuryAccount> accounts = treasuryAccountRepository.findByUserId(user.getId());
+      List<Long> accountIds =
+          accounts.stream().map(TreasuryAccount::getId).collect(Collectors.toList());
+
+      boolean isOfficer =
+          roles.stream().anyMatch(r -> r.contains("COMPLIANCE") || r.contains("ADMIN"));
+      String portalTarget = isOfficer ? "/compliance" : "/dashboard";
+
+      String token =
+          jwtTokenService.generateToken(user.getUserName(), user.getEmail(), roles, accountIds);
+
+      LoginResponseDto response =
+          new LoginResponseDto(
+              token,
+              user.getUserName(),
+              user.getEmail(),
+              roles,
+              portalTarget,
+              accounts,
+              accountIds,
+              jwtTokenService.getExpirySeconds());
+
+      log.info(
+          "JWT issued for authenticated user: {} (portalTarget={})",
+          user.getUserName(),
+          portalTarget);
+      return ResponseEntity.ok(response);
+    } catch (Exception e) {
+      log.warn("Login failed for identifier {}: {}", request.getUsernameOrEmail(), e.getMessage());
+      Map<String, Object> error = new HashMap<>();
+      error.put("errorCode", "INVALID_CREDENTIALS");
+      error.put("message", "Invalid username or password");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<?> me() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("message", "Not authenticated"));
+    }
+
+    String username = auth.getName();
+    User user = userRepository.findByUserName(username).orElse(null);
+
