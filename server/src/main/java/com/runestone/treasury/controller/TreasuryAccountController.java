@@ -41,6 +41,12 @@ public class TreasuryAccountController {
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
 
+  @GetMapping("/all")
+  public ResponseEntity<List<TreasuryAccount>> getAllAccounts() {
+    List<TreasuryAccount> all = treasuryAccountService.getAll();
+    return new ResponseEntity<>(all, HttpStatus.OK);
+  }
+
   @PostMapping
   public ResponseEntity<?> createAccount(@RequestBody TreasuryAccount account) {
     try {
