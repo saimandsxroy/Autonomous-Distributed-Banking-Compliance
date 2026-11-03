@@ -598,3 +598,79 @@ export function LandingHeroPage() {
                   onMouseEnter={handleInteractiveEnter}
                   onMouseLeave={handleInteractiveLeave}
                   className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-[#14181D] hover:bg-black text-[#E8E5DE] rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase font-semibold transition min-h-[36px]"
+                >
+                  <Terminal size={12} />
+                  <span>DASHBOARD</span>
+                </Link>
+
+                <Link
+                  to="/compliance"
+                  onMouseEnter={handleInteractiveEnter}
+                  onMouseLeave={handleInteractiveLeave}
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 border border-[#1D4477]/40 hover:border-[#1D4477] bg-[#1D4477]/10 text-[#1D4477] rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase font-semibold transition min-h-[36px]"
+                >
+                  <Shield size={12} />
+                  <span>COMPLIANCE &amp; AML</span>
+                </Link>
+
+                <Link
+                  to="/batch-fx"
+                  onMouseEnter={handleInteractiveEnter}
+                  onMouseLeave={handleInteractiveLeave}
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 border border-black/20 hover:border-black/50 text-[#45484C] hover:text-black rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase transition min-h-[36px]"
+                >
+                  <Zap size={12} />
+                  <span>BATCH &amp; FX</span>
+                </Link>
+
+                <Link
+                  to="/reconciliation"
+                  onMouseEnter={handleInteractiveEnter}
+                  onMouseLeave={handleInteractiveLeave}
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 border border-black/20 hover:border-black/50 text-[#45484C] hover:text-black rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase transition min-h-[36px]"
+                >
+                  <Lock size={12} />
+                  <span>EOD RECONCILIATION</span>
+                </Link>
+
+                <Link
+                  to="/transfer"
+                  onMouseEnter={handleInteractiveEnter}
+                  onMouseLeave={handleInteractiveLeave}
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 border border-black/20 hover:border-black/50 text-[#45484C] hover:text-black rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase transition min-h-[36px]"
+                >
+                  <ArrowUpRight size={12} />
+                  <span>WIRE TRANSFER</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column Spacer (The 3D Core slides here in Section 2 on desktop) */}
+          <div className="lg:col-span-5 h-[220px] sm:h-[320px] lg:h-[420px] pointer-events-none" />
+        </div>
+      </section>
+
+      {/* Footer System Status Banner */}
+      <footer
+        className="relative z-20 py-6 sm:py-8 px-4 sm:px-8 lg:px-12 border-t text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] uppercase transition-colors duration-700 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-left"
+        style={{
+          borderColor: isSection2
+            ? "rgba(26, 29, 32, 0.12)"
+            : "rgba(255, 255, 255, 0.1)",
+          color: isSection2 ? "#6B6F76" : "#7A7D82",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>RUNESTONE AEGIS ENGINE v2.4 • ALL SYSTEMS NOMINAL</span>
+        </div>
+        <div className="flex flex-wrap justify-center sm:justify-end items-center gap-4 sm:gap-6">
+          <span>ZERO-SUM VERIFIED</span>
+          <span>LATENCY &lt; 0.4MS</span>
+          <span>FATF REC 16 COMPLIANT</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
