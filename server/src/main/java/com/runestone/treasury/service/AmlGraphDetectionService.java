@@ -178,3 +178,147 @@ public class AmlGraphDetectionService {
         }
         if (inCycle) {
           edge.put("isCycle", true);
+        }
+        if (!edge.containsKey("label") && edge.get("amount") != null) {
+          BigDecimal amt =
+              edge.get("amount") instanceof BigDecimal
+                  ? (BigDecimal) edge.get("amount")
+                  : new BigDecimal(edge.get("amount").toString());
+          String formattedAmt = String.format("$%.2f", amt);
+          if (Boolean.TRUE.equals(edge.get("isCycle")) && Boolean.TRUE.equals(edge.get("isHold"))) {
+            formattedAmt += " (Loop)";
+          }
+          edge.put("label", formattedAmt);
+        }
+      }
+
+      List<Map<String, Object>> nodes = new ArrayList<>();
+      for (Long nodeId : nodeSet) {
+        Map<String, Object> node = new HashMap<>();
+        node.put("id", nodeId);
+        node.put("accountId", nodeId);
+        node.put("isOrigin", nodeId.equals(accountId));
+        if (treasuryAccountRepository != null) {
+          treasuryAccountRepository
+              .findById(nodeId)
+              .ifPresent(
+                  acc -> {
+                    node.put("accountNumber", acc.getAccountNumber());
+                    node.put("currency", acc.getCurrency());
+                    node.put(
+                        "label",
+                        acc.getAccountNumber() != null
+                            ? "Account #" + nodeId + " (" + acc.getAccountNumber() + ")"
+                            : "Account #" + nodeId);
+                    node.put("status", acc.getStatus());
+                    node.put("balance", acc.getAvailableBalance());
+                  });
+        }
+        if (!node.containsKey("label")) {
+          node.put("label", "Account #" + nodeId);
+        }
+        nodes.add(node);
+      }
+
+      long fanOut = postingLegRepository.countDistinctOutboundCounterparties24h(accountId);
+      long fanIn = postingLegRepository.countDistinctInboundCounterparties24h(accountId);
+
+      result.put("accountId", accountId);
+      result.put("nodes", nodes);
+      result.put("edges", edges);
+      result.put("cyclePaths", cyclePaths);
+      result.put("cycleDetected", cycleDetected);
+      result.put("fanOutCount24h", fanOut);
+      result.put("fanInCount24h", fanIn);
+      result.put(
+          "riskLevel", cycleDetected ? "CRITICAL" : computeRiskLevel(cyclePaths, fanOut, fanIn));
+    } catch (Exception e) {
+      log.error("Failed to build subgraph for account {}: {}", accountId, e.getMessage(), e);
+      result.put("error", e.getMessage());
+    }
+    return result;
+  }
+
+  private List<String> detectCycles(List<Map<String, Object>> edges) {
+    List<String> cyclePaths = new ArrayList<>();
+    Map<Long, List<Long>> adj = new HashMap<>();
+    for (Map<String, Object> e : edges) {
+      Long from = (Long) e.get("from");
+      Long to = (Long) e.get("to");
+      if (from != null && to != null) {
+        adj.computeIfAbsent(from, k -> new ArrayList<>()).add(to);
+      }
+    }
+
+    for (Long startNode : adj.keySet()) {
+      Set<Long> visited = new HashSet<>();
+      List<Long> path = new ArrayList<>();
+      findCyclesFrom(startNode, startNode, adj, visited, path, cyclePaths, 0);
+    }
+    return cyclePaths;
+  }
+
+  private void findCyclesFrom(
+      Long current,
+      Long origin,
+      Map<Long, List<Long>> adj,
+      Set<Long> visited,
+      List<Long> path,
+      List<String> cyclePaths,
+      int depth) {
+    if (depth > 6) return;
+    visited.add(current);
+    path.add(current);
+
+    List<Long> neighbors = adj.getOrDefault(current, Collections.emptyList());
+    for (Long next : neighbors) {
+      if (next.equals(origin) && path.size() >= 2) {
+        StringBuilder sb = new StringBuilder();
+        for (Long p : path) {
+          sb.append(p).append("->");
+        }
+        sb.append(origin);
+        String cycleStr = sb.toString();
+        if (!cyclePaths.contains(cycleStr)) {
+          cyclePaths.add(cycleStr);
+        }
+      } else if (!visited.contains(next)) {
+        findCyclesFrom(next, origin, adj, visited, path, cyclePaths, depth + 1);
+      }
+    }
+
+    path.remove(path.size() - 1);
+    visited.remove(current);
+  }
+
+  private String computeRiskLevel(List<String> cyclePaths, long fanOut, long fanIn) {
+    if (!cyclePaths.isEmpty()) return "CRITICAL";
+    int maxFanOut = resolveIntConfig("AML_FAN_OUT_MAX_24H", 4);
+    int maxFanIn = resolveIntConfig("AML_FAN_IN_MAX_24H", 4);
+    if (fanOut >= maxFanOut || fanIn >= maxFanIn) return "HIGH";
+    if (fanOut >= maxFanOut / 2 || fanIn >= maxFanIn / 2) return "MEDIUM";
+    return "LOW";
+  }
+
+  private int resolveIntConfig(String key, int defaultValue) {
+    try {
+      String val = appCache.get(key);
+      if ((val == null || val.isBlank()) && "AML_CIRCULAR_RING_MAX_HOPS".equals(key)) {
+        val = appCache.get("AML_MAX_HOP_DEPTH");
+      } else if ((val == null || val.isBlank()) && "AML_MAX_HOP_DEPTH".equals(key)) {
+        val = appCache.get("AML_CIRCULAR_RING_MAX_HOPS");
+      }
+      if (val != null && !val.isBlank()) {
+        return Integer.parseInt(val.trim());
+      }
+    } catch (NumberFormatException ignored) {
+    }
+    return defaultValue;
+  }
+
+  private Long toLong(Object obj) {
+    if (obj instanceof Long) return (Long) obj;
+    if (obj instanceof Number) return ((Number) obj).longValue();
+    return 0L;
+  }
+}
