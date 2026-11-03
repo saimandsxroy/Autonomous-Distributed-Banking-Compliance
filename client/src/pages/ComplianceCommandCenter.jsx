@@ -148,3 +148,153 @@ export function ComplianceCommandCenter() {
   // Load MCP invocations and live subgraph when selected investigation changes
   useEffect(() => {
     if (selectedInvestigation) {
+      setLiveSubgraph(null);
+      const accId = selectedInvestigation.sourceAccountId || 3;
+      setGraphSearchAccountId(accId);
+      loadAccountGraph(accId);
+      fetchMcpInvocations(selectedInvestigation.id)
+        .then(setMcpInvocations)
+        .catch(() => setMcpInvocations([]));
+    } else {
+      loadAccountGraph(3);
+    }
+  }, [selectedInvestigation, loadAccountGraph]);
+
+  // Seed live AML scenario handler
+  const handleSeedScenario = async () => {
+    setIsSeeding(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await seedDemoAmlScenario();
+      setActionSuccess(
+        `⚡ Seeded 3-Hop AML Ring! Leg 1: Alice (#1) -> Bob (#2) ($120.00), Leg 2: Bob (#2) -> Charlie (#3) ($110.00), Leg 3: Charlie (#3) -> Alice (#1) ($100.00 - Closed Loop Intercepted!). Hold #${res.balanceHoldId} created. Investigation #${res.investigationId} queued for HITL review.`
+      );
+      await loadData();
+      setGraphSearchAccountId(3);
+      await loadAccountGraph(3);
+      if (res.investigationId) {
+        const inv = await fetchAmlInvestigations();
+        const created = inv.find((i) => i.id === res.investigationId);
+        if (created) setSelectedInvestigation(created);
+      }
+    } catch (e) {
+      const msg = e.message || "Failed to seed demo scenario";
+      setActionError(`Seeder failed: ${msg}`);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  // HITL Approval with FINRA Rule 3110 enforcement
+  const handleApprove = async (approvalId, action = "RELEASE") => {
+    setActionError(null);
+    setActionSuccess(null);
+    const personaInfo = PERSONAS[activePersona];
+
+    try {
+      await approveHitlRequest(
+        approvalId,
+        personaInfo.username,
+        reviewerNotes || "Verified legitimate counterparty transaction documentation.",
+        action
+      );
+      if (action === "RELEASE") {
+        setActionSuccess(
+          `✓ Request #${approvalId} APPROVED. Hold released and settled to destination account!`
+        );
+      } else {
+        setActionSuccess(
+          `✓ Request #${approvalId} APPROVED. AML freeze executed and hold reversed.`
+        );
+      }
+      setReviewerNotes("");
+      await loadData();
+    } catch (e) {
+      setActionError(e.message || "Approval execution failed");
+    }
+  };
+
+  // HITL Rejection
+  const handleReject = async (approvalId) => {
+    setActionError(null);
+    setActionSuccess(null);
+    const personaInfo = PERSONAS[activePersona];
+    const isOfficer = personaInfo.role.includes("COMPLIANCE_OFFICER");
+
+    if (!isOfficer) {
+      setActionError(
+        "🚫 403 Forbidden: Only designated Compliance Officers may reject or dismiss an autonomous AML alert."
+      );
+      return;
+    }
+
+    try {
+      await rejectHitlRequest(
+        approvalId,
+        personaInfo.username,
+        reviewerNotes || "Rejected after manual verification"
+      );
+      setActionSuccess(
+        `✓ Request #${approvalId} REJECTED. Balance hold dismissed.`
+      );
+      setReviewerNotes("");
+      await loadData();
+    } catch (e) {
+      setActionError(`Rejection failed: ${e.message}`);
+    }
+  };
+
+  // Policy search
+  const handlePolicySearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      const all = await fetchAllPolicies().catch(() => []);
+      setPolicies(all);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const results = await searchPolicies(searchQuery, 6);
+      setPolicies(results);
+    } catch (e) {
+      console.error("Policy search error", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // DLQ Replay
+  const handleReplayDlq = async (id) => {
+    try {
+      await replayDlqEvent(id);
+      setActionSuccess(
+        `✓ Quarantined event #${id} successfully replayed to Kafka topic!`
+      );
+      const dlq = await fetchDlqEvents().catch(() => []);
+      setDlqEvents(dlq);
+    } catch (e) {
+      setActionError(`DLQ Replay failed: ${e.message}`);
+    }
+  };
+
+  // Download Official FinCEN SAR Filing (PDF)
+  const handleDownloadSarPdf = async (holdId) => {
+    if (!holdId) return;
+    setIsDownloadingPdf(true);
+    setActionError(null);
+    try {
+      const blob = await downloadSarPdf(holdId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `FinCEN_SAR_Hold_${holdId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setActionSuccess(`✓ Official FinCEN SAR PDF dossier successfully generated and downloaded for Hold #${holdId}`);
+    } catch (err) {
+      setActionError(`SAR PDF Download failed: ${err.message}`);
+    } finally {
+      setIsDownloadingPdf(false);
