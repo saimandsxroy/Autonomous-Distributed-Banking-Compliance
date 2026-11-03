@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,12 +63,22 @@ public class SettlementBatchController {
    * csvContent/items), evaluates the SHA-256 checksum to reject duplicates (409 Conflict), and
    * processes rows.
    */
-  @PostMapping("/upload")
-  public ResponseEntity<?> uploadBatch(
+  /** POST /batch/upload Ingests a bulk payout CSV via multipart/form-data. */
+  @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<?> uploadBatchMultipart(
       @RequestParam(value = "file", required = false) MultipartFile file,
-      @RequestParam(value = "sourceAccountId", required = false) Long paramSourceAccountId,
-      @RequestBody(required = false) Map<String, Object> jsonPayload) {
+      @RequestParam(value = "sourceAccountId", required = false) Long paramSourceAccountId) {
+    return processBatchUpload(file, paramSourceAccountId, null);
+  }
 
+  /** POST /batch/upload Ingests a bulk payout CSV via application/json. */
+  @PostMapping(value = "/upload", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<?> uploadBatchJson(@RequestBody Map<String, Object> jsonPayload) {
+    return processBatchUpload(null, null, jsonPayload);
+  }
+
+  private ResponseEntity<?> processBatchUpload(
+      MultipartFile file, Long paramSourceAccountId, Map<String, Object> jsonPayload) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String userName = authentication.getName();
 
@@ -143,7 +154,7 @@ public class SettlementBatchController {
    * POST /batch/demo/generate-sample-batch One-click action generating and executing the realistic
    * 15-row corporate payroll batch.
    */
-  @PostMapping("/demo/generate-sample-batch")
+  @PostMapping({"/demo/generate-sample-batch", "/sample"})
   public ResponseEntity<?> generateSampleBatch() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String userName = authentication.getName();
