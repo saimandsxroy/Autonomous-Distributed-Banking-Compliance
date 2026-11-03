@@ -598,3 +598,33 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
       const targetCorePulse = isCoreHovered ? corePulse * 1.15 : corePulse;
       coreGroup.scale.lerp(
         new THREE.Vector3(targetCorePulse, targetCorePulse, targetCorePulse),
+        damp * 2.5
+      );
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseout", handleMouseLeave);
+      container.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("resize", handleResize);
+      if (renderer.domElement && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full cursor-grab active:cursor-grabbing select-none flex items-center justify-center ${className}`}
+    />
+  );
+}
