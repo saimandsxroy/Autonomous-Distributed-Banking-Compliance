@@ -65,7 +65,24 @@ public class WebhookController {
   public ResponseEntity<?> testInboundSigned(@RequestBody Map<String, Object> body) {
     boolean tamper = Boolean.TRUE.equals(body.get("tamper"));
     boolean expired = Boolean.TRUE.equals(body.get("expired"));
-    return ResponseEntity.ok(webhookGatewayService.generateSignedTestPayload(tamper, expired));
+    String eventId = (String) body.get("eventId");
+    String eventType = (String) body.get("eventType");
+    String targetAccount =
+        body.get("targetAccountId") != null
+            ? body.get("targetAccountId").toString()
+            : (String) body.get("targetAccountNumber");
+    java.math.BigDecimal amount = null;
+    if (body.get("amount") != null) {
+      try {
+        amount = new java.math.BigDecimal(body.get("amount").toString());
+      } catch (Exception ignored) {
+      }
+    }
+    String currency = (String) body.get("currency");
+
+    return ResponseEntity.ok(
+        webhookGatewayService.generateSignedTestPayload(
+            tamper, expired, eventId, eventType, targetAccount, amount, currency));
   }
 
   @GetMapping("/deliveries")
