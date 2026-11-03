@@ -108,3 +108,53 @@ public class EodReconciliationService {
               je.getAmount(),
               je.getCurrency()));
     }
+
+    // Element for MISSING_INTERNAL: External wire deposit with unknown idempotency key
+    String externalKey =
+        "SWIFT-MT940-EXT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    simulatedLines.add(
+        new EodStatementLineDto(externalKey, 999L, 1L, new BigDecimal("5400.0000"), "USD"));
+
+    return executeReconciliation(simulatedLines, scopeInternalKeys, executedBy);
+  }
+
+  private void seedBaselineSettledEntries(String executedBy) {
+    try {
+      for (int i = 1; i <= 3; i++) {
+        JournalEntry je = new JournalEntry();
+        je.setIdempotencyKey("SEED-RECON-" + UUID.randomUUID().toString().substring(0, 8));
+        je.setSourceAccountId(1L);
+        je.setDestinationAccountId(2L);
+        je.setAmount(new BigDecimal(100 * i + ".0000"));
+        je.setCurrency("USD");
+        je.setReferenceType("TRANSFER");
+        je.setTitle("Baseline Reconciliation Seed #" + i);
+        je.setContent("Automated seed transfer for reconciliation baseline");
+        journalEntryService.saveEntry(
+            je, executedBy != null ? executedBy : "sarah_compliance", false, null);
+      }
+    } catch (Exception e) {
+      log.warn("Failed seeding baseline entries for reconciliation: {}", e.getMessage());
+    }
+  }
+
+  private ReconciliationRun executeReconciliation(
+      List<EodStatementLineDto> externalLines, Set<String> scopedInternalKeys, String executedBy) {
+
+    String statementRef =
+        "MT940-"
+            + System.currentTimeMillis()
+            + "-"
+            + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+    String operator =
+        (executedBy != null && !executedBy.isBlank()) ? executedBy : "sarah_compliance";
+
+    List<JournalEntry> settled = journalEntryRepository.findByStatus("SETTLED");
+    Map<String, JournalEntry> internalMap = new HashMap<>();
+    for (JournalEntry je : settled) {
+      if (je.getIdempotencyKey() != null) {
+        if (scopedInternalKeys == null || scopedInternalKeys.contains(je.getIdempotencyKey())) {
+          internalMap.put(je.getIdempotencyKey(), je);
+        }
+      }
+    }
