@@ -348,3 +348,53 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
     const gimbalMat2 = new THREE.MeshStandardMaterial({
       color: 0x475569,
       metalness: 0.92,
+      roughness: 0.2,
+      emissive: new THREE.Color(0x8cb0db),
+      emissiveIntensity: 0.0,
+    });
+
+    // Ring 1: Velocity Shield Gimbal (radius = 1.95)
+    const ring1Geo = new THREE.TorusGeometry(1.95, 0.024, 16, 80);
+    const gimbalRing1 = new THREE.Mesh(ring1Geo, gimbalMat1);
+    gimbalRing1.userData = { type: "gimbal", label: "Velocity Shield Gimbal (Redis Lua)" };
+    gimbalGroup.add(gimbalRing1);
+
+    // Ring 1 tick notches
+    for (let t = 0; t < 12; t++) {
+      const ang = (t * Math.PI * 2) / 12;
+      const notchGeo = new THREE.BoxGeometry(0.03, 0.06, 0.04);
+      const notch = new THREE.Mesh(notchGeo, new THREE.MeshBasicMaterial({ color: 0x8cb0db }));
+      notch.position.set(Math.cos(ang) * 1.95, Math.sin(ang) * 1.95, 0);
+      notch.rotation.z = ang;
+      gimbalRing1.add(notch);
+    }
+
+    // Ring 2: SHA-256 Audit Gimbal (radius = 2.15, tilted at 65 deg)
+    const ring2Geo = new THREE.TorusGeometry(2.15, 0.025, 16, 80);
+    const gimbalRing2 = new THREE.Mesh(ring2Geo, gimbalMat2);
+    gimbalRing2.userData = { type: "gimbal", label: "SHA-256 Audit Trail Gimbal" };
+    gimbalRing2.rotation.x = Math.PI / 2.8;
+    gimbalGroup.add(gimbalRing2);
+
+    // Ring 2 tick notches
+    for (let t = 0; t < 16; t++) {
+      const ang = (t * Math.PI * 2) / 16;
+      const notchGeo = new THREE.BoxGeometry(0.03, 0.06, 0.04);
+      const notch = new THREE.Mesh(notchGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+      notch.position.set(Math.cos(ang) * 2.15, Math.sin(ang) * 2.15, 0);
+      notch.rotation.z = ang;
+      gimbalRing2.add(notch);
+    }
+
+    coreMesh.userData = { type: "core", label: "Double-Entry Invariant Titanium Core" };
+    shellMesh.userData = { type: "core", label: "Refractive Sapphire Escrow Shell" };
+
+    const interactableObjects = [
+      ...nodeMeshes,
+      gimbalRing1,
+      gimbalRing2,
+      coreMesh,
+      shellMesh,
+    ];
+
+    // --- Interactive Drag Handling ---
