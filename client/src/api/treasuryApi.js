@@ -58,3 +58,63 @@ export function setActivePersona(persona) {
   switchDemoPersonaJwt(persona).catch((err) => {
     console.debug("Auto JWT mint on persona switch deferred:", err.message);
   });
+}
+
+export function getAuthHeader() {
+  const jwt = getStoredJwt();
+  if (jwt) {
+    return "Bearer " + jwt;
+  }
+  const personaKey = getActivePersona();
+  const info = PERSONAS[personaKey];
+  if (info) {
+    return "Basic " + btoa(`${info.username}:${info.password}`);
+  }
+  return "Basic " + btoa("sarah_compliance:password123");
+}
+
+export function getStoredJwt() {
+  return localStorage.getItem("runestone_jwt_token") || localStorage.getItem("jwt");
+}
+
+export function clearStoredJwt() {
+  localStorage.removeItem("runestone_jwt_token");
+  localStorage.removeItem("jwt");
+  localStorage.removeItem("runestone_user_profile");
+}
+
+export function getStoredUserProfile() {
+  try {
+    const raw = localStorage.getItem("runestone_user_profile");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getDecodedJwtClaims() {
+  const token = getStoredJwt();
+  if (!token) return null;
+  try {
+    let payload = token.split(".")[1];
+    if (!payload) return null;
+    payload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = payload.length % 4;
+    if (pad) payload += "=".repeat(4 - pad);
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+}
+
+export function getUserRoles() {
+  const profile = getStoredUserProfile();
+  if (profile && profile.roles && Array.isArray(profile.roles)) {
+    return profile.roles;
+  }
+  const claims = getDecodedJwtClaims();
+  if (claims && claims.roles && Array.isArray(claims.roles)) {
+    return claims.roles;
+  }
+  const personaKey = getActivePersona();
+  const info = PERSONAS[personaKey];
