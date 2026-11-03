@@ -58,3 +58,63 @@ public class HitlApprovalService {
   @Transactional
   public HitlApprovalRequest approveRequest(
       Long approvalId, String reviewerUserName, String notes, String action) {
+    HitlApprovalRequest request =
+        hitlApprovalRequestRepository
+            .findById(approvalId)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Approval request not found: " + approvalId));
+
+    if (!"PENDING_APPROVAL".equals(request.getStatus())) {
+      throw new IllegalStateException("Approval request already resolved: " + request.getStatus());
+    }
+
+    BalanceHold hold =
+        balanceHoldRepository
+            .findById(request.getBalanceHoldId())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Balance hold not found: " + request.getBalanceHoldId()));
+
+    // Separation of duties verification
+    enforceSeparationOfDuties(reviewerUserName, hold);
+
+    AmlInvestigation investigation =
+        amlInvestigationRepository.findById(request.getInvestigationId()).orElse(null);
+
+    String tool = request.getProposedToolName();
+    boolean shouldRelease =
+        "RELEASE".equalsIgnoreCase(action)
+            || "proposeReleaseHold".equals(tool)
+            || (notes != null
+                && (notes.toLowerCase().contains("legitimate")
+                    || notes.toLowerCase().contains("release")));
+
+    if (shouldRelease) {
+      // Settle hold cleanly
+      balanceHoldService.settleHold(hold.getId());
+
+      if (investigation != null) {
+        investigation.setStatus("RESOLVED_RELEASED");
+        amlInvestigationRepository.save(investigation);
+      }
+
+      updateMcpInvocationStatus(request.getInvestigationId(), tool, "HITL_APPROVED_EXECUTED");
+
+      complianceAuditLogService.recordAuditEvent(
+          reviewerUserName, "HITL_APPROVED_SETTLE_HOLD", request.getId(), request);
+
+      log.info(
+          "HITL APPROVED RELEASE & SETTLE: request={}, hold={} settled by officer={}",
+          approvalId,
+          hold.getId(),
+          reviewerUserName);
+    } else {
+      // Freeze and reverse
+      balanceHoldService.releaseAndReverseHold(hold.getId());
+      treasuryAccountService.freezeAccount(hold.getSourceAccountId());
+
+      if (investigation != null) {
+        investigation.setStatus("RESOLVED_FROZEN_REVERSED");
+        amlInvestigationRepository.save(investigation);
+      }
