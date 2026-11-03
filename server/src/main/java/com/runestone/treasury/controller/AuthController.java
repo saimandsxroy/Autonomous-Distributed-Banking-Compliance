@@ -118,3 +118,82 @@ public class AuthController {
     String username = auth.getName();
     User user = userRepository.findByUserName(username).orElse(null);
 
+    List<String> roles =
+        auth.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList());
+
+    List<TreasuryAccount> accounts =
+        user != null ? treasuryAccountRepository.findByUserId(user.getId()) : List.of();
+
+    boolean isOfficer =
+        roles.stream().anyMatch(r -> r.contains("COMPLIANCE") || r.contains("ADMIN"));
+    String portalTarget = isOfficer ? "/compliance" : "/dashboard";
+
+    Map<String, Object> info = new HashMap<>();
+    info.put("username", username);
+    info.put(
+        "email",
+        user != null && user.getEmail() != null ? user.getEmail() : username + "@runestone.com");
+    info.put("roles", roles);
+    info.put("portalTarget", portalTarget);
+    info.put("accounts", accounts);
+
+    return ResponseEntity.ok(info);
+  }
+
+  @PostMapping("/demo-switch/{personaUsername}")
+  public ResponseEntity<?> demoSwitch(@PathVariable String personaUsername) {
+    try {
+      Optional<User> userOpt = userRepository.findByUserName(personaUsername);
+      if (userOpt.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(
+                Map.of(
+                    "errorCode",
+                    "USER_NOT_FOUND",
+                    "message",
+                    "Demo persona not found: " + personaUsername));
+      }
+
+      User user = userOpt.get();
+      List<String> roles =
+          user.getRoles().stream()
+              .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+              .collect(Collectors.toList());
+
+      List<TreasuryAccount> accounts = treasuryAccountRepository.findByUserId(user.getId());
+      List<Long> accountIds =
+          accounts.stream().map(TreasuryAccount::getId).collect(Collectors.toList());
+
+      boolean isOfficer =
+          roles.stream().anyMatch(r -> r.contains("COMPLIANCE") || r.contains("ADMIN"));
+      String portalTarget = isOfficer ? "/compliance" : "/dashboard";
+
+      String token =
+          jwtTokenService.generateToken(user.getUserName(), user.getEmail(), roles, accountIds);
+
+      LoginResponseDto response =
+          new LoginResponseDto(
+              token,
+              user.getUserName(),
+              user.getEmail(),
+              roles,
+              portalTarget,
+              accounts,
+              accountIds,
+              jwtTokenService.getExpirySeconds());
+
+      log.info(
+          "Demo session switched to persona: {} (roles={}, portalTarget={})",
+          personaUsername,
+          roles,
+          portalTarget);
+      return ResponseEntity.ok(response);
+    } catch (Exception e) {
+      log.error("Failed demo switch to persona {}: {}", personaUsername, e.getMessage(), e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", e.getMessage()));
+    }
+  }
+}
