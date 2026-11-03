@@ -198,3 +198,103 @@ export function LoginPage() {
       {/* Radial Sapphire Backlight */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 36%, rgba(140, 176, 219, 0.12) 0%, rgba(30, 58, 95, 0.05) 45%, transparent 70%)",
+        }}
+      />
+
+      {/* Subtle Film Grain Overlay */}
+      <div className="film-grain pointer-events-none" />
+
+      {/* =====================================================================
+          TOP MICRO-NAVIGATION CHROME BAR
+          ===================================================================== */}
+      <header className="relative z-30 w-full border-b border-white/10 px-4 sm:px-8 lg:px-12 py-3.5 sm:py-4 flex justify-between items-center backdrop-blur-md bg-[#08090A]/80">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34D399]" />
+            <span className="font-hero-display text-xs sm:text-sm tracking-wider text-[#F3F1EC]">
+              RUNESTONE
+            </span>
+          </div>
+          <span className="hidden md:inline font-tech-mono text-[10px] tracking-[0.2em] text-[#7A7D82]">
+            // AUTONOMOUS BANKING INFRASTRUCTURE
+          </span>
+        </div>
+
+        <Link
+          to="/"
+          className="group inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-tech-mono tracking-[0.16em] text-[#8CB0DB] hover:text-white uppercase transition-colors"
+        >
+          <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-1" />
+          <span>Return to 3D Architecture</span>
+        </Link>
+      </header>
+
+      {/* =====================================================================
+          MAIN SPLIT STAGE: Responsive Flex Layout (Stack on Mobile, Row on Desktop)
+          ===================================================================== */}
+      <main className="relative z-20 flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row items-center lg:items-start justify-between gap-8 lg:gap-12 my-auto">
+        {/* =================================================================
+            LEFT COLUMN: IDENTITY & 1-CLICK DEMO CLEARANCE
+            ================================================================= */}
+        <div className="w-full lg:flex-1 flex flex-col justify-center select-none">
+          {/* Eyebrow Pill */}
+          <div className="institutional-glass-badge inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-tech-mono tracking-[0.2em] text-[#E2E8F0] uppercase mb-4 sm:mb-6 w-fit">
+            <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse shadow-[0_0_8px_#38BDF8]" />
+            <span>STATELESS JWT & RBAC CLEARANCE GATE</span>
+          </div>
+
+          {/* Luxury Display Heading */}
+          <h1 className="font-display-sans text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white mb-3 sm:mb-4 leading-[1.08]">
+            Cryptographic access.
+            <br />
+            <span className="font-editorial-serif italic font-normal text-[#38BDF8]">
+              Role-isolated
+            </span>{" "}
+            portals.
+          </h1>
+
+          {/* Subheading */}
+          <p className="font-hero-sub text-xs sm:text-sm text-[#A1A4A8] max-w-lg mb-6 sm:mb-8 leading-relaxed">
+            Stateless HMAC-SHA256 tokens enforcing FINRA 3110 four-eyes separation and autonomous AML graph inspection across corporate treasury, recon desks, and SRE security vaults.
+          </p>
+
+          {/* Instant Preview Sandbox Header & Minimalist Persona Tiles */}
+          <div className="w-full space-y-3 max-w-xl">
+            <div className="flex items-center gap-2 pb-1">
+              <span className="text-[11px] font-tech-mono font-semibold uppercase tracking-[0.2em] text-[#8CB0DB]">
+                ⚡ INSTANT PREVIEW SANDBOX
+              </span>
+            </div>
+
+            {/* Alice Smith Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantDemoLogin("alice", "/dashboard")}
+              disabled={!!demoLoggingIn || isLoading}
+              className="w-full text-left p-4 lg:p-5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-[#38BDF8]/30 transition-all duration-300 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                  <UserCheck size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                    <span className="text-sm font-medium text-white group-hover:text-emerald-300 transition-colors">
+                      Alice Smith
+                    </span>
+                    <span className="text-[9px] font-tech-mono font-medium px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 uppercase tracking-wider">
+                      MAKER
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8E9299] mt-0.5 font-hero-sub break-words">
+                    Execute transfers &amp; batch payroll.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center pl-2 sm:pl-3 shrink-0">
+                {demoLoggingIn === "alice" ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-emerald-400">
+                    <Loader2 size={15} className="animate-spin" />
