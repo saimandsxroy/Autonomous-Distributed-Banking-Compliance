@@ -12,6 +12,13 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			fontFamily: {
+				heading: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+				serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+				display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+				sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+				mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+			},
 			colors: {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
@@ -66,6 +73,9 @@ export default {
 				'brutal': '4px',
 				'brutal-lg': '8px',
 				'brutal-sm': '2px',
+			},
+			transitionTimingFunction: {
+				'institutional': 'cubic-bezier(0.16, 1, 0.3, 1)',
 			}
 		}
 	},
