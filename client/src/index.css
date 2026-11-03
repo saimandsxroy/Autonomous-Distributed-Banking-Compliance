@@ -208,3 +208,61 @@
 
 /* Atmospheric Layer 2: Subtle Film Grain Overlay */
 .film-grain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 40;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Atmospheric Layer 3: Custom Precision Reticle Cursor */
+.reticle-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 229, 222, 0.45);
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate3d(-100px, -100px, 0);
+  transition: width 0.15s ease, height 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reticle-cursor::after {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: rgba(232, 229, 222, 0.85);
+}
+
+.reticle-cursor.hovering-target {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(140, 176, 219, 0.9);
+}
+
+.reticle-cursor.hovering-target::after {
+  background-color: #8CB0DB;
+}
+
+@media (pointer: coarse) {
+  .reticle-cursor {
+    display: none !important;
+  }
+}
+
+/* Vertical list gradient fade for right column */
+.vertical-fade-list {
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 82%, rgba(0,0,0,0.3) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 82%, rgba(0,0,0,0.3) 100%);
+}
+
