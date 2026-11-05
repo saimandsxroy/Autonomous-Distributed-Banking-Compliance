@@ -1018,3 +1018,343 @@ export function ComplianceCommandCenter() {
                           </div>
                         </div>
 
+                        <div className="p-3.5 bg-[#06080C]/85 border border-white/[0.06] rounded-xl text-xs text-[#D1D5DB] font-sans leading-relaxed">
+                          <span className="font-semibold text-amber-300 font-mono text-[10px] uppercase tracking-wider block mb-1">
+                            AI Detective Rationale:
+                          </span>
+                          {currentApproval.aiRationale}
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-mono uppercase text-[#8E929B] font-semibold tracking-wider block mb-1.5">
+                            Reviewer Audit Log Notes
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={reviewerNotes}
+                            onChange={(e) => setReviewerNotes(e.target.value)}
+                            placeholder='e.g. "Verified legitimate counterparty transaction documentation."'
+                            className="w-full px-3.5 py-2.5 bg-[#06080C] border border-white/10 rounded-xl text-xs text-[#F3F1EC] placeholder-[#6E737D] focus:outline-none focus:border-[#38BDF8] font-mono transition-colors"
+                          />
+                        </div>
+
+                        {/* Action buttons with FINRA Rule 3110 4-eyes enforcement (Aesthetic & Animated) */}
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(currentApproval.id, "RELEASE")}
+                            className="flex-1 relative group overflow-hidden py-3 px-4 rounded-xl font-mono text-xs font-semibold uppercase tracking-wider text-emerald-100 bg-gradient-to-r from-emerald-600/90 to-teal-600/90 hover:from-emerald-500 hover:to-teal-500 active:scale-95 transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.55)] border border-emerald-400/40 flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                            <CheckCircle2 size={16} className="text-white group-hover:scale-110 transition-transform duration-200" />
+                            <span className="relative z-10 font-['Plus_Jakarta_Sans',sans-serif] tracking-normal font-semibold">
+                              Approve &amp; Release Hold
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(currentApproval.id, "FREEZE")}
+                            className="flex-1 relative group overflow-hidden py-3 px-4 rounded-xl font-mono text-xs font-semibold uppercase tracking-wider text-rose-100 bg-gradient-to-r from-rose-600/90 to-red-600/90 hover:from-rose-500 hover:to-red-500 active:scale-95 transition-all duration-300 shadow-[0_0_20px_rgba(244,63,94,0.3)] hover:shadow-[0_0_30px_rgba(244,63,94,0.55)] border border-rose-400/40 flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                            <ShieldAlert size={16} className="text-white group-hover:scale-110 transition-transform duration-200" />
+                            <span className="relative z-10 font-['Plus_Jakarta_Sans',sans-serif] tracking-normal font-semibold">
+                              Approve &amp; Execute AML Freeze
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleReject(currentApproval.id)}
+                            className="py-3 px-5 rounded-xl font-mono text-xs font-medium uppercase tracking-wider text-[#9CA3AF] hover:text-white bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 transition-all duration-200 border border-white/10 hover:border-white/20 flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <XCircle size={15} />
+                            <span className="font-['Plus_Jakarta_Sans',sans-serif] tracking-normal">
+                              Reject &amp; Dismiss
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-[#0C1017]/90 border border-white/[0.08] rounded-xl shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-semibold text-[#8E929B] uppercase">
+                      Inspect Account:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { id: 3, label: "Account #3 (Charlie)" },
+                        { id: 1, label: "Account #1 (Alice)" },
+                        { id: 2, label: "Account #2 (Bob)" },
+                      ].map((btn) => (
+                        <button
+                          key={btn.id}
+                          type="button"
+                          onClick={() => {
+                            setGraphSearchAccountId(btn.id);
+                            loadAccountGraph(btn.id);
+                          }}
+                          className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg border transition-all cursor-pointer ${
+                            graphSearchAccountId === btn.id
+                              ? "bg-[#38BDF8]/15 border-[#38BDF8]/50 text-[#38BDF8] shadow-[0_0_10px_rgba(56,189,248,0.2)] font-semibold"
+                              : "bg-[#06080C] border-white/10 text-[#8E929B] hover:text-white hover:border-white/20"
+                          }`}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={graphSearchAccountId}
+                      onChange={(e) => setGraphSearchAccountId(Number(e.target.value))}
+                      placeholder="Account ID"
+                      className="w-24 px-3 py-1.5 text-xs font-mono bg-[#06080C] border border-white/10 rounded-lg text-white text-center focus:outline-none focus:border-[#38BDF8] transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => loadAccountGraph(graphSearchAccountId)}
+                      className="px-3.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-mono font-medium rounded-lg border border-white/10 flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <RefreshCw size={12} className={isGraphLoading ? "animate-spin" : ""} />
+                      <span>Traverse Graph</span>
+                    </button>
+                  </div>
+                </div>
+
+                <AmlGraphVisualizer
+                  analysis={liveSubgraph}
+                  loading={isGraphLoading}
+                  onRefresh={() => loadAccountGraph(graphSearchAccountId || 3)}
+                  title={`Sub-Graph Analysis: Account #${graphSearchAccountId || 3} Money Trail`}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      )}
+
+      {/* =====================================================================
+          TAB 2: REGULATORY RAG POLICY EXPLORER
+          ===================================================================== */}
+      {activeTab === "policies" && (
+        <div className="space-y-6">
+          {/* Search bar */}
+          <form onSubmit={handlePolicySearch} className="flex gap-3">
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7A7D82]"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search regulatory mandates (e.g. structuring, smurfing, circular round-tripping, FATF layering, mule fan-out)..."
+                className="w-full pl-12 pr-4 py-3 bg-[#0C1017] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-sm text-white focus:outline-none font-sans transition-colors"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-5 py-3 bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold uppercase tracking-wider text-xs rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.25)] transition-all shrink-0 cursor-pointer"
+            >
+              Semantic RAG Search
+            </button>
+          </form>
+
+          {/* Policy cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {policies.map((p) => {
+              const jur = p.jurisdiction;
+              const jurColor =
+                jur === "FINCEN"
+                  ? "bg-blue-500/10 text-blue-300 border-blue-500/30"
+                  : jur === "FATF"
+                    ? "bg-purple-500/10 text-purple-300 border-purple-500/30"
+                    : jur === "RBI"
+                      ? "bg-orange-500/10 text-orange-300 border-orange-500/30"
+                      : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30";
+
+              return (
+                <div
+                  key={p.id || p.policyCode}
+                  className="p-5 bg-[#0C1017]/90 border border-white/[0.08] hover:border-white/[0.18] rounded-2xl shadow-xl flex flex-col justify-between space-y-4 backdrop-blur-xl transition-all"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold uppercase tracking-wider border ${jurColor}`}
+                      >
+                        {p.jurisdiction}
+                      </span>
+                      <span className="font-mono text-[10px] text-[#6E737D]">
+                        {p.policyCode}
+                      </span>
+                    </div>
+
+                    <h4 className="font-semibold text-sm text-[#F3F1EC]">
+                      {p.title}
+                    </h4>
+
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-semibold">
+                      Category: {p.category}
+                    </div>
+
+                    <p className="text-xs text-[#9CA3AF] font-sans leading-relaxed line-clamp-5">
+                      {p.content}
+                    </p>
+                  </div>
+
+                  {p.similarityScore !== undefined && (
+                    <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-[#8E929B]">Cosine Similarity:</span>
+                      <span className="font-bold text-emerald-400">
+                        {(p.similarityScore * 100).toFixed(1)}% Match
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          TAB 3: SRE DLQ & CRYPTOGRAPHIC HASH AUDIT TRAIL
+          ===================================================================== */}
+      {activeTab === "sre_audit" && (
+        <div className="space-y-8">
+          {/* Dead Letter Queue (DLQ) Card */}
+          <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2.5">
+                <Terminal size={18} className="text-amber-400" />
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-[#F3F1EC]">
+                  SRE Dead-Letter Queue (DLQ Replay)
+                </h4>
+              </div>
+              <span className="text-xs font-mono text-[#8E929B] bg-white/[0.04] border border-white/10 px-2.5 py-1 rounded-lg">
+                {dlqEvents.length} Quarantined
+              </span>
+            </div>
+
+            {dlqEvents.length === 0 ? (
+              <div className="p-6 text-center text-[#6E737D] text-xs font-mono">
+                ✓ No quarantined DLQ events. Outbox relay pipelines operating normally.
+              </div>
+            ) : (
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead>
+                    <tr className="border-b border-white/[0.08] text-[#6E737D] text-[10px] uppercase tracking-wider">
+                      <th className="py-2.5">ID</th>
+                      <th className="py-2.5">Topic</th>
+                      <th className="py-2.5">Aggregate ID</th>
+                      <th className="py-2.5">Event Type</th>
+                      <th className="py-2.5">Retries</th>
+                      <th className="py-2.5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.06]">
+                    {dlqEvents.map((ev) => (
+                      <tr key={ev.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 font-semibold text-[#F3F1EC]">
+                          #{ev.id}
+                        </td>
+                        <td className="py-3 text-[#9CA3AF]">
+                          {ev.originalTopic}
+                        </td>
+                        <td className="py-3 text-[#9CA3AF]">
+                          {ev.aggregateId}
+                        </td>
+                        <td className="py-3 text-[#F3F1EC] font-semibold">
+                          {ev.eventType}
+                        </td>
+                        <td className="py-3 text-rose-400 font-semibold">
+                          {ev.retryCount}
+                        </td>
+                        <td className="py-3 text-right">
+                          <button
+                            onClick={() => handleReplayDlq(ev.id)}
+                            className="px-3.5 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-mono font-medium rounded-lg text-xs uppercase transition-all shadow-[0_0_10px_rgba(245,158,11,0.15)] cursor-pointer"
+                          >
+                            Replay to Kafka
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Cryptographic SHA-256 Hash Chain Explorer */}
+          <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3.5 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2.5">
+                <Lock size={18} className="text-emerald-400" />
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-[#F3F1EC]">
+                  Cryptographic SHA-256 Audit Trail Chain
+                </h4>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {auditData?.chainIntact ? (
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckCircle2 size={14} />
+                    Chain 100% Cryptographically Verified
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono font-semibold uppercase tracking-wider flex items-center gap-1.5 animate-pulse">
+                    <AlertTriangle size={14} />
+                    Chain Integrity Violation
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-white/[0.08] text-[#6E737D] text-[10px] uppercase tracking-wider">
+                    <th className="py-2.5">ID</th>
+                    <th className="py-2.5">Actor</th>
+                    <th className="py-2.5">Action Type</th>
+                    <th className="py-2.5">Target Entity</th>
+                    <th className="py-2.5">Previous SHA-256</th>
+                    <th className="py-2.5">Record SHA-256</th>
+                    <th className="py-2.5 text-right">Payload</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.06]">
+                  {auditData?.auditLogs.map((log) => {
+                    const isExpanded = !!expandedPayloads[log.id];
+
+                    return (
+                      <tr
+                        key={log.id}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="py-3 font-semibold text-[#8CB0DB]">
+                          #{log.id}
+                        </td>
+                        <td className="py-3 font-semibold text-[#F3F1EC]">
+                          {log.actorUserName}
+                        </td>
+                        <td className="py-3">
+                          <span className="px-2 py-0.5 rounded bg-white/[0.04] border border-white/10 text-[#9CA3AF] text-[10px] font-semibold">
+                            {log.actionType}
+                          </span>
+                        </td>
+                        <td className="py-3 text-[#9CA3AF]">
+                          #{log.targetEntityId}
