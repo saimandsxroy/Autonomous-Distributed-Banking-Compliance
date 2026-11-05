@@ -108,3 +108,41 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
           <div className="flex items-center gap-2">
             {allUserAccounts.length > 1 && (
               <select
+                value={treasuryAccount?.id}
+                onChange={(e) => {
+                  const chosen = allUserAccounts.find(
+                    (a) => a.id === Number(e.target.value)
+                  );
+                  if (chosen) setTreasuryAccount(chosen);
+                }}
+                className="px-2 py-0.5 bg-[#06080C] border border-white/10 text-xs text-white font-mono rounded-lg focus:outline-none"
+              >
+                {allUserAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    Acc #{a.id} ({a.accountNumber})
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={() => setIsRevealed(!isRevealed)}
+              className="p-1 hover:text-white transition-colors text-[#8E929B]"
+              title={isRevealed ? "Hide balance" : "Show balance"}
+            >
+              {isRevealed ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            <button
+              onClick={loadBalance}
+              className={`p-1 hover:text-white transition-colors text-[#8E929B] ${isLoading ? "animate-spin text-[#38BDF8]" : ""}`}
+              title="Refresh ledger balances"
+            >
+              <RefreshCw size={16} />
+            </button>
+          </div>
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="pt-6 space-y-6">
+        {/* Double-Entry Invariant Strip: 3 Balance Buckets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Bucket 1: Posted Balance */}
