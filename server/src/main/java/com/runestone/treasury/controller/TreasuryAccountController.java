@@ -34,9 +34,17 @@ public class TreasuryAccountController {
     User user = userService.findByUserName(userName);
     if (user != null) {
       List<TreasuryAccount> all = treasuryAccountService.findByUserId(user.getId());
-      if (all != null && !all.isEmpty()) {
-        return new ResponseEntity<>(all, HttpStatus.OK);
+      if (all == null || all.isEmpty()) {
+        TreasuryAccount initialAcc = new TreasuryAccount();
+        initialAcc.setCurrency("USD");
+        initialAcc.setStatus("ACTIVE");
+        initialAcc.setAvailableBalance(new java.math.BigDecimal("10000.00"));
+        initialAcc.setHeldBalance(java.math.BigDecimal.ZERO);
+        initialAcc.setPostedBalance(new java.math.BigDecimal("10000.00"));
+        TreasuryAccount created = treasuryAccountService.createAccount(initialAcc, userName);
+        return new ResponseEntity<>(List.of(created), HttpStatus.OK);
       }
+      return new ResponseEntity<>(all, HttpStatus.OK);
     }
     return new ResponseEntity<>(HttpStatus.NOT_FOUND);
   }
