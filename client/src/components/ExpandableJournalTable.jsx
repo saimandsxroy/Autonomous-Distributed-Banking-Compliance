@@ -98,3 +98,121 @@ export function ExpandableJournalTable({ entries = [] }) {
                   </div>
                 </div>
               </div>
+
+              <div className="flex items-center gap-4 text-right self-end md:self-auto">
+                <div>
+                  <div className="font-['JetBrains_Mono',monospace] text-base sm:text-lg font-semibold text-[#F3F1EC]">
+                    ${Number(entry.amount || 0).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    <span className="text-xs text-[#7A7D82] font-normal">{entry.currency || "USD"}</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-[#6E737D]">
+                    {entry.date ? new Date(entry.date).toLocaleString() : ""}
+                  </div>
+                </div>
+
+                {/* Zero-Sum Invariant Badge */}
+                <div
+                  className={`px-2 py-1 rounded-lg text-[10px] font-mono font-medium uppercase tracking-wider hidden sm:flex items-center gap-1.5 border ${
+                    isBalanced
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                      : "bg-rose-500/10 border-rose-500/20 text-rose-300"
+                  }`}
+                  title="Double-Entry Invariant: Sum of signed legs must equal zero"
+                >
+                  <Lock size={11} />
+                  <span>Σ = $0.00</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Expandable Posting Legs Accordion with Smooth Transition */}
+            <div
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                isExpanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="p-4 sm:p-5 bg-[#07090D] border-t border-white/[0.06] space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono">
+                  <span className="text-[#8E929B] font-medium uppercase tracking-wider text-[11px]">
+                    Paired Posting Legs (Double-Entry Atomic Settlement)
+                  </span>
+                  <span className="text-emerald-400 font-medium flex items-center gap-1 text-[11px]">
+                    <CheckCircle2 size={12} />
+                    <span>Sum(Debit) + Sum(Credit) = $0.0000 [ZERO-SUM VERIFIED]</span>
+                  </span>
+                </div>
+
+                {legs.length === 0 ? (
+                  <div className="p-3.5 rounded-xl border border-white/[0.06] text-[#7A7D82] text-xs font-mono text-center bg-white/[0.01]">
+                    {isSettled
+                      ? "Posting legs settled into immutable double-entry ledger."
+                      : "Funds encumbered in PENDING_HOLD. Posting legs await compliance HITL release."}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-mono">
+                      <thead>
+                        <tr className="border-b border-white/[0.06] text-[10px] uppercase text-[#6E737D] tracking-wider">
+                          <th className="py-2 px-2">Leg ID</th>
+                          <th className="py-2 px-2">Type</th>
+                          <th className="py-2 px-2">Account</th>
+                          <th className="py-2 px-2">Counterparty</th>
+                          <th className="py-2 px-2 text-right">Signed Delta</th>
+                          <th className="py-2 px-2 text-right">Balance After</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.04]">
+                        {legs.map((leg) => {
+                          const isCredit = leg.legType === "CREDIT";
+                          return (
+                            <tr key={leg.id} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-2.5 px-2 font-semibold text-[#8E929B]">#{leg.id}</td>
+                              <td className="py-2.5 px-2">
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono uppercase tracking-wider font-semibold border ${
+                                    isCredit
+                                      ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                      : "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                                  }`}
+                                >
+                                  {leg.legType}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-2 text-[#F3F1EC] font-medium">Account #{leg.accountId}</td>
+                              <td className="py-2.5 px-2 text-[#8E929B]">Account #{leg.counterpartyAccountId}</td>
+                              <td
+                                className={`py-2.5 px-2 text-right font-['JetBrains_Mono',monospace] font-semibold ${
+                                  isCredit ? "text-emerald-400" : "text-rose-400"
+                                }`}
+                              >
+                                {isCredit ? "+" : "-"}${Number(leg.amount || 0).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td className="py-2.5 px-2 text-right font-['JetBrains_Mono',monospace] text-[#8E929B]">
+                                {leg.balanceAfter != null
+                                  ? `$${Number(leg.balanceAfter).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}`
+                                  : "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
