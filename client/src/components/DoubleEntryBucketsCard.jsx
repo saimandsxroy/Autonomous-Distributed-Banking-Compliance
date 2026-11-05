@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock, ShieldAlert, ShieldCheck, ArrowRight } from "lucide-react";
+import { Lock, ShieldAlert, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function DoubleEntryBucketsCard({
@@ -10,9 +10,14 @@ export function DoubleEntryBucketsCard({
   const navigate = useNavigate();
 
   const isFrozen = account?.status === "FROZEN_AML";
-  const posted = account?.postedBalance ?? 0;
-  const available = account?.availableBalance ?? 0;
-  const held = account?.heldBalance ?? 0;
+  const posted = Number(account?.postedBalance ?? 0);
+  const available = Number(account?.availableBalance ?? 0);
+  const held = Number(account?.heldBalance ?? 0);
+
+  // Compute percentages for the visual liquidity bar
+  const total = posted > 0 ? posted : (available + held) > 0 ? (available + held) : 1;
+  const availablePct = Math.min(100, Math.max(0, (available / total) * 100));
+  const heldPct = Math.min(100, Math.max(0, (held / total) * 100));
 
   const handleNavigate = () => {
     if (onOpenCompliance) {
@@ -22,111 +27,74 @@ export function DoubleEntryBucketsCard({
     }
   };
 
+  const formatCurrency = (val) => {
+    return val.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   return (
     <div className="space-y-4">
-      {/* Status Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-        <span className="text-xs font-mono font-bold uppercase text-zinc-400">
-          Account #{account?.id || "—"} ({account?.accountNumber || "..."})
-        </span>
-        <span
-          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border ${
-            isFrozen
-              ? "bg-rose-950 text-rose-300 border-rose-600 animate-pulse"
-              : "bg-emerald-950 text-emerald-300 border-emerald-600"
-          }`}
-        >
-          {isFrozen ? <ShieldAlert size={12} /> : <ShieldCheck size={12} />}
-          {isFrozen ? "FROZEN_AML PROTOCOL" : "ACCOUNT ACTIVE"}
-        </span>
-      </div>
-
-      {/* 3 Balance Buckets */}
+      {/* 3-Bucket Glass Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Bucket 1: Posted Balance */}
-        <div className="p-4 bg-zinc-950 border-2 border-zinc-800 rounded-lg">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 font-bold">
-            1. Posted Ledger Total
+        {/* Bucket 1: Posted Book Value */}
+        <div className="p-5 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.16] rounded-2xl transition-all duration-300 relative overflow-hidden group">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10.5px] uppercase tracking-wider text-[#8CB0DB] font-semibold">
+              1. Posted Book Value
+            </span>
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-white/[0.05] text-[#8E929B] border border-white/10 uppercase">
+              Gross Equity
+            </span>
           </div>
-          <div
-            className={`text-2xl md:text-3xl font-black mt-1 text-white tracking-tight ${
-              !isRevealed ? "blur-md select-none opacity-50" : ""
-            }`}
-          >
-            $
-            {posted.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+
+          <div className="mt-3">
+            <div
+              className={`font-['JetBrains_Mono',monospace] text-2xl lg:text-3xl font-semibold tracking-tight text-[#F3F1EC] transition-all duration-300 ${
+                !isRevealed ? "blur-md select-none opacity-40" : ""
+              }`}
+            >
+              <span className="text-[#8E929B] text-lg font-normal mr-1">$</span>
+              {formatCurrency(posted)}
+            </div>
+            <div className="text-[11px] text-[#7A7D82] font-mono mt-1">
+              Book Total = Available + Held
+            </div>
           </div>
-          <div className="text-[10px] font-mono text-zinc-500 mt-1">
-            Book Value = Available + Held
-          </div>
+
+          {/* Hairline Bottom Glow */}
+          <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-[#38BDF8]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
 
-        {/* Bucket 2: Available Balance */}
-        <div className="p-4 bg-zinc-950 border-2 border-emerald-900/60 rounded-lg">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
-            2. Available (Spendable)
+        {/* Bucket 2: Available Liquidity */}
+        <div className="p-5 bg-[#0C1017]/90 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 rounded-2xl transition-all duration-300 relative overflow-hidden group">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10.5px] uppercase tracking-wider text-emerald-400 font-semibold">
+              2. Available (Spendable)
+            </span>
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-emerald-400" />
+              Unencumbered
+            </span>
           </div>
-          <div
-            className={`text-2xl md:text-3xl font-black mt-1 text-emerald-400 tracking-tight ${
-              !isRevealed ? "blur-md select-none opacity-50" : ""
-            }`}
-          >
-            $
-            {available.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+
+          <div className="mt-3">
+            <div
+              className={`font-['JetBrains_Mono',monospace] text-2xl lg:text-3xl font-semibold tracking-tight text-emerald-400 transition-all duration-300 ${
+                !isRevealed ? "blur-md select-none opacity-40" : ""
+              }`}
+            >
+              <span className="text-emerald-500/60 text-lg font-normal mr-1">$</span>
+              {formatCurrency(available)}
+            </div>
+            <div className="text-[11px] text-emerald-500/70 font-mono mt-1">
+              Free Working Capital • Line Speed
+            </div>
           </div>
-          <div className="text-[10px] font-mono text-emerald-600 mt-1">
-            Free of Encumbrances
-          </div>
+
+          <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
 
-        {/* Bucket 3: Held / Escrowed Balance */}
-        <div className="p-4 bg-zinc-950 border-2 border-amber-900/60 rounded-lg">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold">
-            3. Held / Escrowed
-          </div>
-          <div
-            className={`text-2xl md:text-3xl font-black mt-1 text-amber-400 tracking-tight ${
-              !isRevealed ? "blur-md select-none opacity-50" : ""
-            }`}
-          >
-            $
-            {held.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-          <div className="text-[10px] font-mono text-amber-600 mt-1">
-            Intercepted AML & Velocity Holds
-          </div>
-        </div>
-      </div>
-
-      {/* Invariant Verification */}
-      <div className="p-3 bg-zinc-950/70 border border-zinc-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-        <div className="flex items-center gap-2 text-zinc-300">
-          <Lock size={14} className="text-ochre-800 shrink-0" />
-          <span>
-            Invariant: <span className="text-white font-bold">${posted.toFixed(2)}</span> ={" "}
-            <span className="text-emerald-400 font-bold">${available.toFixed(2)}</span> +{" "}
-            <span className="text-amber-400 font-bold">${held.toFixed(2)}</span>
-          </span>
-        </div>
-
-        <button
-          onClick={handleNavigate}
-          className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-ochre-500 hover:text-white rounded border border-zinc-700 font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5 transition-colors shrink-0"
-        >
-          <span>Open AML Compliance Command</span>
-          <ArrowRight size={14} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
+        {/* Bucket 3: Held in Escrow */}
+        <div className="p-5 bg-[#0C1017]/90 backdrop-blur-xl border border-amber-500/20 hover:border-amber-500/40 rounded-2xl transition-all duration-300 relative overflow-hidden group">
