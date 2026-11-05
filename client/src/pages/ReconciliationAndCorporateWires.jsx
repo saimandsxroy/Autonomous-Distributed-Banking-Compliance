@@ -518,3 +518,163 @@ export function ReconciliationAndCorporateWires() {
                     }`}
                   >
                     {selectedRun.status}
+                  </span>
+                </div>
+
+                {/* Discrepancies Table */}
+                <div className="overflow-x-auto rounded-xl border border-white/[0.06] bg-[#07090D]">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead>
+                      <tr className="border-b border-white/[0.06] text-[10px] uppercase text-[#6E737D] tracking-wider">
+                        <th className="p-3">#ID</th>
+                        <th className="p-3">Discrepancy Type</th>
+                        <th className="p-3">Idempotency Key</th>
+                        <th className="p-3">External Amt</th>
+                        <th className="p-3">Internal Amt</th>
+                        <th className="p-3">Resolution</th>
+                        <th className="p-3 text-right">Compensating Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04]">
+                      {discrepancies.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="p-8 text-center text-[#7A7D82]">
+                            No discrepancies in this run — 100% ledger parity achieved.
+                          </td>
+                        </tr>
+                      ) : (
+                        discrepancies.map((disc) => (
+                          <tr key={disc.id} className="hover:bg-white/[0.015] transition-colors">
+                            <td className="p-3 font-semibold text-white">#{disc.id}</td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[9.5px] font-mono uppercase font-semibold border ${
+                                  disc.discrepancyType === "MISSING_INTERNAL"
+                                    ? "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                    : disc.discrepancyType === "AMOUNT_MISMATCH"
+                                    ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                                    : "bg-white/[0.05] text-[#8E929B] border-white/10"
+                                }`}
+                              >
+                                {disc.discrepancyType}
+                              </span>
+                            </td>
+                            <td className="p-3 text-[#F3F1EC] font-semibold truncate max-w-[130px]">
+                              {disc.idempotencyKey}
+                            </td>
+                            <td className="p-3 text-white font-semibold">
+                              {disc.externalAmount != null ? `$${parseFloat(disc.externalAmount).toFixed(2)}` : "—"}
+                            </td>
+                            <td className="p-3 text-[#8E929B]">
+                              {disc.internalAmount != null ? `$${parseFloat(disc.internalAmount).toFixed(2)}` : "—"}
+                            </td>
+                            <td className="p-3">
+                              {disc.resolutionStatus === "OPEN" ? (
+                                <span className="inline-flex items-center gap-1 text-rose-400 font-semibold text-[11px]">
+                                  <AlertTriangle size={11} /> OPEN
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold text-[11px]">
+                                  <CheckCircle2 size={11} /> COMPENSATED
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">
+                              {disc.resolutionStatus === "OPEN" ? (
+                                <button
+                                  onClick={() => handleResolveDiscrepancy(disc)}
+                                  disabled={resolvingId === disc.id}
+                                  className="bg-[#38BDF8]/20 hover:bg-[#38BDF8]/30 border border-[#38BDF8]/40 text-[#38BDF8] rounded-lg px-2.5 py-1 text-[11px] font-mono font-semibold transition-all inline-flex items-center gap-1"
+                                >
+                                  {resolvingId === disc.id ? (
+                                    <RefreshCw size={11} className="animate-spin" />
+                                  ) : (
+                                    <Scale size={11} />
+                                  )}
+                                  <span>Post Compensating Adj</span>
+                                </button>
+                              ) : (
+                                <span className="text-[#6E737D] text-[11px]">Healed (Nostro Pool)</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-[#7A7D82] font-mono text-xs">
+                Click "⚡ Simulate EOD SWIFT Clearing" above to run statement reconciliation.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 2: MAKER-CHECKER CORPORATE SPEND DESK
+          ========================================================================= */}
+      {activeTab === "wires" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {/* Form */}
+            <div className="lg:col-span-2 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300">
+              <div className="pb-4 border-b border-white/[0.06] mb-5">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="text-[#38BDF8]" size={18} />
+                  <h3 className="font-semibold text-base text-[#F3F1EC]">
+                    Corporate Spend Wire Desk
+                  </h3>
+                </div>
+                <p className="font-mono text-[11px] text-[#7A7D82] mt-0.5">
+                  Enforces automated policy thresholding and FINRA Rule 3110 separation of duties across Maker and Checkers.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmitCorporateWire} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono uppercase text-[#8E929B] font-medium block">
+                      Funding Source Account
+                    </label>
+                    <select
+                      value={wireForm.sourceAccountId}
+                      onChange={(e) => setWireForm({ ...wireForm, sourceAccountId: e.target.value })}
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] text-white font-mono text-xs rounded-xl p-2.5 focus:outline-none cursor-pointer"
+                    >
+                      {accounts.map((acct) => (
+                        <option key={acct.id} value={acct.id} className="bg-[#0C1017]">
+                          Acc #{acct.id} ({acct.accountNumber}) — ${parseFloat(acct.availableBalance).toFixed(2)} USD
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono uppercase text-[#8E929B] font-medium block">
+                      Destination Counterparty ID
+                    </label>
+                    <input
+                      type="number"
+                      value={wireForm.destinationAccountId}
+                      onChange={(e) => setWireForm({ ...wireForm, destinationAccountId: e.target.value })}
+                      placeholder="e.g. 2"
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] text-white font-mono text-xs rounded-xl p-2.5 focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono uppercase text-[#8E929B] font-medium block">
+                      Wire Amount ($ USD)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={wireForm.amount}
+                      onChange={(e) => setWireForm({ ...wireForm, amount: e.target.value })}
+                      placeholder="15000.00"
