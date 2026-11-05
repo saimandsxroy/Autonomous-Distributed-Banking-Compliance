@@ -60,7 +60,7 @@ public class IdempotencyService {
             "Idempotency key {} reused with different payload for user {}",
             idempotencyKey,
             userName);
-        stringRedisTemplate.delete(redisKey);
+        safeRedisDelete(redisKey);
         return "HASH_MISMATCH";
       }
       if ("COMPLETED".equals(record.getStatus())) {
@@ -68,7 +68,7 @@ public class IdempotencyService {
             "Replaying completed response for idempotency key {} user {}",
             idempotencyKey,
             userName);
-        stringRedisTemplate.delete(redisKey);
+        safeRedisDelete(redisKey);
         return "REPLAY:" + record.getResponseBody();
       }
     }
@@ -110,13 +110,13 @@ public class IdempotencyService {
       log.error("Failed to mark idempotency record completed: {}", e.getMessage());
     } finally {
       String redisKey = "idemp:" + userName + ":" + idempotencyKey;
-      stringRedisTemplate.delete(redisKey);
+      safeRedisDelete(redisKey);
     }
   }
 
   public void releaseLock(String userName, String idempotencyKey) {
     String redisKey = "idemp:" + userName + ":" + idempotencyKey;
-    stringRedisTemplate.delete(redisKey);
+    safeRedisDelete(redisKey);
   }
 
   private Boolean safeRedisSetIfAbsent(String key, String value, long timeout, TimeUnit unit) {
