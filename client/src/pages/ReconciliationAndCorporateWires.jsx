@@ -778,3 +778,93 @@ export function ReconciliationAndCorporateWires() {
                   <tr className="border-b border-white/[0.06] text-[10px] uppercase text-[#6E737D] tracking-wider">
                     <th className="p-3">#ID</th>
                     <th className="p-3">Maker Submitter</th>
+                    <th className="p-3">Accounts</th>
+                    <th className="p-3">Amount</th>
+                    <th className="p-3">Required Signatures</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Checker Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {corporateWires.map((wire) => {
+                    const isPending = wire.status?.startsWith("PENDING_");
+                    const isMaker = wire.submitterUsername === activePersonaKey;
+                    return (
+                      <tr key={wire.id} className="hover:bg-white/[0.015] transition-colors">
+                        <td className="p-3 font-semibold text-white">#{wire.id}</td>
+                        <td className="p-3 text-[#F3F1EC] font-semibold">{wire.submitterUsername}</td>
+                        <td className="p-3 text-[#8E929B]">
+                          Acc #{wire.sourceAccountId} → Acc #{wire.destinationAccountId}
+                        </td>
+                        <td className="p-3 font-['JetBrains_Mono',monospace] font-semibold text-white">
+                          ${parseFloat(wire.amount).toFixed(2)}
+                        </td>
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-white/[0.04] text-[#8CB0DB] border border-white/10">
+                            {wire.approvalsCount || 0} of {wire.requiredApprovalsCount} Checkers
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[9.5px] font-mono uppercase font-semibold border ${
+                              wire.status === "SETTLED"
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                            }`}
+                          >
+                            {wire.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          {isPending ? (
+                            <div className="flex items-center justify-end gap-2">
+                              {isMaker ? (
+                                <span className="text-[10px] text-rose-400 font-semibold border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 rounded">
+                                  Self-Approval Forbidden
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleApproveWire(wire)}
+                                  disabled={wireApprovingId === wire.id}
+                                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-black font-semibold font-mono text-[11px] uppercase tracking-wider px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.2)] flex items-center gap-1.5 transition-all"
+                                >
+                                  {wireApprovingId === wire.id ? (
+                                    <RefreshCw size={12} className="animate-spin text-black" />
+                                  ) : (
+                                    <UserCheck size={12} />
+                                  )}
+                                  <span>Sign as {activePersonaKey}</span>
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-emerald-400 text-[11px] font-semibold">
+                              ✓ Settled on Ledger
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 3: REAL-TIME SRE & LEDGER TELEMETRY
+          ========================================================================= */}
+      {activeTab === "telemetry" && (
+        <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 space-y-5">
+          <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+            <div>
+              <h3 className="font-semibold text-lg text-[#F3F1EC] flex items-center gap-2">
+                <Activity className="text-[#38BDF8]" size={18} />
+                <span>Live Supervisory SRE & Treasury Telemetry</span>
+              </h3>
+              <p className="font-mono text-[11px] text-[#7A7D82] mt-0.5">
+                Real-time aggregation from MySQL double-entry ledger, outbox relay, and dead-letter queue.
+              </p>
+            </div>
