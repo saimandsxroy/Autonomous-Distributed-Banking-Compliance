@@ -284,6 +284,14 @@ async function treasuryFetch(url, options = {}) {
 
   if (response.status === 401 && !options._retry) {
     const persona = getActivePersona();
+    if (persona && PERSONAS[persona]) {
+      try {
+        await switchDemoPersonaJwt(persona);
+        return await treasuryFetch(url, { ...options, _retry: true });
+      } catch (refreshErr) {
+        console.debug("Silent token refresh failed:", refreshErr.message);
+      }
+    }
   }
 
   if (!response.ok) {
