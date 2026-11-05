@@ -518,3 +518,161 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
       particles.forEach((pt) => {
         pt.progress += pt.speed;
         if (pt.progress > 1.0) pt.progress = 0.0;
+        const ptPos = pt.curve.getPointAt(pt.progress);
+        pt.mesh.position.copy(ptPos);
+      });
+
+      // --- Raycasting & Hover Feedback ---
+      if (!isDraggingRef.current && mouse.x > -900) {
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(interactableObjects, false);
+
+        if (intersects.length > 0) {
+          const firstHit = intersects[0].object;
+          if (hoveredObject !== firstHit) {
+            hoveredObject = firstHit;
+            document.body.style.cursor = "pointer";
+            if (onHoverChange) {
+              onHoverChange(true, firstHit.userData || { label: "Interactive Object" });
+            }
+          }
+        } else {
+          if (hoveredObject !== null) {
+            hoveredObject = null;
+            document.body.style.cursor = "default";
+            if (onHoverChange) {
+              onHoverChange(false, null);
+            }
+          }
+        }
+      } else if (hoveredObject !== null) {
+        hoveredObject = null;
+        if (!isDraggingRef.current) {
+          document.body.style.cursor = "default";
+        }
+        if (onHoverChange) {
+          onHoverChange(false, null);
+        }
+      }
+
+      // Position & Content for the floating HUD tooltip near the hovered object
+      if (hoveredObject && hudRef.current && hudBadgeRef.current && hudDotRef.current && hudTextRef.current) {
+        const worldPos = new THREE.Vector3();
+        hoveredObject.getWorldPosition(worldPos);
+        worldPos.project(camera);
+
+        const sx = (worldPos.x * 0.5 + 0.5) * container.clientWidth;
+        const sy = (-(worldPos.y * 0.5) + 0.5) * container.clientHeight;
+
+        hudRef.current.style.opacity = "1";
+        hudRef.current.style.transform = `translate3d(${sx}px, ${sy - 18}px, 0) translate(-50%, -100%)`;
+
+        let label = hoveredObject.userData?.label || "NODE STATUS ACTIVE";
+        let isAlert = Boolean(hoveredObject.userData?.isAmlRing || hoveredObject.userData?.isQuarantineTarget);
+
+        hudTextRef.current.textContent = label;
+
+        if (isAlert) {
+          hudBadgeRef.current.className =
+            "px-3 py-1.5 rounded-xl border text-[10.5px] font-mono tracking-wider font-semibold shadow-2xl backdrop-blur-xl flex items-center gap-2 whitespace-nowrap bg-[#0C1017]/95 border-rose-500/50 text-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.35)]";
+          hudDotRef.current.className = "w-2 h-2 rounded-full bg-rose-500 animate-pulse";
+        } else {
+          hudBadgeRef.current.className =
+            "px-3 py-1.5 rounded-xl border text-[10.5px] font-mono tracking-wider font-semibold shadow-2xl backdrop-blur-xl flex items-center gap-2 whitespace-nowrap bg-[#0C1017]/95 border-[#38BDF8]/40 text-[#E0F2FE] shadow-[0_0_25px_rgba(56,189,248,0.3)]";
+          hudDotRef.current.className = "w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse";
+        }
+      } else if (hudRef.current) {
+        hudRef.current.style.opacity = "0";
+      }
+
+      // Smooth hover scale & emissive spring on nodes (1.0 -> 1.38 lerp)
+      nodeMeshes.forEach((node) => {
+        const isHovered = hoveredObject === node;
+        const targetScale = isHovered ? 1.38 : 1.0;
+        node.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), damp * 3.5);
+
+        if (node.userData.isAmlRing) {
+          const baseEmissive = node.userData.isQuarantineTarget ? 1.0 : 0.85;
+          const targetEmissive = isHovered ? 2.6 : baseEmissive;
+          node.material.emissiveIntensity +=
+            (targetEmissive - node.material.emissiveIntensity) * damp * 3.5;
+          if (isHovered) {
+            node.material.emissive.setHex(0xff1744);
+          } else {
+            node.material.emissive.setHex(0xe11d48);
+          }
+        } else {
+          const baseEmissive = 0.35;
+          const targetEmissive = isHovered ? 2.0 : baseEmissive;
+          node.material.emissiveIntensity +=
+            (targetEmissive - node.material.emissiveIntensity) * damp * 3.5;
+          if (isHovered) {
+            node.material.emissive.setHex(0x7dd3fc);
+          } else {
+            node.material.emissive.setHex(0x0284c7);
+          }
+        }
+      });
+
+      // Smooth hover glow on gimbal rings
+      const isRing1Hovered = hoveredObject === gimbalRing1;
+      const targetRing1Emissive = isRing1Hovered ? 0.95 : 0.0;
+      gimbalMat1.emissiveIntensity +=
+        (targetRing1Emissive - gimbalMat1.emissiveIntensity) * damp * 3.0;
+
+      const isRing2Hovered = hoveredObject === gimbalRing2;
+      const targetRing2Emissive = isRing2Hovered ? 0.95 : 0.0;
+      gimbalMat2.emissiveIntensity +=
+        (targetRing2Emissive - gimbalMat2.emissiveIntensity) * damp * 3.0;
+
+      // Smooth hover reaction on ledger core
+      const isCoreHovered = hoveredObject === coreMesh || hoveredObject === shellMesh;
+      const targetCorePulse = isCoreHovered ? corePulse * 1.2 : corePulse;
+      coreGroup.scale.lerp(
+        new THREE.Vector3(targetCorePulse, targetCorePulse, targetCorePulse),
+        damp * 2.5
+      );
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseout", handleMouseLeave);
+      container.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("resize", handleResize);
+      document.body.style.cursor = "default";
+      if (renderer.domElement && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full h-full select-none flex items-center justify-center ${className}`}
+    >
+      {/* Floating 3D Subsystem Status HUD Tag */}
+      <div
+        ref={hudRef}
+        className="pointer-events-none absolute left-0 top-0 z-30 transition-opacity duration-150 will-change-transform"
+        style={{ opacity: 0 }}
+      >
+        <div
+          ref={hudBadgeRef}
+          className="px-3 py-1.5 rounded-xl border text-[10.5px] font-mono tracking-wider font-semibold shadow-2xl backdrop-blur-xl flex items-center gap-2 whitespace-nowrap bg-[#0C1017]/95 border-[#38BDF8]/40 text-[#E0F2FE]"
+        >
+          <span ref={hudDotRef} className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse" />
+          <span ref={hudTextRef}>NODE STATUS ACTIVE</span>
+        </div>
+      </div>
+    </div>
+  );
+}
