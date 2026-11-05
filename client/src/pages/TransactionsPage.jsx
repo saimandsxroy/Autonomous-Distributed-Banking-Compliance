@@ -118,3 +118,83 @@ export function TransactionsPage() {
         if (entry.postingLegs && entry.postingLegs.length > 0) {
           entry.postingLegs.forEach((leg) => {
             const isCredit = leg.legType === "CREDIT" || leg.entryType === "CREDIT";
+            const amt = Number(leg.amount || 0);
+            if (isCredit) creditSum += amt;
+            else debitSum += amt;
+          });
+        } else {
+          const amt = Number(entry.amount || 0);
+          creditSum += amt;
+          debitSum += amt;
+        }
+      });
+    }
+
+    if (creditSum === 0 && debitSum === 0 && transactions.length > 0) {
+      transactions.forEach((tx) => {
+        const amt = Number(tx.amount || 0);
+        if (tx.transactionType === "CREDIT") creditSum += amt;
+        else debitSum += amt;
+      });
+    }
+
+    return { totalCredited: creditSum, totalDebited: debitSum };
+  }, [journalEntries, transactions]);
+
+  return (
+    <div className="space-y-7 pb-12 font-['Plus_Jakarta_Sans',sans-serif]">
+      {isModalOpen && (
+        <StatementRequestModal
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleRequestStatement}
+        />
+      )}
+
+      {toastMessage && (
+        <div className="fixed top-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl z-50 text-xs font-mono font-medium flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 size={16} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.03em] text-[#F3F1EC]">
+            Ledger & Transactions
+          </h2>
+          <p className="font-mono text-[11px] text-[#7A7D82] mt-0.5">
+            Double-Entry Balanced Postings • Zero-Sum Invariant • Real-Time Audit Chain
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-start md:self-auto">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/10 rounded-xl text-xs font-mono font-medium transition-all"
+          >
+            <Mail size={14} className="text-[#38BDF8]" />
+            <span>Request Statement</span>
+          </button>
+
+          <button
+            onClick={loadData}
+            className={`p-2 rounded-xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] text-[#8E929B] hover:text-white transition-all ${
+              isLoading ? "animate-spin text-[#38BDF8]" : ""
+            }`}
+            title="Reload Transactions"
+          >
+            <RefreshCw size={15} />
+          </button>
+        </div>
+      </header>
+
+      {/* Stat Cards Strip (4 Metrics) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all">
+          <p className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider font-medium">
+            Total Credited
+          </p>
+          <p className="font-['JetBrains_Mono',monospace] text-xl sm:text-2xl font-semibold mt-1 text-emerald-400">
+            ${totalCredited.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
