@@ -288,3 +288,133 @@ export function BatchAndFxPage() {
         <button
           onClick={() => setActiveTab("batch")}
           className={`flex items-center gap-2 px-4 py-2 font-mono text-xs font-medium rounded-lg transition-all ${
+            activeTab === "batch"
+              ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+              : "text-[#8E929B] hover:text-white"
+          }`}
+        >
+          <FileSpreadsheet size={15} />
+          <span>Bulk CSV Payroll Batch Engine</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("fx")}
+          className={`flex items-center gap-2 px-4 py-2 font-mono text-xs font-medium rounded-lg transition-all ${
+            activeTab === "fx"
+              ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+              : "text-[#8E929B] hover:text-white"
+          }`}
+        >
+          <Coins size={15} />
+          <span>4-Leg Multi-Currency FX Engine</span>
+        </button>
+      </div>
+
+      {/* =========================================================================
+          TAB 1: BULK CSV PAYOUT BATCH ENGINE
+          ========================================================================= */}
+      {activeTab === "batch" && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Quick Action Hero Bar */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 text-[#38BDF8] font-mono font-medium text-xs uppercase tracking-wider">
+                <Sparkles size={14} />
+                <span>High-Throughput Corporate Payroll Engine</span>
+              </div>
+              <h2 className="text-xl font-semibold tracking-tight text-[#F3F1EC]">
+                1-Click 15-Row Corporate Payroll & Vendor Batch
+              </h2>
+              <p className="text-[#8E929B] text-xs leading-relaxed max-w-2xl font-mono">
+                Concurrently executed using Java 21 Virtual Threads across a bounded Semaphore(20). Contains clean domestic transfers, cross-currency FX payouts, high-value AML holds ($15,000 threshold), and intentional overdraw tests demonstrating zero-rollback partial failure isolation.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+              <button
+                onClick={handleRunSampleBatch}
+                disabled={isExecutingSample}
+                className="bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold text-xs font-mono uppercase tracking-wider px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.25)] flex items-center justify-center gap-2.5 transition-all disabled:opacity-50"
+              >
+                {isExecutingSample ? (
+                  <RefreshCw className="animate-spin text-black" size={16} />
+                ) : (
+                  <Play size={16} className="fill-black text-black" />
+                )}
+                <span>{isExecutingSample ? "Processing 15 Rows..." : "⚡ Run 15-Row Sample Payroll Batch"}</span>
+              </button>
+
+              <button
+                onClick={handleDownloadSampleCsv}
+                className="bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-mono text-xs px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+              >
+                <Download size={14} className="text-[#8CB0DB]" />
+                <span>CSV Template</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback Banners */}
+          {uploadSuccess && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 text-emerald-300 flex items-start gap-2.5 text-xs font-mono animate-in fade-in">
+              <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-400" />
+              <span>{uploadSuccess}</span>
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5 text-rose-300 flex items-start gap-2.5 text-xs font-mono animate-in fade-in">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5 text-rose-400" />
+              <span>{uploadError}</span>
+            </div>
+          )}
+
+          {/* Upload Custom File Card */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300">
+            <div className="flex items-center gap-2 pb-4 border-b border-white/[0.06] mb-5">
+              <Upload size={18} className="text-[#38BDF8]" />
+              <h3 className="font-semibold text-base text-[#F3F1EC]">
+                Upload Custom Corporate Settlement CSV
+              </h3>
+            </div>
+
+            <form onSubmit={handleFileUpload} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                    Funding Source Treasury Account
+                  </label>
+                  <select
+                    value={sourceAccountId}
+                    onChange={(e) => setSourceAccountId(e.target.value)}
+                    className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none cursor-pointer"
+                  >
+                    {accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id} className="bg-[#0C1017]">
+                        {acc.accountNumber} ({acc.currency}) — Available: ${Number(acc.availableBalance).toLocaleString()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                    CSV File (Auto-Computes SHA-256 Deduplication Hash)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    className="w-full bg-[#07090D] border border-white/[0.08] rounded-xl p-2 text-xs font-mono text-[#8E929B] file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-white/[0.08] file:text-white hover:file:bg-white/[0.12] cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={!selectedFile || isUploading}
+                  className="bg-[#F3F1EC] hover:bg-white text-black font-semibold font-mono uppercase text-xs tracking-wider px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 disabled:opacity-50 transition-all"
+                >
+                  {isUploading ? <RefreshCw className="animate-spin" size={14} /> : <Upload size={14} />}
+                  <span>{isUploading ? "Uploading & Settling..." : "Ingest & Execute CSV Batch"}</span>
