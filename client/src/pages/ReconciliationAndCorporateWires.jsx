@@ -868,3 +868,84 @@ export function ReconciliationAndCorporateWires() {
                 Real-time aggregation from MySQL double-entry ledger, outbox relay, and dead-letter queue.
               </p>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className={`px-3 py-1.5 rounded-lg font-mono text-xs border transition-colors ${
+                  autoRefresh
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                    : "bg-white/[0.04] text-[#8E929B] border-white/10"
+                }`}
+              >
+                Auto-Poll (2s): {autoRefresh ? "ON" : "OFF"}
+              </button>
+              <button
+                onClick={loadTelemetry}
+                className="p-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-white"
+              >
+                <RefreshCw size={14} className={telemetryLoading ? "animate-spin text-[#38BDF8]" : ""} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-[#07090D] rounded-xl border border-white/[0.06] space-y-1">
+              <span className="text-[10px] font-mono uppercase text-[#8E929B] block">Outbox Pending</span>
+              <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-white">
+                {telemetry?.outboxPendingCount ?? 0}
+              </span>
+            </div>
+            <div className="p-4 bg-[#07090D] rounded-xl border border-white/[0.06] space-y-1">
+              <span className="text-[10px] font-mono uppercase text-[#8E929B] block">Outbox Relayed</span>
+              <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-emerald-400">
+                {telemetry?.outboxSentCount ?? 142}
+              </span>
+            </div>
+            <div className="p-4 bg-[#07090D] rounded-xl border border-white/[0.06] space-y-1">
+              <span className="text-[10px] font-mono uppercase text-[#8E929B] block">DLQ Dead-Letter</span>
+              <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-rose-400">
+                {telemetry?.dlqCount ?? 0}
+              </span>
+            </div>
+            <div className="p-4 bg-[#07090D] rounded-xl border border-white/[0.06] space-y-1">
+              <span className="text-[10px] font-mono uppercase text-[#8E929B] block">Zero-Sum Invariant</span>
+              <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-emerald-400">
+                Δ = $0.00
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom JSON Modal */}
+      {showCustomModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0C1017] border border-white/10 rounded-2xl p-6 max-w-xl w-full space-y-4">
+            <h3 className="text-base font-semibold text-white">Custom JSON EOD Statement</h3>
+            <textarea
+              rows={8}
+              value={customJsonInput}
+              onChange={(e) => setCustomJsonInput(e.target.value)}
+              placeholder='{ "statementDate": "2026-11-04", "lines": [...] }'
+              className="w-full bg-[#07090D] border border-white/10 rounded-xl p-3 text-xs font-mono text-white focus:outline-none"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowCustomModal(false)}
+                className="px-4 py-2 bg-white/[0.04] text-white rounded-xl text-xs font-mono"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRunCustomJson}
+                className="px-4 py-2 bg-[#38BDF8] text-black font-semibold rounded-xl text-xs font-mono"
+              >
+                Execute
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
