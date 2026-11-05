@@ -528,3 +528,113 @@ export function BatchAndFxPage() {
                         100
                       }%`,
                     }}
+                    className="bg-gradient-to-r from-rose-500 to-rose-400 h-full rounded-r-full transition-all duration-700 ease-out"
+                    title={`Failed: ${selectedBatchDetails.batch.failedCount}`}
+                  />
+                </div>
+              </div>
+
+              {/* Batch Item Details Table */}
+              <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet size={16} className="text-[#38BDF8]" />
+                    <h4 className="font-semibold text-sm text-[#F3F1EC]">
+                      Itemized Batch Execution Journal ({filteredItems.length} rows)
+                    </h4>
+                  </div>
+
+                  <div className="flex gap-1 bg-[#07090D] p-1 border border-white/[0.08] rounded-xl self-start sm:self-auto">
+                    {["ALL", "SETTLED", "PENDING_HOLD", "FAILED"].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setBatchItemFilter(status)}
+                        className={`px-2.5 py-1 text-[10px] font-mono uppercase font-semibold rounded-lg transition-colors ${
+                          batchItemFilter === status
+                            ? "bg-white/[0.08] text-white"
+                            : "text-[#8E929B] hover:text-white"
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead>
+                      <tr className="border-b border-white/[0.06] text-[10px] uppercase text-[#6E737D] tracking-wider">
+                        <th className="py-2.5 px-3">Row</th>
+                        <th className="py-2.5 px-3">Recipient</th>
+                        <th className="py-2.5 px-3">Account</th>
+                        <th className="py-2.5 px-3 text-right">Amount</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3">Reason / Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04]">
+                      {filteredItems.map((item) => (
+                        <tr key={item.id} className="hover:bg-white/[0.015] transition-colors">
+                          <td className="py-3 px-3 text-[#6E737D]">#{item.rowNumber}</td>
+                          <td className="py-3 px-3 font-medium text-[#F3F1EC]">{item.counterpartyName}</td>
+                          <td className="py-3 px-3 text-[#8E929B]">{item.receiverAccount}</td>
+                          <td className="py-3 px-3 text-right font-semibold text-white">
+                            ${Number(item.amount).toFixed(2)} {item.currency}
+                          </td>
+                          <td className="py-3 px-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[9.5px] uppercase font-semibold border ${
+                                item.outcomeStatus === "SETTLED"
+                                  ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                  : item.outcomeStatus === "PENDING_HOLD"
+                                  ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                                  : "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                              }`}
+                            >
+                              {item.outcomeStatus}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-[#7A7D82] text-[11px] truncate max-w-xs">
+                            {item.failureReason || (item.outcomeStatus === "SETTLED" ? "Zero-sum settled" : "—")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 2: 4-LEG MULTI-CURRENCY FX TREASURY ENGINE
+          ========================================================================= */}
+      {activeTab === "fx" && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Live FX Rate Matrix (Smooth Hover Elevation) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-mono uppercase text-[#8E929B] font-semibold flex items-center gap-2">
+                <Coins size={16} className="text-[#38BDF8]" />
+                <span>Live Supported FX Rates (0.50% Spread)</span>
+              </h2>
+              <button
+                onClick={loadRates}
+                className="text-xs font-mono text-[#8E929B] hover:text-white bg-white/[0.03] border border-white/10 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors"
+              >
+                <RefreshCw size={11} /> <span>Sync Rates</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {fxRates.map((r) => (
+                <div
+                  key={r.id}
+                  className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-[#38BDF8]/40 hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(56,189,248,0.12)] p-4 rounded-2xl transition-all duration-300 space-y-1 group"
+                >
+                  <div className="text-xs font-mono font-semibold text-[#8E929B] uppercase flex items-center justify-between">
+                    <span>{r.baseCurrency} → {r.targetCurrency}</span>
+                    <span className="text-[9.5px] bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/20 px-1 py-0.2 rounded font-mono">
