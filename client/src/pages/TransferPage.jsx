@@ -578,3 +578,164 @@ export function TransferPage() {
                     type="text"
                     value={idempotencyKey}
                     onChange={(e) => setIdempotencyKey(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white font-mono text-xs focus:outline-none transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopyKey}
+                    className="px-3 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-xl text-[#8E929B] hover:text-white transition-colors flex items-center gap-1"
+                    title="Copy Key"
+                  >
+                    {copiedKey ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Account Selectors for Double-Entry Test */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono uppercase text-[#8E929B] font-semibold block">
+                    Source Account
+                  </label>
+                  <select
+                    value={sourceAccountId}
+                    onChange={(e) => setSourceAccountId(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-xs text-white font-mono focus:outline-none cursor-pointer"
+                  >
+                    {(treasuryAccounts.length > 0 ? treasuryAccounts : allAccounts).map((acc) => (
+                      <option key={acc.id} value={acc.id} className="bg-[#0C1017]">
+                        Acc #{acc.id} ({acc.accountNumber}) — ${Number(acc.availableBalance || 0).toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-mono uppercase text-[#8E929B] font-semibold">
+                      Destination Account
+                    </label>
+                    <span className="text-[10px] font-mono text-[#6E737D]">
+                      ID #{destAccountId}
+                    </span>
+                  </div>
+                  <select
+                    value={destAccountId}
+                    onChange={(e) => setDestAccountId(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-xs text-white font-mono focus:outline-none cursor-pointer"
+                  >
+                    {allAccounts.map((acc) => (
+                      <option key={acc.id} value={acc.id} className="bg-[#0C1017]">
+                        Acc #{acc.id} ({acc.accountNumber}) — ${Number(acc.availableBalance || 0).toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Dedicated Amount & Presets */}
+              <div className="space-y-1.5 pt-2 border-t border-white/[0.06]">
+                <div className="flex items-center justify-between text-[11px] font-mono uppercase text-[#8E929B]">
+                  <span>Transfer Amount USD</span>
+                  <span className="text-amber-400">
+                    Threshold: &gt; $10k AML Escrow
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A7D82] font-mono font-semibold text-base">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="50.00"
+                    value={treasuryAmount}
+                    onChange={(e) => setTreasuryAmount(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white font-mono text-sm focus:outline-none"
+                  />
+                </div>
+
+                {/* Preset Chips */}
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setTreasuryAmount("50.00")}
+                    className={`py-1.5 px-2 rounded-lg border text-center text-[10.5px] font-mono transition-all ${
+                      treasuryAmount === "50.00"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                        : "bg-white/[0.02] text-[#8E929B] border-white/[0.06] hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    $50 (Instant Settle)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTreasuryAmount("500.00")}
+                    className={`py-1.5 px-2 rounded-lg border text-center text-[10.5px] font-mono transition-all ${
+                      treasuryAmount === "500.00"
+                        ? "bg-[#38BDF8]/20 text-[#38BDF8] border-[#38BDF8]/40"
+                        : "bg-white/[0.02] text-[#8E929B] border-white/[0.06] hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    $500 (Standard)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTreasuryAmount("15000.00")}
+                    className={`py-1.5 px-2 rounded-lg border text-center text-[10.5px] font-mono transition-all ${
+                      treasuryAmount === "15000.00"
+                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        : "bg-white/[0.02] text-[#8E929B] border-white/[0.06] hover:bg-white/[0.06] hover:text-white"
+                    }`}
+                  >
+                    $15,000 (AML Hold)
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => handleTreasuryTransfer()}
+                  disabled={isTransferring}
+                  className="py-2.5 px-3 bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/10 hover:border-white/20 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Send size={14} />
+                  <span>Execute Transfer</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleTestTamper}
+                  disabled={isTransferring}
+                  className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <AlertCircle size={14} />
+                  <span>Test Tamper (422)</span>
+                </button>
+              </div>
+
+              {/* Monospace Micro Guide */}
+              <div className="p-3 bg-[#07090D] border border-white/[0.06] rounded-xl text-[11px] font-mono text-[#8E929B] space-y-1">
+                <div className="font-semibold text-[#F3F1EC] flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-[#38BDF8]" />
+                  <span>Invariant Verification Sequence:</span>
+                </div>
+                <div>1. <b>Execute Transfer</b> with fresh key $\rightarrow$ HTTP 201 Settled.</div>
+                <div>2. <b>Lock Key</b> and click <b>Execute</b> again $\rightarrow$ Replays cached response.</div>
+                <div>3. Click <b>Test Tamper</b> with same key $\rightarrow$ Triggers HTTP 422 Hash Mismatch.</div>
+              </div>
+            </div>
+
+            <div className="pt-4 mt-6 border-t border-white/[0.05] flex items-center justify-between text-[10px] font-mono text-[#6E737D]">
+              <span>IDEMPOTENCY: SHA-256 REDIS NX</span>
+              <span>VELOCITY: 5-HOP GRAPH</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
