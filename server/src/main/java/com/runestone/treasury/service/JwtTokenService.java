@@ -24,6 +24,9 @@ public class JwtTokenService {
 
   @Autowired private AppCache appCache;
 
+  @org.springframework.beans.factory.annotation.Value("${jwt.secret:" + DEFAULT_SECRET + "}")
+  private String configuredSecret;
+
   private Key getSigningKey() {
     String secret = appCache != null ? appCache.get("JWT_SECRET_KEY") : null;
     if (secret == null || secret.length() < 32) {
