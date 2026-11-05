@@ -6,16 +6,22 @@ export async function loginUser(email, password) {
   try {
     const res = await fetch("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
       body: JSON.stringify({ usernameOrEmail: email, password }),
     });
     if (res.ok) {
       const data = await res.json();
       const token = data.token;
+      localStorage.setItem("foureyes_jwt_token", token);
       localStorage.setItem("runestone_jwt_token", token);
       localStorage.setItem("jwt", token);
+      localStorage.setItem("foureyes_user_profile", JSON.stringify(data));
       localStorage.setItem("runestone_user_profile", JSON.stringify(data));
       localStorage.setItem("accountInfo", JSON.stringify(data));
+      localStorage.setItem("foureyes_active_persona", data.username);
       localStorage.setItem("runestone_active_persona", data.username);
       return { jwt: token, accountInfo: data };
     }
@@ -31,8 +37,10 @@ export async function loginUser(email, password) {
 
   if (response.jwt) {
     localStorage.setItem("jwt", response.jwt);
+    localStorage.setItem("foureyes_jwt_token", response.jwt);
     localStorage.setItem("runestone_jwt_token", response.jwt);
     localStorage.setItem("accountInfo", JSON.stringify(response.accountInfo));
+    localStorage.setItem("foureyes_user_profile", JSON.stringify(response.accountInfo));
     localStorage.setItem("runestone_user_profile", JSON.stringify(response.accountInfo));
   }
 
@@ -41,17 +49,26 @@ export async function loginUser(email, password) {
 
 export function logoutUser() {
   localStorage.removeItem("jwt");
+  localStorage.removeItem("foureyes_jwt_token");
   localStorage.removeItem("runestone_jwt_token");
   localStorage.removeItem("accountInfo");
+  localStorage.removeItem("foureyes_user_profile");
   localStorage.removeItem("runestone_user_profile");
 }
 
 export function getToken() {
-  return localStorage.getItem("runestone_jwt_token") || localStorage.getItem("jwt");
+  return (
+    localStorage.getItem("foureyes_jwt_token") ||
+    localStorage.getItem("runestone_jwt_token") ||
+    localStorage.getItem("jwt")
+  );
 }
 
 export function getStoredAccountInfo() {
-  const stored = localStorage.getItem("runestone_user_profile") || localStorage.getItem("accountInfo");
+  const stored =
+    localStorage.getItem("foureyes_user_profile") ||
+    localStorage.getItem("runestone_user_profile") ||
+    localStorage.getItem("accountInfo");
   if (!stored) return null;
   try {
     return JSON.parse(stored);
