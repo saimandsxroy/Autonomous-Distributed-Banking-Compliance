@@ -39,6 +39,13 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
   const loadBalance = useCallback(async () => {
     setIsLoading(true);
     try {
+      const currentPersona = getActivePersona();
+      const currentOwner =
+        user?.accountName ||
+        PERSONAS[currentPersona]?.displayName ||
+        user?.userName ||
+        "Institutional Treasury Vault";
+
       if (user?.accountNumber) {
         const data = await fetchBalance(user.accountNumber).catch(() => null);
         if (data?.accountInfo) {
