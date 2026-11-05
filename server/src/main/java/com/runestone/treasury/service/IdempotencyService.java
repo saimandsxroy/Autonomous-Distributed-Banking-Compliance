@@ -134,6 +134,16 @@ public class IdempotencyService {
     return Boolean.TRUE;
   }
 
+  private void safeRedisDelete(String key) {
+    try {
+      if (stringRedisTemplate != null) {
+        stringRedisTemplate.delete(key);
+      }
+    } catch (Exception ex) {
+      log.warn("Redis delete failed for key {}: {}", key, ex.getMessage());
+    }
+  }
+
   private String computeSha256(Object obj) {
     try {
       if (obj instanceof com.runestone.treasury.entity.JournalEntry je) {
