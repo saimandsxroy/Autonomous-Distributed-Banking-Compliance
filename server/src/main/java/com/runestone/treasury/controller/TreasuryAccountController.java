@@ -33,7 +33,7 @@ public class TreasuryAccountController {
     String userName = authentication.getName();
     User user = userService.findByUserName(userName);
     if (user != null) {
-      List<TreasuryAccount> all = user.getTreasuryAccounts();
+      List<TreasuryAccount> all = treasuryAccountService.findByUserId(user.getId());
       if (all != null && !all.isEmpty()) {
         return new ResponseEntity<>(all, HttpStatus.OK);
       }
