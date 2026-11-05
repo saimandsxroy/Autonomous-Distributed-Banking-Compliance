@@ -678,3 +678,103 @@ export function ReconciliationAndCorporateWires() {
                       value={wireForm.amount}
                       onChange={(e) => setWireForm({ ...wireForm, amount: e.target.value })}
                       placeholder="15000.00"
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] text-white font-['JetBrains_Mono',monospace] font-semibold text-base rounded-xl p-2.5 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-mono uppercase text-[#8E929B] font-medium block">
+                      Business Purpose / Reference
+                    </label>
+                    <input
+                      type="text"
+                      value={wireForm.description}
+                      onChange={(e) => setWireForm({ ...wireForm, description: e.target.value })}
+                      placeholder="Corporate vendor payout"
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] text-white font-mono text-xs rounded-xl p-2.5 focus:outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Tier Preview */}
+                <div className={`p-3.5 rounded-xl border flex items-center justify-between font-mono text-xs ${currentTier.color}`}>
+                  <div>
+                    <span className="font-semibold uppercase tracking-wider block">{currentTier.label}</span>
+                    <span className="text-[11px] opacity-80">{currentTier.badge}</span>
+                  </div>
+                  <span className="text-[10.5px] font-semibold uppercase px-2 py-0.5 rounded bg-black/40 border border-current">
+                    {currentTier.approvals}
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={wireSubmitting}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold font-mono uppercase text-xs tracking-wider rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.25)] flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {wireSubmitting ? (
+                    <RefreshCw size={15} className="animate-spin text-black" />
+                  ) : (
+                    <ArrowRight size={15} />
+                  )}
+                  <span>Submit Corporate Spend Wire</span>
+                </button>
+              </form>
+            </div>
+
+            {/* Governance Thresholds */}
+            <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 space-y-3 font-mono text-xs">
+              <div className="flex items-center gap-1.5 pb-2 border-b border-white/[0.06] text-[#38BDF8] font-semibold uppercase text-[11px]">
+                <ShieldCheck size={14} />
+                <span>FINRA 3110 Governance Tiers</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#07090D] border border-emerald-500/20 text-emerald-300">
+                <strong className="block text-emerald-400 font-semibold">Tier 1: Under $1,000.00</strong>
+                <span className="text-[10.5px] text-[#8E929B]">0 Checkers Required • Instant execution</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#07090D] border border-amber-500/20 text-amber-300">
+                <strong className="block text-amber-400 font-semibold">Tier 2: $1,000 to $9,999.99</strong>
+                <span className="text-[10.5px] text-[#8E929B]">1 Independent Checker Signoff</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#07090D] border border-rose-500/20 text-rose-300">
+                <strong className="block text-rose-400 font-semibold">Tier 3: $10,000.00+</strong>
+                <span className="text-[10.5px] text-[#8E929B]">2 Distinct Checkers Required (Multi-Sig)</span>
+              </div>
+            </div>
+          </div>
+
+          {wireAlert && (
+            <div
+              className={`p-3.5 rounded-xl border flex items-start gap-2.5 font-mono text-xs ${
+                wireAlert.type === "success"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                  : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+              }`}
+            >
+              {wireAlert.type === "success" ? (
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 font-medium">{wireAlert.message}</div>
+              <button onClick={() => setWireAlert(null)} className="text-[#8E929B] hover:text-white">✕</button>
+            </div>
+          )}
+
+          {/* Active Wires Table */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 space-y-4">
+            <h4 className="font-semibold text-sm text-[#F3F1EC]">
+              Active Corporate Spend Wires & Dual-Control Stepper ({corporateWires.length} Wires)
+            </h4>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-white/[0.06] text-[10px] uppercase text-[#6E737D] tracking-wider">
+                    <th className="p-3">#ID</th>
+                    <th className="p-3">Maker Submitter</th>
