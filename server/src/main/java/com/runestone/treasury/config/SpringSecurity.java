@@ -122,8 +122,10 @@ public class SpringSecurity {
             .filter(s -> !s.isEmpty())
             .collect(Collectors.toList());
     configuration.setAllowedOriginPatterns(origins);
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
+    configuration.setExposedHeaders(
+        List.of("Authorization", "Content-Type", "Idempotency-Key", "X-Total-Count"));
     configuration.setAllowCredentials(true);
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
