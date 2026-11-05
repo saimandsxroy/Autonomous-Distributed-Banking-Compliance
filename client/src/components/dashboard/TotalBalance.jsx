@@ -20,8 +20,15 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const activePersona = getActivePersona();
+  const fallbackName =
+    user?.accountName ||
+    PERSONAS[activePersona]?.displayName ||
+    user?.userName ||
+    "Institutional Treasury Vault";
+
   const [balanceInfo, setBalanceInfo] = useState({
-    accountName: user?.accountName || "Loading...",
+    accountName: fallbackName,
     accountBalance: user?.accountBalance || 0,
     accountNumber: user?.accountNumber || "...",
   });
