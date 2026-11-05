@@ -256,7 +256,9 @@ public class AmlComplianceController {
     String action = body != null ? body.get("action") : null;
     try {
       HitlApprovalRequest approved =
-          hitlApprovalService.approveRequest(approvalId, reviewer, notes, action);
+          action != null
+              ? hitlApprovalService.approveRequest(approvalId, reviewer, notes, action)
+              : hitlApprovalService.approveRequest(approvalId, reviewer, notes);
       return new ResponseEntity<>(approved, HttpStatus.OK);
     } catch (SecurityException e) {
       log.warn("403 Forbidden on approval: {}", e.getMessage());
