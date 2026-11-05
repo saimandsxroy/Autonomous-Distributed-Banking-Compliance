@@ -30,7 +30,10 @@ public class JwtTokenService {
   private Key getSigningKey() {
     String secret = appCache != null ? appCache.get("JWT_SECRET_KEY") : null;
     if (secret == null || secret.length() < 32) {
-      secret = DEFAULT_SECRET;
+      secret =
+          (configuredSecret != null && configuredSecret.length() >= 32)
+              ? configuredSecret
+              : DEFAULT_SECRET;
     }
     return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
   }
