@@ -538,3 +538,225 @@ export function LoginPage() {
                     <>
                       <span>Authenticate &amp; Enter Portal</span>
                       <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* =============================================================
+                MODE B: SIGN UP FORM & TREASURY VAULT PROVISIONING
+                ============================================================= */}
+            {authMode === "signup" && (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                {/* Username */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="signup-username"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Corporate Username
+                  </label>
+                  <input
+                    id="signup-username"
+                    type="text"
+                    autoComplete="username"
+                    placeholder="e.g. david_treasurer"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 min-h-[44px] text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                  />
+                </div>
+
+                {/* Corporate Email */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="signup-email"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Corporate Work Email
+                  </label>
+                  <input
+                    id="signup-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="david@foureyes.io"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    disabled={isLoading}
+                    required
+                    className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 min-h-[44px] text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                  />
+                </div>
+
+                {/* Passphrase with Toggle */}
+                <div className="space-y-1">
+                  <label
+                    htmlFor="signup-password"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Master Passphrase
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signup-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="••••••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-2.5 min-h-[44px] pr-12 text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                      tabIndex={-1}
+                      aria-label={showSignupPassword ? "Hide password" : "Show password"}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[#7A7D82] hover:text-[#F3F1EC] transition-colors cursor-pointer"
+                    >
+                      {showSignupPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Initial Treasury Vault & Liquidity Selector */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex justify-between items-center text-[11px] font-tech-mono uppercase tracking-wider">
+                    <span className="text-[#A1A4A8]">Initial Treasury Vault &amp; Liquidity</span>
+                    <span className="text-emerald-400 font-semibold">PRE-FUNDED</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {CURRENCY_OPTIONS.map((opt, idx) => {
+                      const isSelected = selectedCurrencyIndex === idx;
+                      return (
+                        <button
+                          key={opt.code}
+                          type="button"
+                          onClick={() => setSelectedCurrencyIndex(idx)}
+                          className={`text-left p-2.5 sm:p-3 rounded-xl border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-white/[0.08] border-[#38BDF8] shadow-[0_0_12px_rgba(56,189,248,0.2)]"
+                              : "bg-[#08090A] border-white/10 hover:border-white/20"
+                          }`}
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-tech-mono font-bold text-white">
+                              {opt.code}
+                            </span>
+                            <span
+                              className={`text-[9px] font-tech-mono px-1.5 py-0.2 rounded border ${opt.badgeColor}`}
+                            >
+                              {opt.code}
+                            </span>
+                          </div>
+                          <div className="text-sm font-tech-mono font-semibold text-emerald-400">
+                            {opt.formatted}
+                          </div>
+                          <div className="text-[10px] text-[#7A7D82] line-clamp-1 mt-0.5">
+                            {opt.label}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Provision & Mint Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full mt-2 py-3.5 px-6 min-h-[44px] rounded-xl font-tech-mono text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2 bg-[#E8E5DE] text-[#08090A] hover:bg-white hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Provisioning Treasury Ledger...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Provision Vault &amp; Mint Identity</span>
+                      <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Micro Terminal Footer Telemetry */}
+            <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-[10px] font-tech-mono text-[#7A7D82]">
+              <span className="flex items-center gap-1.5">
+                <Shield size={12} className="text-[#38BDF8]" />
+                <span>HMAC-SHA256 • ZERO-SUM LEDGER</span>
+              </span>
+              <span>PORT: 8081</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* =====================================================================
+          BOTTOM 4-COLUMN SECURITY SPECIFICATION BAR
+          ===================================================================== */}
+      <footer className="relative z-20 w-full border-t border-white/10 py-6 sm:py-8 px-4 sm:px-8 lg:px-12 bg-[#08090A]/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-left">
+          {/* Spec 1 */}
+          <div className="space-y-1">
+            <div className="text-[11px] font-tech-mono font-semibold uppercase tracking-wider text-[#38BDF8]">
+              HMAC-SHA256
+            </div>
+            <div className="text-xs font-tech-mono text-white font-medium">
+              STATELESS BEARER JWT
+            </div>
+            <p className="text-[11px] text-[#7A7D82] leading-relaxed">
+              Sub-millisecond token verification, zero vulnerable server session memory.
+            </p>
+          </div>
+
+          {/* Spec 2 */}
+          <div className="space-y-1">
+            <div className="text-[11px] font-tech-mono font-semibold uppercase tracking-wider text-emerald-400">
+              BCRYPT-10
+            </div>
+            <div className="text-xs font-tech-mono text-white font-medium">
+              SALTED PASSWORD HASHING
+            </div>
+            <p className="text-[11px] text-[#7A7D82] leading-relaxed">
+              FIPS-grade cryptographic key derivation with adaptive work-factor salting.
+            </p>
+          </div>
+
+          {/* Spec 3 */}
+          <div className="space-y-1">
+            <div className="text-[11px] font-tech-mono font-semibold uppercase tracking-wider text-sky-400">
+              FINRA 3110
+            </div>
+            <div className="text-xs font-tech-mono text-white font-medium">
+              4-EYES SEPARATION GUARD
+            </div>
+            <p className="text-[11px] text-[#7A7D82] leading-relaxed">
+              Mandatory dual-control Maker-Checker quarantine on outbound disbursements.
+            </p>
+          </div>
+
+          {/* Spec 4 */}
+          <div className="space-y-1">
+            <div className="text-[11px] font-tech-mono font-semibold uppercase tracking-wider text-rose-400">
+              SHA-256 CHAIN
+            </div>
+            <div className="text-xs font-tech-mono text-white font-medium">
+              IMMUTABLE AUDIT LOGS
+            </div>
+            <p className="text-[11px] text-[#7A7D82] leading-relaxed">
+              Cryptographically chained forensic trails guaranteeing non-repudiation.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+export default LoginPage;
