@@ -1358,3 +1358,243 @@ export function ComplianceCommandCenter() {
                         </td>
                         <td className="py-3 text-[#9CA3AF]">
                           #{log.targetEntityId}
+                        </td>
+                        <td
+                          className="py-3 text-[#6E737D] text-[10px] truncate max-w-[120px]"
+                          title={log.previousHash}
+                        >
+                          {log.previousHash === "GENESIS"
+                            ? "GENESIS"
+                            : log.previousHash.substring(0, 10) + "..."}
+                        </td>
+                        <td
+                          className="py-3 text-emerald-400 text-[10px] truncate max-w-[120px]"
+                          title={log.recordHash}
+                        >
+                          {log.recordHash.substring(0, 10)}...
+                        </td>
+                        <td className="py-3 text-right">
+                          <button
+                            onClick={() =>
+                              setExpandedPayloads((prev) => ({
+                                ...prev,
+                                [log.id]: !prev[log.id],
+                              }))
+                            }
+                            className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white rounded-lg text-[10px] font-mono transition-colors cursor-pointer"
+                          >
+                            {isExpanded ? "Hide" : "Inspect"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Expanded Payload Viewer */}
+            {Object.keys(expandedPayloads).some(
+              (k) => expandedPayloads[Number(k)]
+            ) && (
+              <div className="mt-4 p-4 bg-[#06080C] border border-white/[0.08] rounded-xl">
+                <div className="text-[10px] uppercase font-mono text-[#8E929B] font-semibold mb-2">
+                  Payload Inspection:
+                </div>
+                {auditData?.auditLogs
+                  .filter((l) => expandedPayloads[l.id])
+                  .map((l) => (
+                    <pre
+                      key={`inspect-${l.id}`}
+                      className="text-xs font-mono text-[#D1D5DB] whitespace-pre-wrap break-all"
+                    >
+                      [ID #{l.id} - {l.actionType}]{l.payload}
+                    </pre>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          TAB 4: CRYPTOGRAPHIC WEBHOOK GATEWAY & HMAC-SHA256 TESTER
+          ===================================================================== */}
+      {activeTab === "webhooks" && (
+        <div className="space-y-6">
+          {/* Header & Gateway Security Overview */}
+          <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold text-[#F3F1EC] flex items-center gap-2.5">
+                  <Webhook className="w-5 h-5 text-amber-400" />
+                  <span>Cryptographic HMAC-SHA256 Webhook Gateway</span>
+                </h3>
+                <p className="text-xs text-[#8E929B] font-mono mt-1">
+                  External payment rail ingress &amp; egress with constant-time verification &amp; 300s replay drift prevention
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-lg bg-[#06080C] border border-white/10 text-xs font-mono text-[#9CA3AF]">
+                  Replay Window: <strong className="text-amber-400">300s</strong>
+                </span>
+                <span className="px-3 py-1 rounded-lg bg-[#06080C] border border-white/10 text-xs font-mono text-[#9CA3AF]">
+                  Algorithm: <strong className="text-amber-400">HMAC-SHA256</strong>
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div className="bg-[#06080C]/85 border border-white/[0.06] p-4 rounded-xl space-y-2">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#8E929B]">
+                  Active Webhook Secret Key
+                </div>
+                <div className="font-mono text-xs text-amber-300 bg-[#0C1017] px-3 py-2 rounded-lg border border-white/10 break-all select-all">
+                  whsec_runestone_swift_rail_2024_prod
+                </div>
+                <div className="text-[10px] text-[#6E737D] font-mono">
+                  Managed via <code className="text-[#9CA3AF]">config_treasury_app</code> table and dynamic AppCache.
+                </div>
+              </div>
+
+              <div className="bg-[#06080C]/85 border border-white/[0.06] p-4 rounded-xl space-y-2">
+                <div className="text-[10px] font-mono uppercase font-semibold text-[#8E929B]">
+                  HMAC Signature Formula
+                </div>
+                <div className="font-mono text-xs text-emerald-400 bg-[#0C1017] px-3 py-2 rounded-lg border border-white/10 break-all">
+                  Hex(Mac(&quot;HmacSHA256&quot;, X-RuneStone-Timestamp + &quot;.&quot; + rawPayload, secret))
+                </div>
+                <div className="text-[10px] text-[#6E737D] font-mono">
+                  Compared using <code className="text-[#9CA3AF]">MessageDigest.isEqual</code> to eliminate timing side-channels.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive HMAC Simulator Card */}
+          <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.08]">
+              <div>
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-[#F3F1EC] flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>Inbound SWIFT Rail Webhook Dispatcher</span>
+                </h4>
+                <p className="text-xs text-[#8E929B] font-mono mt-0.5">
+                  Configure custom event payload parameters or trigger standard test vectors against <code className="text-[#9CA3AF]">POST /webhooks/inbound/swift-rail</code>
+                </p>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWebhookEventId("evt-swift-rail-test-99");
+                    setWebhookEventType("WIRE_DEPOSIT");
+                    setWebhookTargetAccountId("1");
+                    setWebhookAmount("5000.00");
+                    setWebhookCurrency("USD");
+                    setWebhookTamperSignature(false);
+                    setWebhookExpiredTimestamp(false);
+                  }}
+                  className="px-3 py-1.5 bg-[#06080C] border border-emerald-500/30 hover:border-emerald-500/60 rounded-lg text-xs font-mono text-emerald-300 font-semibold transition-all cursor-pointer"
+                >
+                  ⚡ Preset 1 (Valid 200)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWebhookEventId("evt-tamper-test-101");
+                    setWebhookEventType("WIRE_DEPOSIT");
+                    setWebhookTargetAccountId("1");
+                    setWebhookAmount("5000.00");
+                    setWebhookCurrency("USD");
+                    setWebhookTamperSignature(true);
+                    setWebhookExpiredTimestamp(false);
+                  }}
+                  className="px-3 py-1.5 bg-[#06080C] border border-rose-500/30 hover:border-rose-500/60 rounded-lg text-xs font-mono text-rose-300 font-semibold transition-all cursor-pointer"
+                >
+                  ⚡ Preset 2 (Tampered 401)
+                </button>
+              </div>
+            </div>
+
+            {/* Configurable Test Form */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-mono uppercase font-semibold text-[#8E929B] block mb-1">
+                  Event ID
+                </label>
+                <input
+                  type="text"
+                  value={webhookEventId}
+                  onChange={(e) => setWebhookEventId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#06080C] border border-white/10 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-[#38BDF8] transition-colors"
+                  placeholder="evt-swift-rail-test-99"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase font-semibold text-[#8E929B] block mb-1">
+                  Event Type
+                </label>
+                <select
+                  value={webhookEventType}
+                  onChange={(e) => setWebhookEventType(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#06080C] border border-white/10 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-[#38BDF8] transition-colors"
+                >
+                  <option value="WIRE_DEPOSIT">WIRE_DEPOSIT</option>
+                  <option value="ACH_CREDIT">ACH_CREDIT</option>
+                  <option value="SETTLEMENT_PAYOUT">SETTLEMENT_PAYOUT</option>
+                  <option value="FX_INTERBANK_SETTLE">FX_INTERBANK_SETTLE</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase font-semibold text-[#8E929B] block mb-1">
+                  Target Account ID
+                </label>
+                <input
+                  type="text"
+                  value={webhookTargetAccountId}
+                  onChange={(e) => setWebhookTargetAccountId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#06080C] border border-white/10 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-[#38BDF8] transition-colors"
+                  placeholder="1 or AC-4BE19A42A8DC"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase font-semibold text-[#8E929B] block mb-1">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={webhookAmount}
+                  onChange={(e) => setWebhookAmount(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#06080C] border border-white/10 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-[#38BDF8] transition-colors"
+                  placeholder="5000.00"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase font-semibold text-[#8E929B] block mb-1">
+                  Currency
+                </label>
+                <select
+                  value={webhookCurrency}
+                  onChange={(e) => setWebhookCurrency(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#06080C] border border-white/10 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-[#38BDF8] transition-colors"
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="INR">INR</option>
+                </select>
+              </div>
+
+              {/* Toggles */}
+              <div className="flex flex-col justify-end space-y-2 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
