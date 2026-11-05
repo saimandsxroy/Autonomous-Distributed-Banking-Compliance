@@ -264,7 +264,10 @@ public class HitlApprovalService {
         boolean isSupervisor =
             reviewer.getRoles().stream()
                 .anyMatch(
-                    r -> "COMPLIANCE_OFFICER".equalsIgnoreCase(r) || "ADMIN".equalsIgnoreCase(r));
+                    r -> "COMPLIANCE_OFFICER".equalsIgnoreCase(r)
+                        || "ROLE_COMPLIANCE_OFFICER".equalsIgnoreCase(r)
+                        || "ADMIN".equalsIgnoreCase(r)
+                        || "ROLE_ADMIN".equalsIgnoreCase(r));
         if (!isSupervisor) {
           log.warn(
               "Supervisory role violation: user {} lacks COMPLIANCE_OFFICER role",
