@@ -346,7 +346,7 @@ public class AmlComplianceController {
    * POST /compliance/demo/seed-aml-scenarios Seeds a fresh live 3-hop circular AML layering
    * sequence and immediately triggers autonomous Gemini investigation and HITL queue.
    */
-  @PostMapping("/demo/seed-aml-scenarios")
+  @PostMapping({"/demo/seed-aml-scenarios", "/demo/seed-aml-scenario"})
   public ResponseEntity<?> seedAmlScenarios() {
     try {
       Map<String, Object> scenario = amlDemoSeederService.seedAmlScenario();
