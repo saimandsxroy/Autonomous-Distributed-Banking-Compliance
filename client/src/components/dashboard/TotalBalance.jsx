@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { fetchBalance } from "../../services/dashboard";
-import { fetchUserAccounts } from "../../api/treasuryApi";
+import { fetchUserAccounts, PERSONAS, getActivePersona } from "../../api/treasuryApi";
 import { useNavigate } from "react-router-dom";
 
 export function TotalBalance({ isRevealed, setIsRevealed }) {
