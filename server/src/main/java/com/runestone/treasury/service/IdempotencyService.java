@@ -40,9 +40,7 @@ public class IdempotencyService {
 
     // Layer 1: Redis fast-path lock (SET NX EX 60)
     Boolean isNew =
-        stringRedisTemplate
-            .opsForValue()
-            .setIfAbsent(redisKey, IN_FLIGHT_VALUE, LOCK_TTL_SECONDS, TimeUnit.SECONDS);
+        safeRedisSetIfAbsent(redisKey, IN_FLIGHT_VALUE, LOCK_TTL_SECONDS, TimeUnit.SECONDS);
 
     if (Boolean.FALSE.equals(isNew)) {
       // Key already exists in Redis - concurrent duplicate in-flight
