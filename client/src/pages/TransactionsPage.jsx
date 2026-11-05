@@ -288,3 +288,101 @@ export function TransactionsPage() {
             <input
               type="text"
               placeholder="Search by ID, key, account or title..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-[#0C1017] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white placeholder-[#4B5563] font-mono text-xs focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main View Display */}
+      {viewMode === "DOUBLE_ENTRY" ? (
+        <ExpandableJournalTable entries={filteredJournals} />
+      ) : (
+        /* Statement View (Account History) */
+        <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden p-2">
+          {isLoading ? (
+            <div className="py-16 text-center text-[#7A7D82] font-mono text-xs flex flex-col items-center justify-center gap-2">
+              <RefreshCw size={20} className="animate-spin text-[#38BDF8]" />
+              <span>Loading statement records...</span>
+            </div>
+          ) : filteredTxs.length === 0 ? (
+            <div className="py-16 text-center text-[#7A7D82] font-mono text-xs">
+              No transactions match the selected criteria.
+            </div>
+          ) : (
+            <div className="divide-y divide-white/[0.04]">
+              {filteredTxs.map((tx) => {
+                const isPositive = tx.transactionType === "CREDIT";
+                const parsedDate = parseTransactionDate(tx.timeOfCreation);
+                return (
+                  <div
+                    key={tx.transactionId || tx.id || Math.random()}
+                    className="p-4 flex items-center justify-between hover:bg-white/[0.02] rounded-xl transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                          isPositive
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            : "bg-white/[0.03] text-[#8CB0DB] border-white/[0.08]"
+                        }`}
+                      >
+                        {isPositive ? <ArrowDownRight size={18} /> : <ArrowUpRight size={18} />}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-medium text-sm text-[#F3F1EC] truncate">
+                            {tx.transactionType === "TRANSFER" && tx.counterpartyName
+                              ? `Transfer to ${tx.counterpartyName}`
+                              : tx.transactionType === "CREDIT" && tx.counterpartyName
+                                ? `Credit from ${tx.counterpartyName}`
+                                : tx.transactionType}
+                          </h5>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono uppercase tracking-wider font-semibold border ${
+                              tx.status === "SUCCESS"
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                            }`}
+                          >
+                            {tx.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10.5px] font-mono text-[#7A7D82] mt-0.5">
+                          <span>{parsedDate.toLocaleDateString()}</span>
+                          <span>•</span>
+                          <span className="truncate max-w-[140px] text-[#6E737D]">
+                            {tx.transactionId}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0 pl-3">
+                      <div
+                        className={`font-['JetBrains_Mono',monospace] text-base font-semibold ${
+                          isPositive ? "text-emerald-400" : "text-[#F3F1EC]"
+                        }`}
+                      >
+                        {isPositive ? "+" : "-"}${Number(tx.amount || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                      <div className="font-mono text-[9.5px] text-[#6E737D] mt-0.5 uppercase">
+                        {tx.transactionType}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
