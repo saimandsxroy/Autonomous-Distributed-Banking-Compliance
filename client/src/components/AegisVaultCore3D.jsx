@@ -198,3 +198,183 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
 
     const nodeMeshes = [];
     const legitimateNodeMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.35,
+    });
+
+    const crimsonNodeMat = new THREE.MeshStandardMaterial({
+      color: 0xf43f5e,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0xe11d48,
+      emissiveIntensity: 0.85,
+    });
+
+    nodeCoords.forEach((pos, idx) => {
+      const isAmlRing = idx <= 2;
+      const isQuarantineTarget = idx === 2; // Charlie #3 where recursive CTE caught cycle
+      const radius = isQuarantineTarget ? 0.13 : isAmlRing ? 0.105 : 0.085;
+
+      const nodeGeo = new THREE.SphereGeometry(radius, 24, 24);
+      const baseMat = isAmlRing ? crimsonNodeMat : legitimateNodeMat;
+      const nodeMesh = new THREE.Mesh(nodeGeo, baseMat.clone());
+      nodeMesh.position.copy(pos);
+      nodeMesh.userData = {
+        id: idx,
+        isAmlRing,
+        isQuarantineTarget,
+        basePos: pos.clone(),
+        label:
+          idx === 2
+            ? "NODE #3: 5-HOP AML RING QUARANTINED"
+            : idx <= 2
+            ? `NODE #${idx + 1}: AML SUSPECT MULE HOP`
+            : `NODE #${idx + 1}: AUTHORIZED SETTLEMENT RAILS`,
+      };
+      networkGroup.add(nodeMesh);
+      nodeMeshes.push(nodeMesh);
+
+      // Add rotating wireframe quarantine cage around Charlie #3
+      if (isQuarantineTarget) {
+        const cageGeo = new THREE.OctahedronGeometry(0.24, 0);
+        const cageMat = new THREE.MeshBasicMaterial({
+          color: 0xf43f5e,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.85,
+        });
+        const cageMesh = new THREE.Mesh(cageGeo, cageMat);
+        cageMesh.name = "quarantineCage";
+        nodeMesh.add(cageMesh);
+
+        // High-alert pulsing warning ring
+        const ringGeo = new THREE.RingGeometry(0.25, 0.28, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xf43f5e,
+          transparent: true,
+          opacity: 0.7,
+          side: THREE.DoubleSide,
+        });
+        const pulseRing = new THREE.Mesh(ringGeo, ringMat);
+        pulseRing.name = "pulseRing";
+        nodeMesh.add(pulseRing);
+      }
+    });
+
+    // --- Edges / Settlement Tubes ---
+    const cleanEdgePairs = [
+      [3, 4], [4, 9], [3, 7], [5, 6], [6, 8], [7, 0], [8, 4]
+    ];
+
+    const amlEdgePairs = [
+      [0, 1], // Leg 1: Alice -> Bob ($120.00)
+      [1, 2], // Leg 2: Bob -> Charlie ($110.00)
+      [2, 0], // Leg 3: Charlie -> Alice ($100.00) CLOSED LOOP INTERCEPTED!
+    ];
+
+    const cleanTubes = [];
+    cleanEdgePairs.forEach(([i, j]) => {
+      const p1 = nodeCoords[i];
+      const p2 = nodeCoords[j];
+      const curve = new THREE.LineCurve3(p1, p2);
+      const tubeGeo = new THREE.TubeGeometry(curve, 16, 0.016, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.45,
+        roughness: 0.3,
+        metalness: 0.8,
+        transparent: true,
+        opacity: 0.75,
+      });
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      networkGroup.add(tube);
+      cleanTubes.push({ tube, curve });
+    });
+
+    const amlTubes = [];
+    amlEdgePairs.forEach(([i, j]) => {
+      const p1 = nodeCoords[i];
+      const p2 = nodeCoords[j];
+      const curve = new THREE.LineCurve3(p1, p2);
+      const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.024, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({
+        color: 0xf43f5e,
+        emissive: 0xe11d48,
+        emissiveIntensity: 0.95,
+        roughness: 0.2,
+        metalness: 0.9,
+      });
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      networkGroup.add(tube);
+      amlTubes.push({ tube, curve });
+    });
+
+    // Data packet particles animating along edges
+    const particleCount = 18;
+    const particleGeo = new THREE.SphereGeometry(0.028, 8, 8);
+    const cleanParticleMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const crimsonParticleMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+
+    const particles = [];
+    for (let k = 0; k < particleCount; k++) {
+      const isCrimson = k < 6;
+      const pMesh = new THREE.Mesh(particleGeo, isCrimson ? crimsonParticleMat : cleanParticleMat);
+      networkGroup.add(pMesh);
+
+      const targetCurves = isCrimson ? amlTubes : cleanTubes;
+      const targetEdge = targetCurves[k % targetCurves.length];
+      particles.push({
+        mesh: pMesh,
+        curve: targetEdge.curve,
+        progress: k / particleCount,
+        speed: 0.006 + Math.random() * 0.004,
+        isCrimson,
+      });
+    }
+
+    // =========================================================================
+    // LAYER 3: DUAL MACHINED TITANIUM GIMBAL RINGS (gimbalGroup)
+    // =========================================================================
+    const gimbalGroup = new THREE.Group();
+    masterGroup.add(gimbalGroup);
+
+    const gimbalMat1 = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      metalness: 0.88,
+      roughness: 0.24,
+      emissive: new THREE.Color(0x38bdf8),
+      emissiveIntensity: 0.0,
+    });
+
+    const gimbalMat2 = new THREE.MeshStandardMaterial({
+      color: 0x475569,
+      metalness: 0.92,
+      roughness: 0.2,
+      emissive: new THREE.Color(0x8cb0db),
+      emissiveIntensity: 0.0,
+    });
+
+    // Ring 1: Velocity Shield Gimbal (radius = 1.95)
+    const ring1Geo = new THREE.TorusGeometry(1.95, 0.024, 16, 80);
+    const gimbalRing1 = new THREE.Mesh(ring1Geo, gimbalMat1);
+    gimbalRing1.userData = { type: "gimbal", label: "GIMBAL: 0.4ms REDIS LUA SHIELD" };
+    gimbalGroup.add(gimbalRing1);
+
+    // Ring 1 tick notches
+    for (let t = 0; t < 12; t++) {
+      const ang = (t * Math.PI * 2) / 12;
+      const notchGeo = new THREE.BoxGeometry(0.03, 0.06, 0.04);
+      const notch = new THREE.Mesh(notchGeo, new THREE.MeshBasicMaterial({ color: 0x8cb0db }));
+      notch.position.set(Math.cos(ang) * 1.95, Math.sin(ang) * 1.95, 0);
+      notch.rotation.z = ang;
+      gimbalRing1.add(notch);
+    }
+
+    // Ring 2: SHA-256 Audit Gimbal (radius = 2.15, tilted at 65 deg)
+    const ring2Geo = new THREE.TorusGeometry(2.15, 0.025, 16, 80);
+    const gimbalRing2 = new THREE.Mesh(ring2Geo, gimbalMat2);
+    gimbalRing2.userData = { type: "gimbal", label: "GIMBAL: SHA-256 TAMPER-EVIDENT AUDIT CHAIN" };
