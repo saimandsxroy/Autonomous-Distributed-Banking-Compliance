@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/Card";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -7,143 +6,115 @@ import {
   XCircle,
   CheckCircle2,
   RefreshCw,
+  Sparkles,
+  ArrowLeftRight,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import {
   fetchRecentTransactions,
   parseTransactionDate,
+  transferFunds,
 } from "../../services/dashboard";
 
-export function RecentTransactions({ isRevealed }) {
+export function RecentTransactions({ isRevealed, activeAccount }) {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  const targetAccountNumber = activeAccount?.accountNumber || user?.accountNumber;
 
   const loadTransactions = useCallback(async () => {
-    if (!user?.accountNumber) return;
+    if (!targetAccountNumber) return;
     setIsLoading(true);
     try {
-      const data = await fetchRecentTransactions(user.accountNumber);
-      setTransactions(data.slice(0, 5));
+      const data = await fetchRecentTransactions(targetAccountNumber);
+      setTransactions(Array.isArray(data) ? data.slice(0, 7) : []);
     } catch (error) {
       console.error("Failed to fetch transactions:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [user?.accountNumber]);
+  }, [targetAccountNumber]);
 
   useEffect(() => {
     loadTransactions();
+
+    const handleRefresh = () => loadTransactions();
+    window.addEventListener("runestone_transfer_settled", handleRefresh);
+    window.addEventListener("foureyes_transfer_settled", handleRefresh);
+    window.addEventListener("runestone_persona_changed", handleRefresh);
+    window.addEventListener("foureyes_persona_changed", handleRefresh);
+
+    return () => {
+      window.removeEventListener("runestone_transfer_settled", handleRefresh);
+      window.removeEventListener("foureyes_transfer_settled", handleRefresh);
+      window.removeEventListener("runestone_persona_changed", handleRefresh);
+      window.removeEventListener("foureyes_persona_changed", handleRefresh);
+    };
   }, [loadTransactions]);
 
-  return (
-    <Card className="bg-zinc-900 border-4 border-zinc-800 text-white h-full flex flex-col">
-      <CardHeader className="border-b-4 border-zinc-800 pb-4 flex flex-row items-center justify-between">
-        <CardTitle className="text-xl md:text-2xl text-white">
-          Recent Transactions
-        </CardTitle>
-        <button
-          onClick={loadTransactions}
-          className={`p-1 hover:text-white text-zinc-400 transition-colors ${isLoading ? "animate-spin" : ""}`}
-        >
-          <RefreshCw size={18} />
-        </button>
-      </CardHeader>
-      <CardContent className="pt-0 flex-1 overflow-y-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full min-h-[150px] text-zinc-500 font-bold uppercase tracking-widest text-sm">
-            <RefreshCw size={20} className="animate-spin mr-3" />
-            Loading...
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className="flex items-center justify-center h-full min-h-[150px] text-zinc-500 font-bold uppercase tracking-widest text-sm">
-            No recent transactions
-          </div>
-        ) : (
-          <div className="divide-y-4 divide-zinc-800">
-            {transactions.map((tx) => (
-              <TransactionItem
-                key={tx.transactionId}
-                transaction={tx}
-                isRevealed={isRevealed}
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+  const handleRunSampleFlow = async () => {
+    if (!targetAccountNumber) return;
+    setIsSeeding(true);
+    try {
+      const targetCounterparty =
+        targetAccountNumber === "AC-4BE19A42A8DC"
+          ? "AC-69D1D364271B"
+          : "AC-4BE19A42A8DC";
 
-function TransactionItem({ transaction, isRevealed }) {
-  const isPositive = transaction.transactionType === "CREDIT";
-  const amountColor = isPositive ? "text-green-400" : "text-red-500";
-  const amountPrefix = isPositive ? "+" : "-";
-  const parsedDate = parseTransactionDate(transaction.timeOfCreation);
+      await transferFunds({
+        sender: targetAccountNumber,
+        receiver: targetCounterparty,
+        amount: 250.0,
+      });
 
-  const renderStatusIcon = () => {
-    switch (transaction.status) {
-      case "SUCCESS":
-        return <CheckCircle2 size={16} className="text-zinc-500" />;
-      case "PENDING":
-        return <Clock size={16} className="text-zinc-500" />;
-      case "FAILED":
-        return <XCircle size={16} className="text-red-500" />;
-      default:
-        return null;
+      window.dispatchEvent(new CustomEvent("foureyes_transfer_settled"));
+      await loadTransactions();
+    } catch (err) {
+      console.error("Sample flow execution failed:", err);
+    } finally {
+      setIsSeeding(false);
     }
   };
 
   return (
-    <div className="py-6 flex items-center justify-between group">
-      <div className="flex items-center gap-4">
-        <div
-          className={`p-3 border-2 border-zinc-800 bg-zinc-950 ${isPositive ? "text-green-400" : "text-red-500"}`}
-        >
-          {isPositive ? (
-            <ArrowDownRight size={24} />
-          ) : (
-            <ArrowUpRight size={24} />
-          )}
-        </div>
-        <div>
-          <h4 className="font-bold text-lg">
-            {transaction.transactionType === "TRANSFER" &&
-            transaction.counterpartyName
-              ? `Transfer to ${transaction.counterpartyName}`
-              : transaction.transactionType === "CREDIT" &&
-                  transaction.counterpartyName
-                ? `Transfer from ${transaction.counterpartyName}`
-                : transaction.transactionType}
-          </h4>
-          <div className="flex items-center gap-2 text-xs md:text-sm text-zinc-500 font-mono tracking-wider mt-1">
-            <span>{parsedDate.toLocaleDateString()}</span>
-            <span>•</span>
-            <span className="truncate max-w-[100px] md:max-w-none">
-              {transaction.transactionId}
-            </span>
+    <div className="h-full bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between">
+      <div>
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="font-semibold text-lg text-[#F3F1EC] tracking-[-0.02em]">
+                Live Double-Entry Feed
+              </h3>
+              <p className="font-mono text-[11px] text-[#7A7D82] mt-0.5">
+                Real-time debit / credit journal stream
+              </p>
+            </div>
+            {transactions.length > 0 && (
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] text-[#8CB0DB] border border-white/10 uppercase">
+                {transactions.length} entries
+              </span>
+            )}
           </div>
-        </div>
-      </div>
 
-      <div className="text-right">
-        <div
-          className={`font-black text-xl md:text-2xl ${amountColor} flex items-center justify-end gap-2 transition-all duration-300 ${!isRevealed ? "blur-md select-none" : ""}`}
-        >
-          {amountPrefix}${Number(transaction.amount || 0).toFixed(2)}
-        </div>
-        <div className="flex items-center justify-end gap-1 mt-1 font-bold text-xs tracking-wider uppercase">
-          {renderStatusIcon()}
-          <span
-            className={
-              transaction.status === "FAILED" ? "text-red-500" : "text-zinc-500"
-            }
+          <button
+            onClick={loadTransactions}
+            className={`p-2 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.06] text-[#8E929B] hover:text-white transition-all ${
+              isLoading ? "animate-spin text-[#38BDF8]" : ""
+            }`}
+            title="Refresh transaction stream"
           >
-            {transaction.status}
-          </span>
+            <RefreshCw size={15} />
+          </button>
         </div>
-      </div>
-    </div>
-  );
-}
 
+        {/* Content Stream */}
+        <div className="pt-2 min-h-[260px]">
+          {isLoading && transactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-56 text-[#7A7D82] font-mono text-xs gap-3">
+              <RefreshCw size={24} className="animate-spin text-[#38BDF8]" />
+              <span>Fetching cryptographic journal entries...</span>
