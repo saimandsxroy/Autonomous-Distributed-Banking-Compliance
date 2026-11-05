@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: FourEyes Autonomous Core-Banking & Fraud Interception Platform
+  version: 1.0.0
+  description: High-frequency double-entry ledger, in-database 5-hop AML cycle detection, and autonomous AI investigations.
+servers:
+  - url: http://localhost:8081
+    description: Local Development Engine
+paths:
+  /auth/login:
+    post:
+      summary: Stateless JWT Authentication
+  /journal/transfer:
+    post:
+      summary: Double-Entry Balanced Transfer
+  /compliance/demo/seed-aml-scenarios:
+    post:
+      summary: Seed 3-Hop AML Ring Scenario
