@@ -282,6 +282,10 @@ async function treasuryFetch(url, options = {}) {
     headers,
   });
 
+  if (response.status === 401 && !options._retry) {
+    const persona = getActivePersona();
+  }
+
   if (!response.ok) {
     let errorDetail = `HTTP ${response.status} ${response.statusText}`;
     try {
