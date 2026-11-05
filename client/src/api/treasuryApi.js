@@ -328,3 +328,193 @@ export async function fetchUserAccounts() {
 /** GET /account/all Returns all treasury accounts in the institution */
 export async function fetchAllTreasuryAccounts() {
   try {
+    return await treasuryFetch("/account/all");
+  } catch (e) {
+    if (e?.status === 404) {
+      return await fetchUserAccounts().catch(() => []);
+    }
+    throw e;
+  }
+}
+
+/** POST /account Creates a new treasury account with initial liquidity */
+export async function createTreasuryAccount(accountData) {
+  return await treasuryFetch("/account", {
+    method: "POST",
+    body: JSON.stringify(accountData),
+  });
+}
+
+/** POST /journal Creates a double-entry transfer with idempotency & AML checks */
+export async function createJournalTransfer(entry, idempotencyKey) {
+  return await treasuryFetch("/journal", {
+    method: "POST",
+    headers: {
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
+      currency: "USD",
+      referenceType: "TRANSFER",
+      idempotencyKey: idempotencyKey,
+      ...entry,
+    }),
+  });
+}
+
+/** GET /journal Returns journal entries for current user */
+export async function fetchUserJournalEntries() {
+  try {
+    return await treasuryFetch("/journal");
+  } catch (e) {
+    if (e?.status === 404) {
+      return [];
+    }
+    throw e;
+  }
+}
+
+/** GET /compliance/audit-logs Returns SHA-256 hash chained logs with verification */
+export async function fetchComplianceAuditLogs() {
+  return await treasuryFetch("/compliance/audit-logs");
+}
+
+/** POST /compliance/demo/seed-aml-scenarios Seeds 3-hop ring & triggers AI detective */
+export async function seedDemoAmlScenario() {
+  return await treasuryFetch("/compliance/demo/seed-aml-scenarios", {
+    method: "POST",
+  });
+}
+
+/** GET /compliance/investigations Returns all AI AML investigations */
+export async function fetchAmlInvestigations() {
+  return await treasuryFetch("/compliance/investigations");
+}
+
+/** GET /compliance/investigations/hold/{holdId} */
+export async function fetchAmlInvestigationByHold(holdId) {
+  return await treasuryFetch(`/compliance/investigations/hold/${holdId}`);
+}
+
+/** GET /compliance/approvals/pending Returns HITL approval queue */
+export async function fetchPendingApprovals() {
+  return await treasuryFetch("/compliance/approvals/pending");
+}
+
+/** POST /compliance/approvals/{id}/approve (with fallback to /compliance/approvals/id/{id}/approve) */
+export async function approveHitlRequest(
+  id,
+  reviewerUserName,
+  notes = "Approved by compliance lead",
+  action = "RELEASE"
+) {
+  try {
+    return await treasuryFetch(`/compliance/approvals/${id}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ reviewerUserName, notes, action }),
+    });
+  } catch (err) {
+    if (err?.status === 404 || err?.message?.includes("404") || err?.message?.includes("ROUTE_NOT_FOUND")) {
+      return await treasuryFetch(`/compliance/approvals/id/${id}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ reviewerUserName, notes, action }),
+      });
+    }
+    throw err;
+  }
+}
+
+/** POST /compliance/approvals/{id}/reject (with fallback to /compliance/approvals/id/{id}/reject) */
+export async function rejectHitlRequest(
+  id,
+  reviewerUserName,
+  notes = "Rejected after compliance review"
+) {
+  try {
+    return await treasuryFetch(`/compliance/approvals/${id}/reject`, {
+      method: "POST",
+      body: JSON.stringify({ reviewerUserName, notes }),
+    });
+  } catch (err) {
+    if (err?.status === 404 || err?.message?.includes("404") || err?.message?.includes("ROUTE_NOT_FOUND")) {
+      return await treasuryFetch(`/compliance/approvals/id/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ reviewerUserName, notes }),
+      });
+    }
+    throw err;
+  }
+}
+
+/** GET /compliance/mcp/invocations/{investigationId} */
+export async function fetchMcpInvocations(investigationId) {
+  return await treasuryFetch(
+    `/compliance/mcp/invocations/${investigationId}`
+  );
+}
+
+/** GET /compliance/graph/account/{accountId} 5-hop recursive CTE subgraph */
+export async function fetchAccountGraph(accountId) {
+  return await treasuryFetch(`/compliance/graph/account/${accountId}`);
+}
+
+/** GET /compliance/policies Returns all regulatory policy chunks */
+export async function fetchAllPolicies() {
+  return await treasuryFetch("/compliance/policies");
+}
+
+/** GET /compliance/policies/search?query=...&topK=... RAG semantic search */
+export async function searchPolicies(query, topK = 4) {
+  const encoded = encodeURIComponent(query);
+  return await treasuryFetch(
+    `/compliance/policies/search?query=${encoded}&topK=${topK}`
+  );
+}
+
+/** GET /admin/dlq Quarantined DLQ events */
+export async function fetchDlqEvents() {
+  return await treasuryFetch("/admin/dlq");
+}
+
+/** POST /admin/dlq/replay/{id} SRE DLQ replay */
+export async function replayDlqEvent(id) {
+  return await treasuryFetch(`/admin/dlq/replay/${id}`, {
+    method: "POST",
+  });
+}
+
+/* =====================================================================
+   Phase 7: Multi-Currency FX & Bulk Settlement Batch Endpoints
+   ===================================================================== */
+
+/** GET /fx/rates Returns list of supported FX rate pairs and spread bps */
+export async function fetchFxRates() {
+  return await treasuryFetch("/fx/rates");
+}
+
+/** GET /fx/quote?from=...&to=...&amount=... Calculates live FX quote with fee */
+export async function fetchFxQuote(from, to, amount) {
+  return await treasuryFetch(
+    `/fx/quote?from=${encodeURIComponent(from)}&to=${encodeURIComponent(
+      to
+    )}&amount=${encodeURIComponent(amount)}`
+  );
+}
+
+/** GET /batch Returns historical settlement batches */
+export async function fetchSettlementBatches() {
+  return await treasuryFetch("/batch");
+}
+
+/** GET /batch/id/{batchId} Returns batch details and reconciliation items */
+export async function fetchSettlementBatchById(batchId) {
+  return await treasuryFetch(`/batch/id/${batchId}`);
+}
+
+/** POST /batch/upload Accepts JSON payload with fileName, sourceAccountId, csvContent or items */
+export async function uploadBatchJson(payload) {
+  return await treasuryFetch("/batch/upload", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
