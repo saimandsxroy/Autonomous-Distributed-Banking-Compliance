@@ -2,30 +2,44 @@ import { useState, useEffect } from "react";
 import {
   getActivePersona,
   setActivePersona,
+  switchDemoPersonaJwt,
   PERSONAS,
 } from "../api/treasuryApi";
-import { ShieldCheck, User, Users, ChevronDown } from "lucide-react";
+import { ShieldCheck, User, Users, ChevronDown, Check } from "lucide-react";
 
 export function PersonaSwitcher({ compact = false, onPersonaChange }) {
   const [currentPersona, setCurrentPersona] = useState(getActivePersona());
   const [isOpen, setIsOpen] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     const handleChanged = (e) => {
       setCurrentPersona(e.detail);
     };
     window.addEventListener("runestone_persona_changed", handleChanged);
+    window.addEventListener("foureyes_persona_changed", handleChanged);
     return () => {
       window.removeEventListener("runestone_persona_changed", handleChanged);
+      window.removeEventListener("foureyes_persona_changed", handleChanged);
     };
   }, []);
 
-  const handleSelect = (p) => {
-    setActivePersona(p);
-    setCurrentPersona(p);
-    setIsOpen(false);
-    if (onPersonaChange) {
-      onPersonaChange(p);
+  const handleSelect = async (p) => {
+    setIsSwitching(true);
+    try {
+      await switchDemoPersonaJwt(p);
+      setCurrentPersona(p);
+      setIsOpen(false);
+      if (onPersonaChange) {
+        onPersonaChange(p);
+      }
+    } catch (e) {
+      console.error("Persona switch error:", e);
+      setActivePersona(p);
+      setCurrentPersona(p);
+      setIsOpen(false);
+    } finally {
+      setIsSwitching(false);
     }
   };
 
@@ -33,41 +47,43 @@ export function PersonaSwitcher({ compact = false, onPersonaChange }) {
   const isOfficer = personaInfo?.role?.includes("COMPLIANCE_OFFICER");
 
   return (
-    <div className="relative inline-block text-left w-full">
+    <div className="relative inline-block text-left w-full font-['Plus_Jakarta_Sans',sans-serif]">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between border-2 transition-all select-none ${
+        className={`w-full flex items-center justify-between border transition-all select-none backdrop-blur-xl ${
           isOfficer
-            ? "bg-violet-950/40 border-violet-600/70 text-violet-200 hover:bg-violet-900/50"
-            : "bg-zinc-900 border-zinc-700 text-zinc-200 hover:bg-zinc-800"
-        } ${compact ? "px-3 py-1.5 text-xs rounded-md" : "px-4 py-3 text-sm rounded-lg shadow-brutal"}`}
+            ? "bg-violet-950/30 border-violet-500/40 text-violet-200 hover:bg-violet-900/40 hover:border-violet-500/60"
+            : "bg-[#0C1017]/90 border-white/10 text-[#F3F1EC] hover:bg-[#121722] hover:border-white/20"
+        } ${compact ? "px-3 py-1.5 text-xs rounded-xl" : "px-3.5 py-2.5 text-xs rounded-xl shadow-lg"}`}
       >
-        <div className="flex items-center gap-3 overflow-hidden text-left">
+        <div className="flex items-center gap-2.5 overflow-hidden text-left">
           <div
-            className={`p-1.5 rounded-md shrink-0 ${
-              isOfficer ? "bg-violet-600 text-white" : "bg-ochre-800 text-white"
+            className={`p-1.5 rounded-lg shrink-0 ${
+              isOfficer
+                ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                : "bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/20"
             }`}
           >
             {isOfficer ? (
-              <ShieldCheck size={compact ? 14 : 18} />
+              <ShieldCheck size={compact ? 13 : 15} />
             ) : (
-              <User size={compact ? 14 : 18} />
+              <User size={compact ? 13 : 15} />
             )}
           </div>
           <div className="truncate">
-            <div className="font-bold tracking-tight truncate">
+            <div className="font-semibold tracking-[-0.01em] text-[#F3F1EC] truncate text-xs">
               {personaInfo?.displayName}
             </div>
-            <div className="text-[10px] uppercase font-mono tracking-wider opacity-70">
+            <div className="text-[10px] font-mono tracking-wider text-[#6E737D] truncate">
               {personaInfo?.role}{" "}
               {personaInfo?.accountId ? `• Acc #${personaInfo.accountId}` : ""}
             </div>
           </div>
         </div>
         <ChevronDown
-          size={16}
-          className={`shrink-0 ml-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          size={14}
+          className={`shrink-0 ml-2 text-[#8E929B] transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -77,10 +93,10 @@ export function PersonaSwitcher({ compact = false, onPersonaChange }) {
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-full min-w-[280px] bg-zinc-950 border-2 border-zinc-700 shadow-2xl rounded-lg z-50 p-2 space-y-1 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 border-b border-zinc-800 mb-1 flex items-center justify-between">
-              <span>Switch Active Actor / Persona</span>
-              <Users size={12} />
+          <div className="absolute right-0 mt-2 w-full min-w-[280px] bg-[#0C1017]/95 border border-white/10 shadow-2xl rounded-2xl z-50 p-2 space-y-1 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-3 py-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#6E737D] border-b border-white/[0.06] mb-1 flex items-center justify-between">
+              <span>Switch Active Session Identity</span>
+              <Users size={12} className="text-[#38BDF8]" />
             </div>
 
             {Object.keys(PERSONAS).map((key) => {
@@ -92,34 +108,35 @@ export function PersonaSwitcher({ compact = false, onPersonaChange }) {
                 <button
                   key={key}
                   type="button"
+                  disabled={isSwitching}
                   onClick={() => handleSelect(key)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all text-xs ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all text-xs ${
                     isSelected
                       ? isLead
-                        ? "bg-violet-900/60 text-violet-200 border border-violet-500/50"
-                        : "bg-zinc-800 text-white border border-zinc-600"
-                      : "hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200"
+                        ? "bg-violet-500/15 text-violet-200 border border-violet-500/40 shadow-[0_0_15px_rgba(139,92,246,0.15)]"
+                        : "bg-white/[0.08] text-white border border-[#38BDF8]/40 shadow-[0_0_15px_rgba(56,189,248,0.1)]"
+                      : "hover:bg-white/[0.04] text-[#9CA3AF] hover:text-white border border-transparent"
                   }`}
                 >
                   <div
-                    className={`p-1.5 rounded-md shrink-0 ${
+                    className={`p-1.5 rounded-lg shrink-0 ${
                       isLead
-                        ? "bg-violet-700 text-white"
-                        : "bg-zinc-800 text-zinc-400"
+                        ? "bg-violet-500/20 text-violet-300"
+                        : "bg-white/[0.05] text-[#8E929B]"
                     }`}
                   >
-                    {isLead ? <ShieldCheck size={14} /> : <User size={14} />}
+                    {isLead ? <ShieldCheck size={13} /> : <User size={13} />}
                   </div>
                   <div className="flex-1 truncate">
-                    <div className="font-semibold text-zinc-200 truncate">
+                    <div className="font-semibold text-[#F3F1EC] truncate text-xs">
                       {info.displayName}
                     </div>
-                    <div className="text-[10px] font-mono text-zinc-500">
+                    <div className="text-[10px] font-mono text-[#6E737D] truncate">
                       {info.username} • {info.role}
                     </div>
                   </div>
                   {isSelected && (
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                    <Check size={14} className={isLead ? "text-violet-400" : "text-[#38BDF8]"} />
                   )}
                 </button>
               );
@@ -130,4 +147,3 @@ export function PersonaSwitcher({ compact = false, onPersonaChange }) {
     </div>
   );
 }
-
