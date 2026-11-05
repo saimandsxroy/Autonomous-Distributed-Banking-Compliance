@@ -728,3 +728,83 @@ export function BatchAndFxPage() {
                       ))}
                     </select>
                   </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                      Destination ({quoteTo})
+                    </label>
+                    <select
+                      value={fxTransferDestination}
+                      onChange={(e) => setFxTransferDestination(e.target.value)}
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none cursor-pointer"
+                    >
+                      {quoteTo === "INR" && (
+                        <option value="15">Acc #15 (AC-CORP-INR-VENDOR) — Bangalore Tech (INR)</option>
+                      )}
+                      {quoteTo === "EUR" && (
+                        <option value="16">Acc #16 (AC-CORP-EUR-VENDOR) — Frankfurt Cloud (EUR)</option>
+                      )}
+                      {quoteTo === "GBP" && (
+                        <option value="17">Acc #17 (AC-CORP-GBP-VENDOR) — London Legal (GBP)</option>
+                      )}
+                      <option value="2">Acc #2 (AC-69D1D364271B) — Bob Jones (USD)</option>
+                      <option value="3">Acc #3 (AC-2B1F918288D9) — Charlie Day (USD)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Feedback */}
+                {fxTransferSuccess && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 text-emerald-300 text-xs font-mono flex items-start gap-2.5">
+                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block text-white font-semibold mb-0.5">5-Leg FX Wire Settled!</strong>
+                      Journal Entry #{fxTransferSuccess.id} cleared through Nostro liquidity pools.
+                    </div>
+                  </div>
+                )}
+
+                {fxTransferError && (
+                  <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-3.5 text-rose-300 text-xs font-mono flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-rose-400 shrink-0" />
+                    <span>{fxTransferError}</span>
+                  </div>
+                )}
+
+                {/* Execute Button */}
+                <button
+                  onClick={handleExecuteFxTransfer}
+                  disabled={fxTransferSubmitting || quoteLoading || !liveQuote}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold font-mono uppercase text-xs tracking-wider rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.25)] flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {fxTransferSubmitting ? (
+                    <RefreshCw className="animate-spin text-black" size={16} />
+                  ) : (
+                    <ArrowRight size={16} />
+                  )}
+                  <span>
+                    {fxTransferSubmitting
+                      ? "Executing 5-Leg Double-Entry..."
+                      : `Execute 5-Leg FX Wire (${quoteFrom} → ${quoteTo})`}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column: Quote Breakdown & Zero-Sum Invariant Card */}
+            <div className="lg:col-span-5 space-y-5">
+              <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] text-xs font-mono">
+                  <span className="text-[#8E929B] font-semibold uppercase">Live FX Conversion</span>
+                  {quoteLoading ? (
+                    <RefreshCw size={13} className="animate-spin text-[#38BDF8]" />
+                  ) : (
+                    <span className="text-emerald-400 text-[10.5px]">● ACTIVE</span>
+                  )}
+                </div>
+
+                {liveQuote ? (
+                  <div className="space-y-2.5 text-xs font-mono">
+                    <div className="flex justify-between items-center text-[#8E929B]">
+                      <span>Gross Source:</span>
+                      <span className="text-white font-semibold">
