@@ -348,3 +348,173 @@ export function ReconciliationAndCorporateWires() {
       };
     }
   };
+
+  const currentTier = computeWireTier(wireForm.amount);
+
+  return (
+    <div className="space-y-7 pb-16 font-['Plus_Jakarta_Sans',sans-serif]">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.03em] text-[#F3F1EC]">
+              Reconciliation & Corporate Spend Desk
+            </h1>
+          </div>
+          <p className="font-mono text-[11px] text-[#7A7D82] mt-0.5">
+            EOD Nostro/Vostro Split-Brain Healing • FINRA Multi-Tier Maker-Checker Multi-Signature Governance
+          </p>
+        </div>
+
+        {/* Persona Indicator */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0C1017] border border-white/[0.08] rounded-xl text-xs font-mono text-[#8E929B] self-start md:self-auto">
+          <Building size={14} className="text-[#38BDF8] shrink-0" />
+          <div>
+            <span className="text-[#6E737D]">Signer Identity: </span>
+            <span className="font-semibold text-white">
+              {PERSONAS[activePersonaKey]?.displayName || activePersonaKey}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs (FourEyes Active Pill System) */}
+      <div className="inline-flex p-1 bg-[#0C1017] border border-white/[0.08] rounded-xl self-start flex-wrap">
+        <button
+          onClick={() => setActiveTab("recon")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-medium transition-all ${
+            activeTab === "recon"
+              ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+              : "text-[#8E929B] hover:text-white"
+          }`}
+        >
+          <FileCheck size={14} />
+          <span>EOD Statement Reconciliation</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("wires")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-medium transition-all ${
+            activeTab === "wires"
+              ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+              : "text-[#8E929B] hover:text-white"
+          }`}
+        >
+          <UserCheck size={14} />
+          <span>Maker-Checker Corporate Spend</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("telemetry")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs font-medium transition-all ${
+            activeTab === "telemetry"
+              ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+              : "text-[#8E929B] hover:text-white"
+          }`}
+        >
+          <Activity size={14} />
+          <span>Ledger & SRE Telemetry</span>
+        </button>
+      </div>
+
+      {/* =========================================================================
+          TAB 1: EOD NOSTRO/VOSTRO RECONCILIATION
+          ========================================================================= */}
+      {activeTab === "recon" && (
+        <div className="space-y-6">
+          {/* Action Trigger Card */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
+              <div>
+                <h3 className="font-semibold text-lg text-[#F3F1EC] tracking-[-0.02em] flex items-center gap-2">
+                  <Sparkles className="text-[#38BDF8]" size={18} />
+                  <span>SWIFT MT940 EOD Statement Clearing Engine</span>
+                </h3>
+                <p className="font-mono text-[11px] text-[#7A7D82] mt-0.5">
+                  Performs O(N) idempotency-keyed comparison between external bank clearing lines and internal double-entry journals.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleSimulateEodStatement}
+                  disabled={reconLoading}
+                  className="bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold font-mono uppercase text-xs tracking-wider px-4 py-2.5 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.25)] flex items-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {reconLoading ? (
+                    <RefreshCw size={14} className="animate-spin text-black" />
+                  ) : (
+                    <Zap size={14} className="fill-black text-black" />
+                  )}
+                  <span>⚡ Simulate EOD SWIFT Clearing</span>
+                </button>
+                <button
+                  onClick={() => setShowCustomModal(true)}
+                  className="bg-white/[0.04] hover:bg-white/[0.08] text-white font-mono text-xs px-3.5 py-2.5 rounded-xl border border-white/10 transition-colors"
+                >
+                  Custom JSON Statement
+                </button>
+              </div>
+            </div>
+
+            {reconAlert && (
+              <div
+                className={`mt-4 p-3.5 rounded-xl border text-xs font-mono flex items-start gap-2.5 animate-in fade-in ${
+                  reconAlert.type === "success"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                }`}
+              >
+                {reconAlert.type === "success" ? (
+                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertTriangle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1 font-medium">{reconAlert.message}</div>
+                <button onClick={() => setReconAlert(null)} className="text-[#8E929B] hover:text-white">✕</button>
+              </div>
+            )}
+
+            {/* Run Selection & Summary */}
+            {selectedRun ? (
+              <div className="mt-5 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3.5 bg-[#07090D] rounded-xl border border-white/[0.04] space-y-0.5">
+                    <span className="text-[10px] font-mono uppercase text-[#8E929B] block">Matched Clean</span>
+                    <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-emerald-400">
+                      {selectedRun.matchedCount}
+                    </span>
+                  </div>
+                  <div className="p-3.5 bg-[#07090D] rounded-xl border border-white/[0.04] space-y-0.5">
+                    <span className="text-[10px] font-mono uppercase text-[#8E929B] block">External Unmatched</span>
+                    <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-rose-400">
+                      {selectedRun.unmatchedExternalCount}
+                    </span>
+                  </div>
+                  <div className="p-3.5 bg-[#07090D] rounded-xl border border-white/[0.04] space-y-0.5">
+                    <span className="text-[10px] font-mono uppercase text-[#8E929B] block">Internal Unmatched</span>
+                    <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-amber-400">
+                      {selectedRun.unmatchedInternalCount}
+                    </span>
+                  </div>
+                  <div className="p-3.5 bg-[#07090D] rounded-xl border border-white/[0.04] space-y-0.5">
+                    <span className="text-[10px] font-mono uppercase text-[#8E929B] block">Amount Mismatch</span>
+                    <span className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-amber-400">
+                      {selectedRun.amountMismatchCount}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <h4 className="text-xs font-mono font-semibold uppercase text-[#8E929B] flex items-center gap-1.5">
+                    <Scale size={14} className="text-[#38BDF8]" />
+                    <span>Discrepancy Audit & Compensating Adjustment Table ({discrepancies.length} Items)</span>
+                  </h4>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold border ${
+                      selectedRun.status === "RECONCILED_CLEAN"
+                        ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                        : selectedRun.status === "RESOLVED"
+                        ? "bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30"
+                        : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                    }`}
+                  >
+                    {selectedRun.status}
