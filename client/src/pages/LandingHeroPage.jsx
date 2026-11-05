@@ -493,3 +493,24 @@ export function LandingHeroPage() {
                 }`}
               />
             </div>
+
+            {/* In-Place Character-by-Character Typewriter Container with Refined Word Gap & Block Cursor */}
+            <div className="mt-4 min-h-[2.5em] max-w-[460px] text-[clamp(2.2rem,3.6vw,3.4rem)] leading-[1.18] tracking-[-0.01em] font-normal">
+              <span style={{ whiteSpace: "pre-wrap" }} className="text-[#F3F1EC]">
+                {prefixVisible}
+              </span>
+              {targetVisible && (
+                <span
+                  style={{ whiteSpace: "pre-wrap" }}
+                  className="font-serif italic text-[#38BDF8] ml-[0.03em] pr-[0.04em] drop-shadow-[0_0_18px_rgba(56,189,248,0.32)]"
+                >
+                  {targetVisible}
+                </span>
+              )}
+              {/* Dark Translucent Block Cursor */}
+              <span className="w-[0.44em] h-[0.84em] ml-[4px] bg-[#1E2024]/90 border border-white/20 rounded-[2px] inline-block align-baseline translate-y-[0.08em] animate-pulse" />
+            </div>
+          </div>
+
+          {/* Center Column (lg:col-span-4) — 3D Bounded Zone */}
+          <div className="lg:col-span-4 h-[220px] sm:h-[320px] lg:h-[480px] pointer-events-none relative" />
