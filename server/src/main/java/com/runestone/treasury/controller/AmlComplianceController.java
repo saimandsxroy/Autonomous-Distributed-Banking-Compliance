@@ -293,7 +293,7 @@ public class AmlComplianceController {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String reviewer =
         (authentication != null
-                && authentication.isAuthenticated()
+                && authentication.getName() != null
                 && !authentication.getName().equals("anonymousUser"))
             ? authentication.getName()
             : (body != null && body.containsKey("reviewerUserName")
