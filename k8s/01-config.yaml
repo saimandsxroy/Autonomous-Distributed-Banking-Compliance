@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: foureyes-config
+  namespace: foureyes
+data:
+  PORT: "8081"
+  SPRING_DATA_REDIS_HOST: "redis.foureyes.svc.cluster.local"
+  SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka.foureyes.svc.cluster.local:9092"
+  APP_CORS_ALLOWED_ORIGINS: "https://foureyes.io,https://app.foureyes.io"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: foureyes-secret
+  namespace: foureyes
+type: Opaque
+stringData:
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql.foureyes.svc.cluster.local:3306/runestone_treasury?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  SPRING_DATASOURCE_USERNAME: "root"
+  SPRING_DATASOURCE_PASSWORD: "CHANGE_ME_IN_PRODUCTION"
+  JWT_SECRET: "runestone_treasury_jwt_hs256_secret_key_minimum_256_bits_2024"
