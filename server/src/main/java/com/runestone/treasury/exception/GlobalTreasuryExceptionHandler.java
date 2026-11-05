@@ -98,6 +98,14 @@ public class GlobalTreasuryExceptionHandler {
         .body(buildErrorBody("RESOURCE_NOT_FOUND", ex.getMessage()));
   }
 
+  @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+  public ResponseEntity<?> handleNoResourceFound(
+      org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+    log.warn("No static resource / route found: {}", ex.getMessage());
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(buildErrorBody("ROUTE_NOT_FOUND", ex.getMessage()));
+  }
+
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
     log.warn("Illegal argument: {}", ex.getMessage());
