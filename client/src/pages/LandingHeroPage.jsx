@@ -514,3 +514,167 @@ export function LandingHeroPage() {
 
           {/* Center Column (lg:col-span-4) — 3D Bounded Zone */}
           <div className="lg:col-span-4 h-[220px] sm:h-[320px] lg:h-[480px] pointer-events-none relative" />
+
+          {/* Right Column (lg:col-span-4) — LIVE 7-STAGE DEFENSE PIPELINE */}
+          <div className="lg:col-span-4 flex flex-col justify-center pointer-events-auto select-none z-20 lg:pl-6">
+            <div className="w-full max-w-full lg:max-w-[400px]">
+              <div className="text-[10px] font-tech-mono tracking-[0.22em] text-[#8CB0DB] uppercase mb-2 font-semibold flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+                <span>LIVE 7-STAGE DEFENSE PIPELINE</span>
+              </div>
+
+              {/* Integrated Concise Subheading */}
+              <p className="text-[12.5px] leading-[1.6] text-[#94A3B8] mb-4 max-w-[340px] font-sans">
+                Double-entry core banking fused with in-database 5-hop graph detection, sub-ms Redis velocity gates, and human-governed AI investigations.
+              </p>
+
+              {/* 7 Structured Pipeline Rows */}
+              <div className="space-y-2.5 sm:space-y-3 font-tech-mono text-[11px] sm:text-[12px] border-l border-white/10 pl-3 sm:pl-4">
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-[#7A7D82] text-[10px] sm:text-[11px]">01</span>
+                  <span className="text-[#E8E5DE] font-semibold">IDEMPOTENCY</span>
+                  <span className="text-[#9CA3AF] text-[10px] sm:text-[11px]">— Redis NX &amp; SHA-256 fence</span>
+                </div>
+
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-[#7A7D82] text-[10px] sm:text-[11px]">02</span>
+                  <span className="text-[#E8E5DE] font-semibold">VELOCITY GATE</span>
+                  <span className="text-[#9CA3AF] text-[10px] sm:text-[11px]">— 0.4ms atomic Lua burst limiter</span>
+                </div>
+
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2 bg-[#F43F5E]/10 py-1 px-1.5 rounded border border-[#F43F5E]/30 -ml-1.5">
+                  <span className="text-[#F43F5E] text-[10px] sm:text-[11px] font-bold">03</span>
+                  <span className="text-[#FDA4AF] font-bold">5-HOP AML GRAPH</span>
+                  <span className="text-[#FECDD3] text-[10px] sm:text-[11px]">— MySQL recursive cycle trap</span>
+                </div>
+
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-[#7A7D82] text-[10px] sm:text-[11px]">04</span>
+                  <span className="text-[#E8E5DE] font-semibold">3-BUCKET ESCROW</span>
+                  <span className="text-[#9CA3AF] text-[10px] sm:text-[11px]">— Zero-sum PENDING_HOLD isolation</span>
+                </div>
+
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-[#7A7D82] text-[10px] sm:text-[11px]">05</span>
+                  <span className="text-[#E8E5DE] font-semibold">OUTBOX STREAM</span>
+                  <span className="text-[#9CA3AF] text-[10px] sm:text-[11px]">— SKIP LOCKED relay to Kafka</span>
+                </div>
+
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2 text-[#8CB0DB]">
+                  <span className="text-[#8CB0DB] text-[10px] sm:text-[11px]">06</span>
+                  <span className="font-semibold">AI DETECTIVE</span>
+                  <span className="text-[#93C5FD] text-[10px] sm:text-[11px]">— MCP tools &amp; FinCEN/FATF RAG</span>
+                </div>
+
+                <div className="leading-tight flex flex-wrap sm:flex-nowrap items-baseline gap-1.5 sm:gap-2">
+                  <span className="text-[#7A7D82] text-[10px] sm:text-[11px]">07</span>
+                  <span className="text-[#E8E5DE] font-semibold">4-EYES HITL</span>
+                  <span className="text-[#9CA3AF] text-[10px] sm:text-[11px]">— FINRA 3110 sign-off &amp; SAR PDF</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom CTA Bar & 5-Column Technical Telemetry Strip */}
+        <div className="w-full max-w-[1440px] mx-auto mt-4 pointer-events-auto z-20">
+          {/* Dual Pill Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-5 w-full max-w-md sm:max-w-none mx-auto">
+            <Link
+              to="/dashboard"
+              onClick={() => playButtonClickSound()}
+              onMouseEnter={() => {
+                handleInteractiveEnter();
+                playButtonHoverSound();
+              }}
+              onMouseLeave={handleInteractiveLeave}
+              className="text-center bg-[#E8E5DE] hover:bg-white text-[#08090A] rounded-full px-6 sm:px-8 py-3 text-[11px] font-tech-mono tracking-[0.22em] uppercase font-bold shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center justify-center"
+            >
+              LAUNCH TREASURY TERMINAL
+            </Link>
+
+            <Link
+              to="/compliance"
+              onClick={() => playButtonClickSound()}
+              onMouseEnter={() => {
+                handleInteractiveEnter();
+                playButtonHoverSound();
+              }}
+              onMouseLeave={handleInteractiveLeave}
+              className="text-center border border-white/25 hover:border-white/60 bg-black/40 backdrop-blur-md text-[#9CA3AF] hover:text-white rounded-full px-6 sm:px-7 py-3 text-[11px] font-tech-mono tracking-[0.22em] uppercase transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] min-h-[44px] flex items-center justify-center"
+            >
+              OPEN AML COMMAND CENTER
+            </Link>
+          </div>
+
+          {/* 5-Column Bottom Strip */}
+          <div className="border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-x divide-white/10 select-none">
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#E8E5DE] tracking-tight">
+                Σ $0.0000
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                DOUBLE-ENTRY INVARIANT
+              </div>
+            </div>
+
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#E8E5DE] tracking-tight">
+                0.4 ms
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                REDIS LUA VELOCITY
+              </div>
+            </div>
+
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#F43F5E] tracking-tight">
+                5-HOP CTE
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                IN-DB RING DETECTION
+              </div>
+            </div>
+
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6 hidden sm:block">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#E8E5DE] tracking-tight">
+                4-LEG FX
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                MULTI-CURRENCY &amp; BATCH
+              </div>
+            </div>
+
+            <div className="py-2.5 sm:py-3 px-3 sm:px-6 hidden md:block">
+              <div className="text-xs sm:text-base font-bold font-tech-mono text-[#E8E5DE] tracking-tight">
+                SHA-256
+              </div>
+              <div className="text-[8px] sm:text-[9px] font-tech-mono tracking-[0.2em] text-[#7A7D82] uppercase mt-0.5">
+                TAMPER-EVIDENT AUDIT CHAIN
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          STAGE 2: SCROLL TRANSITION TO ARCHIVAL BONE SPECIFICATION
+          Plate 1: Warm Archival Stone (#EAE6DF)
+          ===================================================================== */}
+      <section
+        className={`relative z-20 min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-12 py-16 sm:py-24 pointer-events-none transition-all duration-700 ease-out ${
+          isSection2
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-8"
+        }`}
+      >
+        <div className="w-full max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 items-center gap-8 lg:gap-12">
+          {/* Left Column on Stone Plate: Two-Tone Stacked Headline & Datasheet */}
+          <div className="lg:col-span-7 pointer-events-auto select-none">
+            {/* Two-Tone Stacked Headline */}
+            <h2 className="font-hero-display text-2xl sm:text-4xl lg:text-5xl leading-[1.08]">
+              <span className="block text-[#2A2D32]">Mathematical ledger certainty.</span>
+              <span className="block text-[#1D4477]">Autonomous AI compliance.</span>
+            </h2>
+
+            {/* Editorial Paragraph */}
