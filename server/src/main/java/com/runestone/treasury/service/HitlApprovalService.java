@@ -162,6 +162,7 @@ public class HitlApprovalService {
     HitlApprovalRequest request =
         hitlApprovalRequestRepository
             .findById(approvalId)
+            .or(() -> hitlApprovalRequestRepository.findByInvestigationId(approvalId))
             .orElseThrow(
                 () -> new IllegalArgumentException("Approval request not found: " + approvalId));
 
