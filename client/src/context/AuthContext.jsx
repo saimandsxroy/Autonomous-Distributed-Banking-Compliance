@@ -76,7 +76,23 @@ export function AuthProvider({ children }) {
       startExpiryTimer();
     }
     setIsLoading(false);
-    return () => clearExpiryTimer();
+
+    const handlePersonaChange = () => {
+      const storedToken = getToken();
+      const storedUser = getStoredAccountInfo();
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(storedUser);
+      }
+    };
+    window.addEventListener("foureyes_persona_changed", handlePersonaChange);
+    window.addEventListener("runestone_persona_changed", handlePersonaChange);
+
+    return () => {
+      clearExpiryTimer();
+      window.removeEventListener("foureyes_persona_changed", handlePersonaChange);
+      window.removeEventListener("runestone_persona_changed", handlePersonaChange);
+    };
   }, [clearExpiryTimer, startExpiryTimer]);
 
   const login = useCallback(
