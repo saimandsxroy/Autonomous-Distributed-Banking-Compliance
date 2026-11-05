@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foureyes-server
+  namespace: foureyes
+  labels:
+    app: foureyes-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: foureyes-server
+  template:
+    metadata:
+      labels:
+        app: foureyes-server
+    spec:
+      containers:
+        - name: server
+          image: foureyes/treasury-core:v1.0.0
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: foureyes-config
+            - secretRef:
+                name: foureyes-secret
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: foureyes-server-service
+  namespace: foureyes
+spec:
+  type: ClusterIP
+  selector:
+    app: foureyes-server
+  ports:
+    - port: 8081
+      targetPort: 8081
