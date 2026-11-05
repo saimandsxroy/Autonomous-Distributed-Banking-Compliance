@@ -46,7 +46,7 @@ public class TreasuryAccountController {
       }
       return new ResponseEntity<>(all, HttpStatus.OK);
     }
-    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(List.of(), HttpStatus.OK);
   }
 
   @GetMapping("/all")
