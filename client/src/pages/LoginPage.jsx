@@ -298,3 +298,243 @@ export function LoginPage() {
                     </span>
                     <span className="text-[9px] font-tech-mono font-medium px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 uppercase tracking-wider">
                       MAKER
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8E9299] mt-0.5 font-hero-sub break-words">
+                    Execute transfers &amp; batch payroll.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center pl-2 sm:pl-3 shrink-0">
+                {demoLoggingIn === "alice" ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-emerald-400">
+                    <Loader2 size={15} className="animate-spin" />
+                    <span className="hidden sm:inline">Authenticating...</span>
+                  </div>
+                ) : (
+                  <ArrowRight
+                    size={16}
+                    className="text-[#6E737D] group-hover:text-[#38BDF8] group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </div>
+            </button>
+
+            {/* Bob Jones Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantDemoLogin("bob", "/reconciliation")}
+              disabled={!!demoLoggingIn || isLoading}
+              className="w-full text-left p-4 lg:p-5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-[#38BDF8]/30 transition-all duration-300 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-105 transition-transform shrink-0">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                    <span className="text-sm font-medium text-white group-hover:text-amber-300 transition-colors">
+                      Bob Jones
+                    </span>
+                    <span className="text-[9px] font-tech-mono font-medium px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 uppercase tracking-wider">
+                      CHECKER
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8E9299] mt-0.5 font-hero-sub break-words">
+                    Dual-control approvals &amp; reconciliation.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center pl-2 sm:pl-3 shrink-0">
+                {demoLoggingIn === "bob" ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-amber-400">
+                    <Loader2 size={15} className="animate-spin" />
+                    <span className="hidden sm:inline">Authenticating...</span>
+                  </div>
+                ) : (
+                  <ArrowRight
+                    size={16}
+                    className="text-[#6E737D] group-hover:text-[#38BDF8] group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </div>
+            </button>
+
+            {/* Sarah Connor Card */}
+            <button
+              type="button"
+              onClick={() => handleInstantDemoLogin("sarah_compliance", "/compliance")}
+              disabled={!!demoLoggingIn || isLoading}
+              className="w-full text-left p-4 lg:p-5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-[#38BDF8]/30 transition-all duration-300 flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 sm:gap-4">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
+                  <KeyRound size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                    <span className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors">
+                      Sarah Connor
+                    </span>
+                    <span className="text-[9px] font-tech-mono font-medium px-2 py-0.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 uppercase tracking-wider">
+                      COMPLIANCE
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8E9299] mt-0.5 font-hero-sub break-words">
+                    AI investigation &amp; AML graph analysis.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center pl-2 sm:pl-3 shrink-0">
+                {demoLoggingIn === "sarah_compliance" ? (
+                  <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] font-tech-mono text-indigo-400">
+                    <Loader2 size={15} className="animate-spin" />
+                    <span className="hidden sm:inline">Authenticating...</span>
+                  </div>
+                ) : (
+                  <ArrowRight
+                    size={16}
+                    className="text-[#6E737D] group-hover:text-[#38BDF8] group-hover:translate-x-1 transition-all"
+                  />
+                )}
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* =================================================================
+            RIGHT COLUMN: GLASSMORPHIC CRYPTOGRAPHIC AUTH TERMINAL
+            ================================================================= */}
+        <div className="w-full lg:max-w-md mx-auto shrink-0">
+          <div className="relative rounded-2xl bg-[#0B0E13]/90 backdrop-blur-xl border border-white/12 p-5 sm:p-7 lg:p-8 shadow-2xl overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent">
+            {/* Ambient Sapphire Glow in Corner */}
+            <div className="absolute -top-24 -right-24 w-60 h-60 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Mode Switcher Tabs */}
+            <div className="relative grid grid-cols-2 p-1 rounded-xl bg-white/[0.03] border border-white/10 mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("signin");
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                className={`min-h-[44px] py-2.5 text-xs font-tech-mono tracking-wider uppercase rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  authMode === "signin"
+                    ? "bg-white/[0.08] text-white shadow-sm border border-white/15"
+                    : "text-[#7A7D82] hover:text-[#C5C8CD]"
+                }`}
+              >
+                <LogIn size={14} className={authMode === "signin" ? "text-[#38BDF8]" : ""} />
+                <span>[01] Sign In</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode("signup");
+                  setError("");
+                  setSuccessMsg("");
+                }}
+                className={`min-h-[44px] py-2.5 text-xs font-tech-mono tracking-wider uppercase rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  authMode === "signup"
+                    ? "bg-white/[0.08] text-white shadow-sm border border-white/15"
+                    : "text-[#7A7D82] hover:text-[#C5C8CD]"
+                }`}
+              >
+                <Coins size={14} className={authMode === "signup" ? "text-emerald-400" : ""} />
+                <span>[02] Create Account</span>
+              </button>
+            </div>
+
+            {/* Error Notification Banner */}
+            {error && (
+              <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-300 flex items-start gap-2.5 animate-fadeIn">
+                <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                <p className="text-xs font-tech-mono leading-relaxed">{error}</p>
+              </div>
+            )}
+
+            {/* Success Notification Banner */}
+            {successMsg && (
+              <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 flex items-start gap-2.5 animate-fadeIn">
+                <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                <p className="text-xs font-tech-mono leading-relaxed">{successMsg}</p>
+              </div>
+            )}
+
+            {/* =============================================================
+                MODE A: SIGN IN FORM
+                ============================================================= */}
+            {authMode === "signin" && (
+              <form onSubmit={handleSignIn} className="space-y-4">
+                {/* Identifier */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="signin-identifier"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Identifier
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signin-identifier"
+                      type="text"
+                      autoComplete="username"
+                      placeholder="sarah_compliance or alice"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-3 min-h-[44px] text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Master Passphrase with Toggle */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="signin-password"
+                    className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]"
+                  >
+                    Master Passphrase
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signin-password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      placeholder="••••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                      required
+                      className="w-full bg-[#08090A] border border-white/10 rounded-xl px-4 py-3 min-h-[44px] pr-12 text-sm text-[#F3F1EC] placeholder:text-[#45474D] font-tech-mono focus:outline-none focus:border-[#38BDF8] focus:ring-1 focus:ring-[#38BDF8]/40 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-[#7A7D82] hover:text-[#F3F1EC] transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full mt-2 py-3.5 px-6 min-h-[44px] rounded-xl font-tech-mono text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2 bg-[#E8E5DE] text-[#08090A] hover:bg-white hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Minting Stateless JWT...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Authenticate &amp; Enter Portal</span>
+                      <ArrowRight size={15} />
