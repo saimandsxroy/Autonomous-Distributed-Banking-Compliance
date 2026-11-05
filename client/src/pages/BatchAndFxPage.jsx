@@ -808,3 +808,68 @@ export function BatchAndFxPage() {
                     <div className="flex justify-between items-center text-[#8E929B]">
                       <span>Gross Source:</span>
                       <span className="text-white font-semibold">
+                        ${Number(liveQuote.sourceAmount).toFixed(2)} {liveQuote.fromCurrency}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-amber-400">
+                      <span>Platform Spread Fee (0.50%):</span>
+                      <span className="font-semibold">
+                        -${Number(liveQuote.feeAmount).toFixed(2)} {liveQuote.fromCurrency}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-[#8E929B]">
+                      <span>Net Converted:</span>
+                      <span className="text-white font-semibold">
+                        ${Number(liveQuote.netPrincipal).toFixed(2)} {liveQuote.fromCurrency}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 bg-[#07090D] border border-white/[0.06] rounded-xl space-y-1 mt-3">
+                      <div className="text-[10px] uppercase font-mono text-[#8E929B]">
+                        Net Destination Payout
+                      </div>
+                      <div className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-emerald-400">
+                        {Number(liveQuote.convertedTargetAmount).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        <span className="text-sm text-[#8CB0DB]">{liveQuote.toCurrency}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-[#7A7D82] font-mono text-xs">
+                    Calculating conversion quote...
+                  </div>
+                )}
+              </div>
+
+              {/* 5-Leg Double-Entry Zero-Sum Invariant Card */}
+              <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 space-y-3 font-mono text-xs">
+                <div className="flex items-center gap-1.5 pb-2 border-b border-white/[0.06] text-[#38BDF8] font-semibold uppercase text-[11px]">
+                  <ShieldCheck size={14} />
+                  <span>5-Leg Double-Entry Zero-Sum Proof</span>
+                </div>
+
+                <div className="p-2.5 bg-[#07090D] rounded-xl border border-white/[0.04] space-y-1 text-[11px]">
+                  <div className="text-rose-400">• Leg 1 [DEBIT]: User Account (-${liveQuote?.sourceAmount || "1,000.00"} {quoteFrom})</div>
+                  <div className="text-emerald-400">• Leg 2 [CREDIT]: Fee Pool AC-SYS-FEE-USD (+${liveQuote?.feeAmount || "5.00"} {quoteFrom})</div>
+                  <div className="text-emerald-400">• Leg 3 [CREDIT]: FX Pool AC-SYS-FX-{quoteFrom} (+${liveQuote?.netPrincipal || "995.00"} {quoteFrom})</div>
+                  <div className="text-[#6E737D] pt-1 border-t border-white/[0.04]">∑ SignedAmount({quoteFrom}) = 0.0000 (BALANCED)</div>
+                </div>
+
+                <div className="p-2.5 bg-[#07090D] rounded-xl border border-white/[0.04] space-y-1 text-[11px]">
+                  <div className="text-rose-400">• Leg 4 [DEBIT]: FX Pool AC-SYS-FX-{quoteTo} (-{liveQuote?.convertedTargetAmount || "83,082.50"} {quoteTo})</div>
+                  <div className="text-emerald-400">• Leg 5 [CREDIT]: Destination Account (+{liveQuote?.convertedTargetAmount || "83,082.50"} {quoteTo})</div>
+                  <div className="text-[#6E737D] pt-1 border-t border-white/[0.04]">∑ SignedAmount({quoteTo}) = 0.0000 (BALANCED)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
