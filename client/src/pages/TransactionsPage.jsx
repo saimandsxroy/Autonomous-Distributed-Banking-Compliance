@@ -198,3 +198,93 @@ export function TransactionsPage() {
           <p className="font-['JetBrains_Mono',monospace] text-xl sm:text-2xl font-semibold mt-1 text-emerald-400">
             ${totalCredited.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
+          <p className="text-[10px] font-mono text-[#6E737D] mt-0.5">Posting Legs Sum</p>
+        </div>
+
+        <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all">
+          <p className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider font-medium">
+            Total Debited
+          </p>
+          <p className="font-['JetBrains_Mono',monospace] text-xl sm:text-2xl font-semibold mt-1 text-[#F3F1EC]">
+            ${totalDebited.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <p className="text-[10px] font-mono text-[#6E737D] mt-0.5">Equalized Contra-Entries</p>
+        </div>
+
+        <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all">
+          <p className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider font-medium">
+            Journal Entries
+          </p>
+          <p className="font-['JetBrains_Mono',monospace] text-xl sm:text-2xl font-semibold mt-1 text-[#38BDF8]">
+            {journalEntries.length}
+          </p>
+          <p className="text-[10px] font-mono text-[#6E737D] mt-0.5">Double-Entry Batches</p>
+        </div>
+
+        <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all">
+          <p className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider font-medium">
+            Settled Status
+          </p>
+          <div className="flex items-center gap-1.5 mt-1 font-['JetBrains_Mono',monospace] text-base sm:text-lg font-semibold text-emerald-400">
+            <Lock size={14} className="text-emerald-400" />
+            <span>Δ = $0.00</span>
+          </div>
+          <p className="text-[10px] font-mono text-emerald-500/80 mt-0.5">● ZERO-SUM INVARIANT</p>
+        </div>
+      </div>
+
+      {/* View Mode Selector & Search / Filter Controls */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        {/* FourEyes Sapphire/Bone Active Pill Tab */}
+        <div className="inline-flex p-1 bg-[#0C1017] border border-white/[0.08] rounded-xl self-start">
+          <button
+            onClick={() => setViewMode("DOUBLE_ENTRY")}
+            className={`px-3.5 py-1.5 rounded-lg font-medium text-xs font-mono transition-all flex items-center gap-2 ${
+              viewMode === "DOUBLE_ENTRY"
+                ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+                : "text-[#8E929B] hover:text-white"
+            }`}
+          >
+            <Layers size={13} />
+            <span>Double-Entry Postings ({journalEntries.length})</span>
+          </button>
+          <button
+            onClick={() => setViewMode("ACCOUNT_HISTORY")}
+            className={`px-3.5 py-1.5 rounded-lg font-medium text-xs font-mono transition-all flex items-center gap-2 ${
+              viewMode === "ACCOUNT_HISTORY"
+                ? "bg-gradient-to-r from-[#38BDF8]/20 to-[#38BDF8]/10 text-white border border-[#38BDF8]/40 shadow-[0_0_12px_rgba(56,189,248,0.15)]"
+                : "text-[#8E929B] hover:text-white"
+            }`}
+          >
+            <FileText size={13} />
+            <span>Statement View ({transactions.length})</span>
+          </button>
+        </div>
+
+        {/* Filter Buttons & Search Input */}
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 flex-1 sm:max-w-md">
+          {viewMode === "ACCOUNT_HISTORY" && (
+            <div className="flex gap-1 bg-[#0C1017] p-1 border border-white/[0.08] rounded-xl shrink-0">
+              {["ALL", "CREDIT", "DEBIT", "TRANSFER"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type)}
+                  className={`px-2.5 py-1 text-[10px] font-mono uppercase font-semibold rounded-lg transition-colors ${
+                    filterType === type
+                      ? "bg-white/[0.08] text-white"
+                      : "text-[#8E929B] hover:text-white"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="relative flex-1 w-full">
+            <Search
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A7D82]"
+            />
+            <input
+              type="text"
+              placeholder="Search by ID, key, account or title..."
