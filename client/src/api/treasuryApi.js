@@ -148,3 +148,183 @@ export function getDecodedJwtClaims() {
   }
 }
 
+export function getUserRoles() {
+  const profile = getStoredUserProfile();
+  if (profile && profile.roles && Array.isArray(profile.roles)) {
+    return profile.roles;
+  }
+  const claims = getDecodedJwtClaims();
+  if (claims && claims.roles && Array.isArray(claims.roles)) {
+    return claims.roles;
+  }
+  const personaKey = getActivePersona();
+  const info = PERSONAS[personaKey];
+  if (info && info.role) {
+    return info.role.split(",").map((r) => r.trim());
+  }
+  return ["ROLE_USER"];
+}
+
+export function isOfficerRole() {
+  const roles = getUserRoles();
+  return roles.some(
+    (r) =>
+      r.includes("COMPLIANCE") ||
+      r.includes("ADMIN") ||
+      r === "ROLE_COMPLIANCE_OFFICER" ||
+      r === "ROLE_ADMIN"
+  );
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+/** POST /auth/login — authenticates with credentials, generates and stores stateless JWT */
+export async function loginWithCredentials(usernameOrEmail, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: JSON.stringify({ usernameOrEmail, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Invalid username or password");
+  }
+  if (data.token) {
+    localStorage.setItem("foureyes_jwt_token", data.token);
+    localStorage.setItem("runestone_jwt_token", data.token);
+    localStorage.setItem("jwt", data.token);
+    localStorage.setItem("foureyes_user_profile", JSON.stringify(data));
+    localStorage.setItem("runestone_user_profile", JSON.stringify(data));
+    localStorage.setItem("accountInfo", JSON.stringify(data));
+    localStorage.setItem("foureyes_active_persona", data.username);
+    localStorage.setItem("runestone_active_persona", data.username);
+    window.dispatchEvent(
+      new CustomEvent("runestone_persona_changed", { detail: data.username })
+    );
+    window.dispatchEvent(
+      new CustomEvent("foureyes_persona_changed", { detail: data.username })
+    );
+  }
+  return data;
+}
+
+/** POST /auth/demo-switch/{personaUsername} — 1-click cryptographic demo persona swap */
+export async function switchDemoPersonaJwt(personaUsername) {
+  const response = await fetch(`${API_BASE_URL}/auth/demo-switch/${personaUsername}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || `Failed to switch to persona ${personaUsername}`);
+  }
+  if (data.token) {
+    localStorage.setItem("foureyes_jwt_token", data.token);
+    localStorage.setItem("runestone_jwt_token", data.token);
+    localStorage.setItem("jwt", data.token);
+    localStorage.setItem("foureyes_user_profile", JSON.stringify(data));
+    localStorage.setItem("runestone_user_profile", JSON.stringify(data));
+    localStorage.setItem("accountInfo", JSON.stringify(data));
+    localStorage.setItem("foureyes_active_persona", data.username);
+    localStorage.setItem("runestone_active_persona", data.username);
+    window.dispatchEvent(
+      new CustomEvent("runestone_persona_changed", { detail: data.username })
+    );
+    window.dispatchEvent(
+      new CustomEvent("foureyes_persona_changed", { detail: data.username })
+    );
+  }
+  return data;
+}
+
+/** POST /auth/login — legacy alias for backward compatibility */
+export async function login(username, password) {
+  return loginWithCredentials(username, password);
+}
+
+/** POST /public/create-user — registers a new corporate user with BCrypt password hashing */
+export async function registerUser({ userName, email, password }) {
+  const response = await fetch(`${API_BASE_URL}/public/create-user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: JSON.stringify({ userName, username: userName, email, password }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Registration failed. User may already exist.");
+  }
+  return await response.json();
+}
+
+/* =====================================================================
+   Base Fetch Wrapper with Error Handling
+   ===================================================================== */
+
+async function treasuryFetch(url, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    Authorization: getAuthHeader(),
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorDetail = `HTTP ${response.status} ${response.statusText}`;
+    try {
+      const errJson = await response.json();
+      if (errJson?.message) {
+        errorDetail = errJson.message;
+      } else if (errJson?.error) {
+        errorDetail = errJson.error;
+      }
+    } catch {
+      const text = await response.text().catch(() => "");
+      if (text) errorDetail = text;
+    }
+    const err = new Error(errorDetail);
+    err.status = response.status;
+    throw err;
+  }
+
+  // Handle 204 or empty bodies
+  if (response.status === 204) {
+    return {};
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+}
+
+/* =====================================================================
+   Treasury & Compliance Endpoints
+   ===================================================================== */
+
+/** GET /account Returns accounts belonging to current logged in persona */
+export async function fetchUserAccounts() {
+  try {
+    return await treasuryFetch("/account");
+  } catch (e) {
+    if (e?.status === 404) {
+      return [];
+    }
+    throw e;
+  }
+}
+
+/** GET /account/all Returns all treasury accounts in the institution */
+export async function fetchAllTreasuryAccounts() {
+  try {
