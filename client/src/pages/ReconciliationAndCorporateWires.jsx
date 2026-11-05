@@ -178,3 +178,173 @@ export function ReconciliationAndCorporateWires() {
       setReconLoading(false);
     }
   };
+
+  const handleRunCustomJson = async () => {
+    setReconLoading(true);
+    setReconAlert(null);
+    setShowCustomModal(false);
+    try {
+      const parsed = JSON.parse(customJsonInput);
+      const result = await runEodStatement(parsed);
+      setReconAlert({
+        type: "success",
+        message: `Custom EOD Statement #${result.id} processed: ${result.status}`,
+      });
+      const updatedRuns = await fetchReconciliationRuns();
+      setReconRuns(updatedRuns || []);
+      setSelectedRun(result);
+      await loadDiscrepancies(result.id);
+    } catch (e) {
+      setReconAlert({
+        type: "error",
+        message: `JSON parse or execution failed: ${e.message}`,
+      });
+    } finally {
+      setReconLoading(false);
+    }
+  };
+
+  const handleResolveDiscrepancy = async (disc) => {
+    setResolvingId(disc.id);
+    setReconAlert(null);
+    try {
+      const res = await resolveDiscrepancy(disc.id, {
+        decision: "ADJUST_POSTING",
+        reason: "Compensating adjusting journal posted via Nostro Suspense pool.",
+        resolvedBy: activePersonaKey,
+      });
+
+      setReconAlert({
+        type: "success",
+        message: `Discrepancy #${disc.id} healed! Posted Compensating Journal #${res.compensatingJournalId}.`,
+      });
+
+      if (selectedRun) {
+        await loadDiscrepancies(selectedRun.id);
+        const runs = await fetchReconciliationRuns();
+        setReconRuns(runs || []);
+        const refreshedRun = runs.find((r) => r.id === selectedRun.id);
+        if (refreshedRun) setSelectedRun(refreshedRun);
+      }
+      window.dispatchEvent(new CustomEvent("foureyes_transfer_settled"));
+    } catch (e) {
+      setReconAlert({
+        type: "error",
+        message: e.message || "Failed to resolve discrepancy.",
+      });
+    } finally {
+      setResolvingId(null);
+    }
+  };
+
+  const handleSubmitCorporateWire = async (e) => {
+    e.preventDefault();
+    setWireSubmitting(true);
+    setWireAlert(null);
+
+    try {
+      const payload = {
+        sourceAccountId: parseInt(wireForm.sourceAccountId),
+        destinationAccountId: parseInt(wireForm.destinationAccountId),
+        amount: parseFloat(wireForm.amount),
+        currency: "USD",
+        businessPurpose: wireForm.description,
+      };
+
+      const result = await submitCorporateWire(payload);
+      setWireAlert({
+        type: "success",
+        message: `Corporate Spend Wire #${result.id} created (${result.governanceTier}). Status: ${result.status}. Required Approvals: ${result.requiredApprovalsCount}.`,
+      });
+
+      const updatedWires = await fetchCorporateWires();
+      setCorporateWires(updatedWires || []);
+      setWireForm({
+        ...wireForm,
+        description: "",
+      });
+      window.dispatchEvent(new CustomEvent("foureyes_transfer_settled"));
+    } catch (e) {
+      setWireAlert({
+        type: "error",
+        message: e.message || "Wire submission rejected.",
+      });
+    } finally {
+      setWireSubmitting(false);
+    }
+  };
+
+  const handleApproveWire = async (wire) => {
+    setWireApprovingId(wire.id);
+    setWireAlert(null);
+
+    try {
+      const result = await approveCorporateWire(wire.id, {
+        decision: "APPROVE",
+        comments: `Signed and verified by ${activePersonaKey} under FINRA 3110 policy.`,
+        reviewer: activePersonaKey,
+      });
+
+      setWireAlert({
+        type: "success",
+        message: `Signature verified! Wire #${wire.id} updated. Current status: ${result.status}. Approved by: ${result.approvals?.map((a) => a.approverUsername).join(", ")}.`,
+      });
+
+      const updatedWires = await fetchCorporateWires();
+      setCorporateWires(updatedWires || []);
+      window.dispatchEvent(new CustomEvent("foureyes_transfer_settled"));
+    } catch (e) {
+      setWireAlert({
+        type: "error",
+        message: e.message || "Approval rejected.",
+      });
+    } finally {
+      setWireApprovingId(null);
+    }
+  };
+
+  const loadTelemetry = async () => {
+    setTelemetryLoading(true);
+    try {
+      const data = await fetchTelemetryMetrics();
+      setTelemetry(data);
+    } catch (e) {
+      console.error("Telemetry fetch failed:", e);
+    } finally {
+      setTelemetryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let interval;
+    if (activeTab === "telemetry" && autoRefresh) {
+      interval = setInterval(loadTelemetry, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [activeTab, autoRefresh]);
+
+  const computeWireTier = (amountStr) => {
+    const val = parseFloat(amountStr) || 0;
+    if (val < 1000) {
+      return {
+        label: "TIER 1 (DE MINIMIS)",
+        approvals: "0 Checkers (Instant Execution)",
+        badge: "Under $1,000",
+        color: "border-emerald-500/30 text-emerald-300 bg-emerald-500/10",
+      };
+    } else if (val < 10000) {
+      return {
+        label: "TIER 2 (SUPERVISOR CLEARANCE)",
+        approvals: "1 Independent Checker Signoff",
+        badge: "$1,000 to $9,999.99",
+        color: "border-amber-500/30 text-amber-300 bg-amber-500/10",
+      };
+    } else {
+      return {
+        label: "TIER 3 (DUAL-CONTROL EXECUTIVE)",
+        approvals: "2 Distinct Checkers Required (FINRA 3110)",
+        badge: "$10,000.00 and Above",
+        color: "border-rose-500/30 text-rose-300 bg-rose-500/10",
+      };
+    }
+  };
