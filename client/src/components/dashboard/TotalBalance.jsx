@@ -49,27 +49,43 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
       if (user?.accountNumber) {
         const data = await fetchBalance(user.accountNumber).catch(() => null);
         if (data?.accountInfo) {
-          setBalanceInfo(data.accountInfo);
+          setBalanceInfo((prev) => ({
+            ...prev,
+            accountName: data.accountInfo.accountName || currentOwner,
+            accountBalance: data.accountInfo.accountBalance ?? prev.accountBalance,
+            accountNumber: data.accountInfo.accountNumber || prev.accountNumber,
+          }));
         }
       }
 
       const accounts = await fetchUserAccounts().catch(() => []);
       setAllUserAccounts(accounts || []);
       if (accounts && accounts.length > 0) {
+        const selected = accounts[0];
         setTreasuryAccount((prev) => {
           if (prev) {
             const found = accounts.find((a) => a.id === prev.id);
             if (found) return found;
           }
-          return accounts[0];
+          return selected;
         });
+        setBalanceInfo((prev) => ({
+          ...prev,
+          accountName: currentOwner,
+          accountNumber: selected.accountNumber,
+        }));
+      } else {
+        setBalanceInfo((prev) => ({
+          ...prev,
+          accountName: currentOwner,
+        }));
       }
     } catch (error) {
       console.error("Failed to fetch balance:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [user?.accountNumber]);
+  }, [user?.accountNumber, user?.accountName, user?.userName]);
 
   useEffect(() => {
     loadBalance();
