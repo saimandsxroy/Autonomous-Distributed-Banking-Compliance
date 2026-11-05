@@ -408,3 +408,173 @@ export function TransferPage() {
                 <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-2.5 text-xs font-mono text-rose-300 animate-in fade-in">
                   <AlertCircle size={16} className="text-rose-400 shrink-0" />
                   <span>{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleStandardTransfer} className="space-y-4 mt-5">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[11px] font-mono uppercase text-[#8E929B]">
+                    <span>Receiver Account</span>
+                    <span className="text-[#6B7280]">Account Resolution</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. AC-69D1D364271B or 0000000000"
+                      value={receiver}
+                      onChange={(e) => {
+                        setReceiver(e.target.value);
+                        setResolvedName(null);
+                        setError("");
+                      }}
+                      className="flex-1 px-3.5 py-2.5 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white placeholder-[#4B5563] font-mono text-sm tracking-wider focus:outline-none transition-colors"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleLookup}
+                      disabled={isLookingUp}
+                      className="px-3.5 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-xl text-white disabled:opacity-50 transition-colors flex items-center justify-center shrink-0"
+                      title="Look up account name"
+                    >
+                      {isLookingUp ? (
+                        <RefreshCw size={16} className="animate-spin text-[#38BDF8]" />
+                      ) : (
+                        <UserSearch size={16} />
+                      )}
+                    </button>
+                  </div>
+
+                  {resolvedName && (
+                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 font-mono text-xs flex items-center gap-1.5 mt-1">
+                      <CheckCircle2 size={13} />
+                      <span>Verified Counterparty: {resolvedName}</span>
+                    </div>
+                  )}
+
+                  {recentRecipients.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                      <span className="text-[10px] uppercase font-mono text-[#6E737D]">
+                        Recents:
+                      </span>
+                      {recentRecipients.map((rec) => (
+                        <button
+                          key={rec.account}
+                          type="button"
+                          onClick={() => {
+                            setReceiver(rec.account);
+                            setResolvedName(rec.name);
+                          }}
+                          className="px-2 py-0.5 bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/20 rounded-lg text-[10.5px] text-[#8E929B] hover:text-white font-mono transition-colors"
+                        >
+                          {rec.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[11px] font-mono uppercase text-[#8E929B]">
+                    <span>Amount USD</span>
+                    <span className="text-[#6B7280]">Currency: USD</span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#7A7D82] font-mono font-semibold text-base">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="w-full pl-8 pr-4 py-2.5 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white placeholder-[#4B5563] font-['JetBrains_Mono',monospace] text-lg font-semibold tracking-tight focus:outline-none transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isTransferring || !resolvedName}
+                  className="w-full mt-2 py-3 px-4 rounded-xl font-medium text-sm tracking-wide bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:shadow-[0_0_25px_rgba(56,189,248,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 group/btn"
+                >
+                  {isTransferring ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin text-black" />
+                      <span>Settling Ledger...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Dispatch Direct Transfer</span>
+                      <Send size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            <div className="pt-4 mt-6 border-t border-white/[0.05] flex items-center justify-between text-[10px] font-mono text-[#6E737D]">
+              <span>LEDGER PROTOCOL: INSTANT DEBIT/CREDIT</span>
+              <span className="text-emerald-400">● 100% BALANCED</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Idempotency & AML Sandbox Card */}
+        <div className="lg:col-span-6">
+          <div className="h-full bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+                    <Lock size={15} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-[#F3F1EC] tracking-[-0.02em]">
+                      Idempotency & AML Sandbox
+                    </h3>
+                    <p className="font-mono text-[11px] text-[#7A7D82]">
+                      Cryptographic lock key & velocity gate testbed
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-white/[0.04] text-[#8CB0DB] text-[10px] font-mono border border-white/10 uppercase">
+                  Phase 2 & 4 Core
+                </span>
+              </div>
+
+              {/* Idempotency Key Customizer */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] font-mono uppercase text-[#8E929B]">
+                  <span>Custom Idempotency-Key</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsKeyLocked(!isKeyLocked)}
+                      className={`text-[10px] uppercase font-mono font-medium px-2 py-0.5 rounded-lg border transition-all flex items-center gap-1 ${
+                        isKeyLocked
+                          ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+                          : "bg-white/[0.04] border-white/10 text-[#8E929B] hover:text-white"
+                      }`}
+                    >
+                      {isKeyLocked ? <Lock size={11} /> : <Unlock size={11} />}
+                      <span>{isKeyLocked ? "Key Locked" : "Auto-Rotate"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateNewKey}
+                      className="text-[10px] uppercase font-mono text-[#38BDF8] hover:underline"
+                    >
+                      New Key
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={idempotencyKey}
+                    onChange={(e) => setIdempotencyKey(e.target.value)}
