@@ -348,3 +348,86 @@ public class AmlComplianceController {
    */
   @PostMapping("/demo/seed-aml-scenarios")
   public ResponseEntity<?> seedAmlScenarios() {
+    try {
+      Map<String, Object> scenario = amlDemoSeederService.seedAmlScenario();
+      return new ResponseEntity<>(scenario, HttpStatus.CREATED);
+    } catch (Exception e) {
+      log.error("Failed to seed demo AML scenario", e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage() != null ? e.getMessage() : e.getClass().getName()),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * GET /compliance/investigations/hold/{holdId}/export-sar-pdf Generates and streams the official
+   * FinCEN/FATF Suspicious Activity Report (SAR) PDF dossier.
+   */
+  @GetMapping(
+      value = "/investigations/hold/{holdId}/export-sar-pdf",
+      produces = MediaType.APPLICATION_PDF_VALUE)
+  public ResponseEntity<?> exportSarPdf(@PathVariable Long holdId) {
+    try {
+      byte[] pdfBytes = sarPdfExportService.generateSarPdf(holdId);
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_PDF);
+      headers.setContentDisposition(
+          org.springframework.http.ContentDisposition.attachment()
+              .filename("FinCEN_SAR_Hold_" + holdId + ".pdf")
+              .build());
+      return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+    } catch (Exception e) {
+      log.error("Failed to export SAR PDF for holdId={}: {}", holdId, e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", "SAR PDF export failed: " + e.getMessage()),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * GET /compliance/metrics/telemetry Aggregates live database and runtime operational metrics for
+   * SRE and supervisory oversight.
+   */
+  @GetMapping("/metrics/telemetry")
+  public ResponseEntity<?> getTelemetryMetrics() {
+    try {
+      java.math.BigDecimal totalPostedLiquidityUsd =
+          treasuryAccountRepository.sumUsdPostedBalance();
+      long activeHoldsCount = balanceHoldRepository.countByStatus("PENDING_HOLD");
+      long openReconciliationDiscrepancies =
+          reconciliationDiscrepancyRepository.countByResolutionStatus("OPEN");
+      long pendingMakerCheckerWires = makerCheckerWireRepository.countByStatus("PENDING_APPROVAL");
+      long outboxPendingCount = outboxEventRepository.countByStatus("PENDING");
+      long dlqCount = deadLetterEventRepository.count();
+      long mcpAutoExecutionsCount =
+          mcpToolInvocationRepository.countByExecutionStatus("AUTO_EXECUTED");
+
+      boolean sha256ChainVerified = false;
+      try {
+        Map<String, Object> ver = complianceAuditLogService.getAuditLogsWithVerification();
+        sha256ChainVerified = Boolean.TRUE.equals(ver.get("chainIntact"));
+      } catch (Exception ex) {
+        log.warn("Chain verification error during telemetry fetch: {}", ex.getMessage());
+      }
+
+      Map<String, Object> telemetry = new HashMap<>();
+      telemetry.put(
+          "totalPostedLiquidityUsd",
+          totalPostedLiquidityUsd != null ? totalPostedLiquidityUsd : java.math.BigDecimal.ZERO);
+      telemetry.put("activeHoldsCount", activeHoldsCount);
+      telemetry.put("openReconciliationDiscrepancies", openReconciliationDiscrepancies);
+      telemetry.put("pendingMakerCheckerWires", pendingMakerCheckerWires);
+      telemetry.put("outboxPendingCount", outboxPendingCount);
+      telemetry.put("dlqCount", dlqCount);
+      telemetry.put("mcpAutoExecutionsCount", mcpAutoExecutionsCount);
+      telemetry.put("sha256ChainVerified", sha256ChainVerified);
+      telemetry.put("timestamp", java.time.Instant.now().toString());
+
+      return new ResponseEntity<>(telemetry, HttpStatus.OK);
+    } catch (Exception e) {
+      log.error("Failed to aggregate compliance telemetry metrics: {}", e.getMessage(), e);
+      return new ResponseEntity<>(
+          Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+}
