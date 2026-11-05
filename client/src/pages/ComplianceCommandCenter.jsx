@@ -678,3 +678,343 @@ export function ComplianceCommandCenter() {
                             Reject &amp; Dismiss
                           </span>
                         </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Investigations List */}
+          <div className="lg:col-span-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-[#8E929B] font-semibold">
+                Dossier Queue ({investigations.length})
+              </h3>
+              <button
+                onClick={loadData}
+                className={`text-[#6E737D] hover:text-white transition-colors ${isLoading ? "animate-spin" : ""}`}
+                title="Reload"
+              >
+                <RefreshCw size={14} />
+              </button>
+            </div>
+
+            {investigations.length === 0 ? (
+              <div className="p-8 text-center border border-dashed border-white/10 rounded-xl text-[#6E737D] text-xs font-mono">
+                No active AML investigations. Click "Seed 3-Hop AML Ring Scenario"
+                above to generate a fresh case.
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
+                {investigations.map((inv) => {
+                  const isSelected = selectedInvestigation?.id === inv.id;
+                  const isCritical = inv.riskSeverity === "CRITICAL";
+                  const isAwaiting = inv.status === "AWAITING_HITL_APPROVAL";
+
+                  return (
+                    <button
+                      key={inv.id}
+                      onClick={() => setSelectedInvestigation(inv)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "bg-[#0C1017] border-[#38BDF8]/60 shadow-[0_0_20px_rgba(56,189,248,0.15)] ring-1 ring-[#38BDF8]/40"
+                          : "bg-[#0C1017]/70 border-white/[0.06] hover:border-white/[0.14] hover:bg-[#0C1017]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono text-xs font-semibold text-[#F3F1EC]">
+                          Case #{inv.id} • Hold #{inv.balanceHoldId}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold uppercase tracking-wider border ${
+                            isCritical
+                              ? "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                              : "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                          }`}
+                        >
+                          Score: {inv.riskScore}/100
+                        </span>
+                      </div>
+
+                      <div className="text-xs font-medium text-[#D1D5DB] line-clamp-2 mb-2 font-sans">
+                        {inv.executiveSummary}
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] font-mono text-[#6E737D] pt-2 border-t border-white/[0.06]">
+                        <span>
+                          From Acc #{inv.sourceAccountId} → #{inv.destinationAccountId}
+                        </span>
+                        <span
+                          className={`font-semibold uppercase ${
+                            isAwaiting ? "text-amber-400" : "text-emerald-400"
+                          }`}
+                        >
+                          {isAwaiting ? "Awaiting HITL" : "Resolved"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Selected Case Details */}
+          <div className="lg:col-span-8 space-y-6">
+            {selectedInvestigation ? (
+              <div className="space-y-6">
+                {/* Case Header Card */}
+                <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
+                    <div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#F3F1EC]">
+                          Investigation Case #{selectedInvestigation.id}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/10 text-[#8CB0DB] text-xs font-mono font-medium">
+                          Hold #{selectedInvestigation.balanceHoldId}
+                        </span>
+                      </div>
+                      <div className="text-xs text-[#8E929B] font-mono mt-1">
+                        Source Acc #{selectedInvestigation.sourceAccountId} →
+                        Dest Acc #{selectedInvestigation.destinationAccountId}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className="text-[10px] uppercase font-mono text-[#6E737D] font-semibold">
+                          Risk Assessment
+                        </div>
+                        <div className="text-2xl font-semibold font-mono text-rose-400">
+                          {selectedInvestigation.riskScore}/100
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-300 font-mono font-semibold text-xs uppercase tracking-wider rounded-lg shadow-[0_0_10px_rgba(244,63,94,0.15)]">
+                        {selectedInvestigation.riskSeverity}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Executive Summary */}
+                  <div className="mt-4 space-y-2">
+                    <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#8E929B]">
+                      Autonomous AI Detective Executive Summary
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#D1D5DB] leading-relaxed bg-[#06080C]/80 p-4 border border-white/[0.06] rounded-xl font-sans">
+                      {selectedInvestigation.executiveSummary}
+                    </p>
+                  </div>
+
+                  {/* Cited Regulatory Policies */}
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-mono text-[#6E737D] font-semibold uppercase">
+                      Cited Violations:
+                    </span>
+                    {selectedInvestigation.citedPolicyCodes
+                      ?.split(",")
+                      .map((code) => (
+                        <span
+                          key={code}
+                          className="px-2.5 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-lg text-xs font-mono font-semibold tracking-tight"
+                        >
+                          {code.trim()}
+                        </span>
+                      ))}
+                  </div>
+
+                  {/* Phase 8: FinCEN SAR PDF Dossier Export */}
+                  <div className="mt-5 pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="text-xs font-mono text-[#8E929B]">
+                      Official FinCEN / FATF Compliance Filing with Cryptographic Audit Seal
+                    </div>
+                    <button
+                      onClick={() => handleDownloadSarPdf(selectedInvestigation.balanceHoldId)}
+                      disabled={isDownloadingPdf}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 disabled:opacity-50 text-rose-300 font-mono font-semibold text-xs uppercase tracking-wider rounded-xl border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)] transition-all cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4 text-rose-300" />
+                      <span>{isDownloadingPdf ? "Generating PDF..." : "📄 Download Official FinCEN SAR Filing (PDF)"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Account Graph Control Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-[#0C1017]/90 border border-white/[0.08] rounded-xl shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-semibold text-[#8E929B] uppercase">
+                      Inspect Account:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { id: 3, label: "Account #3 (Charlie)" },
+                        { id: 1, label: "Account #1 (Alice)" },
+                        { id: 2, label: "Account #2 (Bob)" },
+                      ].map((btn) => (
+                        <button
+                          key={btn.id}
+                          type="button"
+                          onClick={() => {
+                            setGraphSearchAccountId(btn.id);
+                            loadAccountGraph(btn.id);
+                          }}
+                          className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg border transition-all cursor-pointer ${
+                            graphSearchAccountId === btn.id
+                              ? "bg-[#38BDF8]/15 border-[#38BDF8]/50 text-[#38BDF8] shadow-[0_0_10px_rgba(56,189,248,0.2)] font-semibold"
+                              : "bg-[#06080C] border-white/10 text-[#8E929B] hover:text-white hover:border-white/20"
+                          }`}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={graphSearchAccountId}
+                      onChange={(e) => setGraphSearchAccountId(Number(e.target.value))}
+                      placeholder="Account ID"
+                      className="w-24 px-3 py-1.5 text-xs font-mono bg-[#06080C] border border-white/10 rounded-lg text-white text-center focus:outline-none focus:border-[#38BDF8] transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => loadAccountGraph(graphSearchAccountId)}
+                      className="px-3.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs font-mono font-medium rounded-lg border border-white/10 flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <RefreshCw size={12} className={isGraphLoading ? "animate-spin" : ""} />
+                      <span>Traverse Graph</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 5-Hop Recursive CTE Graph Visualizer */}
+                <AmlGraphVisualizer
+                  analysis={liveSubgraph || parsedSubgraph}
+                  loading={isGraphLoading}
+                  onRefresh={() => loadAccountGraph(graphSearchAccountId || selectedInvestigation?.sourceAccountId || 3)}
+                  title={`Sub-Graph Analysis: Account #${graphSearchAccountId || selectedInvestigation?.sourceAccountId || 3} Money Trail`}
+                />
+
+                {/* MCP Tool Execution Trail (Step-by-Step) */}
+                <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+                  <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-2.5">
+                      <Cpu size={18} className="text-violet-400" />
+                      <h4 className="text-sm font-semibold uppercase tracking-wider text-[#F3F1EC]">
+                        Autonomous MCP Tool Execution Trail (
+                        {mcpInvocations.length} Steps)
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-mono uppercase bg-white/[0.04] border border-white/10 text-[#8CB0DB] px-2.5 py-1 rounded-lg">
+                      Model Context Protocol 2.0
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {mcpInvocations.map((step, idx) => {
+                      const isHitl = step.permissionTier === "WRITE_HITL";
+                      const isApproved =
+                        step.executionStatus === "HITL_APPROVED_EXECUTED";
+                      const isAuto = step.executionStatus === "AUTO_EXECUTED";
+
+                      return (
+                        <div
+                          key={step.id || idx}
+                          className="p-3.5 bg-[#06080C]/85 border border-white/[0.06] rounded-xl space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <span className="h-5 w-5 rounded-full bg-white/[0.06] text-[#8CB0DB] font-mono text-[10px] font-semibold flex items-center justify-center">
+                                {idx + 1}
+                              </span>
+                              <span className="font-mono font-semibold text-xs text-[#F3F1EC]">
+                                {step.toolName}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[9px] font-mono font-semibold uppercase ${
+                                  isHitl
+                                    ? "bg-rose-500/10 text-rose-300 border border-rose-500/30"
+                                    : "bg-cyan-500/10 text-cyan-300 border border-cyan-500/30"
+                                }`}
+                              >
+                                {step.permissionTier}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase ${
+                                  isApproved || isAuto
+                                    ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+                                    : "bg-amber-500/10 text-amber-300 border border-amber-500/30 animate-pulse"
+                                }`}
+                              >
+                                {step.executionStatus}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Arguments & Output details */}
+                          <div className="text-[11px] font-mono text-[#8E929B] space-y-1 bg-[#0C1017] p-2.5 rounded-lg border border-white/[0.04]">
+                            <div>
+                              <span className="text-[#6E737D] font-semibold uppercase text-[9px]">
+                                Args:{" "}
+                              </span>
+                              <span className="text-[#D1D5DB] break-all">
+                                {step.argumentsJson}
+                              </span>
+                            </div>
+                            {step.outputJson && (
+                              <div>
+                                <span className="text-[#6E737D] font-semibold uppercase text-[9px]">
+                                  Output:{" "}
+                                </span>
+                                <span className="text-[#D1D5DB] break-all">
+                                  {step.outputJson.length > 220
+                                    ? step.outputJson.substring(0, 220) + "..."
+                                    : step.outputJson}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* HITL Approval Decision Action Card */}
+                {currentApproval &&
+                  currentApproval.status === "PENDING_APPROVAL" && (
+                    <div className="bg-[#0C1017]/95 border border-amber-500/35 rounded-2xl p-6 backdrop-blur-xl shadow-2xl space-y-5 relative overflow-hidden animate-in fade-in">
+                      {/* Top Golden Laser Accent */}
+                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/70 to-transparent pointer-events-none" />
+
+                      <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08]">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]">
+                            <AlertTriangle size={18} />
+                          </div>
+                          <h4 className="text-sm font-semibold uppercase tracking-wider text-amber-300">
+                            Human-in-the-Loop (HITL) Action Required
+                          </h4>
+                        </div>
+                        <span className="text-xs font-mono font-medium text-[#8E929B] bg-white/[0.04] border border-white/10 px-2.5 py-1 rounded-lg">
+                          Request #{currentApproval.id}
+                        </span>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <div className="text-[10px] font-mono uppercase text-[#6E737D] font-semibold tracking-wider">
+                            Proposed High-Impact Tool
+                          </div>
+                          <div className="text-base font-semibold font-mono text-rose-400 mt-0.5">
+                            {currentApproval.proposedToolName?.replace(/([A-Z])/g, " $1").trim()}
+                          </div>
+                        </div>
+
