@@ -418,3 +418,113 @@ export function BatchAndFxPage() {
                 >
                   {isUploading ? <RefreshCw className="animate-spin" size={14} /> : <Upload size={14} />}
                   <span>{isUploading ? "Uploading & Settling..." : "Ingest & Execute CSV Batch"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Active / Most Recent Batch Reconciliation Dashboard */}
+          {selectedBatchDetails?.batch && (
+            <div className="space-y-6">
+              {/* Batch Header & Metrics */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all space-y-1">
+                  <div className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider flex items-center justify-between font-medium">
+                    <span>Batch Reference</span>
+                    <Hash size={14} className="text-[#38BDF8]" />
+                  </div>
+                  <div className="text-base font-semibold text-white truncate" title={selectedBatchDetails.batch.batchReference}>
+                    {selectedBatchDetails.batch.batchReference}
+                  </div>
+                  <div className="text-[10px] text-[#6E737D] font-mono truncate" title={selectedBatchDetails.batch.fileSha256Hash}>
+                    SHA-256: {selectedBatchDetails.batch.fileSha256Hash?.substring(0, 16)}...
+                  </div>
+                </div>
+
+                <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all space-y-1">
+                  <div className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider flex items-center justify-between font-medium">
+                    <span>Settled Volume</span>
+                    <TrendingUp size={14} className="text-emerald-400" />
+                  </div>
+                  <div className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-emerald-400">
+                    ${Number(selectedBatchDetails.batch.totalSettledAmount || 0).toLocaleString()}
+                  </div>
+                  <div className="text-[10px] text-[#6E737D] font-mono">
+                    {selectedBatchDetails.batch.settledCount} of {selectedBatchDetails.batch.totalRows} settled
+                  </div>
+                </div>
+
+                <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all space-y-1">
+                  <div className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider flex items-center justify-between font-medium">
+                    <span>AML Quarantined</span>
+                    <AlertTriangle size={14} className="text-amber-400" />
+                  </div>
+                  <div className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-amber-400">
+                    {selectedBatchDetails.batch.heldAmlCount || 0}
+                  </div>
+                  <div className="text-[10px] text-[#6E737D] font-mono">Quarantined for 4-Eyes review</div>
+                </div>
+
+                <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl transition-all space-y-1">
+                  <div className="text-[#8E929B] font-mono text-[10.5px] uppercase tracking-wider flex items-center justify-between font-medium">
+                    <span>Graceful Failures</span>
+                    <XCircle size={14} className="text-rose-400" />
+                  </div>
+                  <div className="font-['JetBrains_Mono',monospace] text-2xl font-semibold text-rose-400">
+                    {selectedBatchDetails.batch.failedCount || 0}
+                  </div>
+                  <div className="text-[10px] text-[#6E737D] font-mono">Isolated partial overdraws</div>
+                </div>
+              </div>
+
+              {/* Animated Progress Bar */}
+              <div className="p-4 bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] rounded-2xl space-y-2.5">
+                <div className="flex justify-between items-center text-xs font-mono text-[#8E929B]">
+                  <span>Reconciliation Distribution</span>
+                  <div className="flex items-center gap-2">
+                    <span>Batch Status:</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold border ${
+                        selectedBatchDetails.batch.status === "COMPLETED"
+                          ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                          : selectedBatchDetails.batch.status === "COMPLETED_WITH_HOLDS"
+                          ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                          : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                      }`}
+                    >
+                      {selectedBatchDetails.batch.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-3 w-full bg-white/[0.03] rounded-full overflow-hidden flex border border-white/[0.06] p-0.5">
+                  <div
+                    style={{
+                      width: `${
+                        ((selectedBatchDetails.batch.settledCount || 0) /
+                          (selectedBatchDetails.batch.totalRows || 1)) *
+                        100
+                      }%`,
+                    }}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-l-full transition-all duration-700 ease-out"
+                    title={`Settled: ${selectedBatchDetails.batch.settledCount}`}
+                  />
+                  <div
+                    style={{
+                      width: `${
+                        ((selectedBatchDetails.batch.heldAmlCount || 0) /
+                          (selectedBatchDetails.batch.totalRows || 1)) *
+                        100
+                      }%`,
+                    }}
+                    className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-700 ease-out"
+                    title={`AML Held: ${selectedBatchDetails.batch.heldAmlCount}`}
+                  />
+                  <div
+                    style={{
+                      width: `${
+                        ((selectedBatchDetails.batch.failedCount || 0) /
+                          (selectedBatchDetails.batch.totalRows || 1)) *
+                        100
+                      }%`,
+                    }}
