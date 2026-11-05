@@ -638,3 +638,93 @@ export function BatchAndFxPage() {
                   <div className="text-xs font-mono font-semibold text-[#8E929B] uppercase flex items-center justify-between">
                     <span>{r.baseCurrency} → {r.targetCurrency}</span>
                     <span className="text-[9.5px] bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/20 px-1 py-0.2 rounded font-mono">
+                      {r.spreadBps} bps
+                    </span>
+                  </div>
+                  <div className="font-['JetBrains_Mono',monospace] text-lg font-semibold text-[#F3F1EC] group-hover:text-white">
+                    {Number(r.exchangeRate).toFixed(4)}
+                  </div>
+                  <div className="text-[10px] text-[#6E737D] font-mono">0.50% treasury spread</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive FX Converter & Wire Form */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Calculator & Wire Execution */}
+            <div className="lg:col-span-7">
+              <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 space-y-5">
+                <div className="flex items-center gap-2 pb-4 border-b border-white/[0.06]">
+                  <ArrowRightLeft size={18} className="text-[#38BDF8]" />
+                  <h3 className="font-semibold text-base text-[#F3F1EC]">
+                    Multi-Currency Cross-Border Wire Execution
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                      From Currency
+                    </label>
+                    <select
+                      value={quoteFrom}
+                      onChange={(e) => setQuoteFrom(e.target.value)}
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none cursor-pointer"
+                    >
+                      <option value="USD">USD (US Dollar)</option>
+                      <option value="EUR">EUR (Euro)</option>
+                      <option value="GBP">GBP (British Pound)</option>
+                      <option value="INR">INR (Indian Rupee)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                      To Currency
+                    </label>
+                    <select
+                      value={quoteTo}
+                      onChange={(e) => handleQuoteToChange(e.target.value)}
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none cursor-pointer"
+                    >
+                      <option value="INR">INR (Indian Rupee)</option>
+                      <option value="EUR">EUR (Euro)</option>
+                      <option value="GBP">GBP (British Pound)</option>
+                      <option value="USD">USD (US Dollar)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                      Transfer Amount
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={quoteAmount}
+                      onChange={(e) => setQuoteAmount(e.target.value)}
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl p-2 text-xs font-mono text-white focus:outline-none"
+                      placeholder="1000.00"
+                    />
+                  </div>
+                </div>
+
+                {/* Account Selectors */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/[0.06]">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                      Funding Source Account
+                    </label>
+                    <select
+                      value={sourceAccountId}
+                      onChange={(e) => setSourceAccountId(e.target.value)}
+                      className="w-full bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none cursor-pointer"
+                    >
+                      {accounts.map((acc) => (
+                        <option key={acc.id} value={acc.id} className="bg-[#0C1017]">
+                          {acc.accountNumber} ({acc.currency}) — ${Number(acc.availableBalance).toLocaleString()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
