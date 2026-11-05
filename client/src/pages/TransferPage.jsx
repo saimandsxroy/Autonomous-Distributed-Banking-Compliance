@@ -148,3 +148,123 @@ export function TransferPage() {
 
     try {
       const response = await lookupAccountName(receiver);
+      if (response.responseCode === "004" && response.accountInfo) {
+        setResolvedName(response.accountInfo.accountName);
+      } else {
+        setError(response.responseMessage || "Account not found.");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error looking up account."
+      );
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
+
+  // Standard portal transfer
+  const handleStandardTransfer = async (e) => {
+    e.preventDefault();
+    if (!resolvedName || !user?.accountNumber) return;
+
+    setIsTransferring(true);
+    setError("");
+    setSuccessMessage("");
+    setLastJournalResult(null);
+
+    try {
+      await transferFunds({
+        sender: user.accountNumber,
+        receiver,
+        amount: parseFloat(amount),
+      });
+
+      setSuccessMessage(
+        `$${parseFloat(amount).toFixed(2)} sent to ${resolvedName} successfully.`
+      );
+      setReceiver("");
+      setAmount("");
+      setResolvedName(null);
+      setTimeout(() => setSuccessMessage(""), 5000);
+      loadRecentRecipients();
+      window.dispatchEvent(new CustomEvent("foureyes_transfer_settled"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Transfer failed.");
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  // Advanced Treasury Double-Entry Transfer (with Idempotency + AML)
+  const handleTreasuryTransfer = async (overrideAmount) => {
+    const amt = overrideAmount ?? parseFloat(treasuryAmount || amount || "50");
+    if (isNaN(amt) || amt <= 0) {
+      setError("Please specify a valid transfer amount.");
+      return;
+    }
+
+    setIsTransferring(true);
+    setError("");
+    setSuccessMessage("");
+    setLastJournalResult(null);
+    setRawResponseStatus(null);
+
+    try {
+      const res = await createJournalTransfer(
+        {
+          sourceAccountId,
+          destinationAccountId: destAccountId,
+          amount: amt,
+          currency: "USD",
+          title: `Treasury Transfer #${idempotencyKey}`,
+        },
+        idempotencyKey
+      );
+
+      setLastJournalResult(res);
+      await loadAccounts();
+      window.dispatchEvent(new CustomEvent("foureyes_transfer_settled"));
+
+      if (res.status === "SETTLED") {
+        setSuccessMessage(
+          `✓ Journal Entry #${res.id} SETTLED immediately. Signed debit/credit posting legs committed.`
+        );
+      } else if (res.status === "PENDING_HOLD") {
+        setSuccessMessage(
+          `⚠️ Transfer Intercepted by AML/Velocity Engine! Placed in PENDING_HOLD.`
+        );
+      }
+
+      if (!isKeyLocked) {
+        generateNewKey();
+      }
+    } catch (err) {
+      const msg = err.message || "";
+      setError(`Transfer Rejected: ${msg}`);
+      if (
+        err.status === 422 ||
+        msg.includes("422") ||
+        msg.includes("reused with different payload")
+      ) {
+        setRawResponseStatus(
+          "HTTP 422 UNPROCESSABLE_ENTITY (Idempotency Hash Mismatch)"
+        );
+      } else if (err.status === 409 || msg.includes("409")) {
+        setRawResponseStatus("HTTP 409 CONFLICT (In-Flight Request)");
+      }
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleTestTamper = () => {
+    const current = parseFloat(treasuryAmount || amount || "50");
+    handleTreasuryTransfer(current + 1.0);
+  };
+
+  const persona = getActivePersona();
+  const personaInfo = PERSONAS[persona] || PERSONAS.alice;
+
+  return (
+    <div className="space-y-7 pb-12 font-['Plus_Jakarta_Sans',sans-serif]">
+      {/* Header */}
