@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: foureyes
+  labels:
+    name: foureyes
+    tier: enterprise-core-banking
