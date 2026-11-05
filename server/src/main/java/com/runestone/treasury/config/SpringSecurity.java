@@ -18,8 +18,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -66,12 +68,24 @@ public class SpringSecurity {
                     .anyRequest()
                     .authenticated())
         .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint()))
+        .httpBasic(basic -> basic.authenticationEntryPoint(restAuthenticationEntryPoint()))
         .addFilterBefore(
             new JwtAuthenticationFilter(jwtTokenService),
-            UsernamePasswordAuthenticationFilter.class)
-        .httpBasic(Customizer.withDefaults());
+            UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
+  }
+
+  @Bean
+  public AuthenticationEntryPoint restAuthenticationEntryPoint() {
+    return (request, response, authException) -> {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.setContentType("application/json;charset=UTF-8");
+      // Explicitly ensure WWW-Authenticate header is never sent, completely killing the browser modal popup
+      response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+      response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + authException.getMessage() + "\"}");
+    };
   }
 
   @Bean
