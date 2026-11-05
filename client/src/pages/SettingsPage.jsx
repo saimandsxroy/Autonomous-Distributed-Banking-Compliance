@@ -238,3 +238,93 @@ export function SettingsPage() {
                 disabled={isSaving || isLoading}
                 className="py-2.5 px-5 bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#60A5FA] hover:to-[#2563EB] text-black font-semibold font-mono uppercase text-xs tracking-wider rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.25)] flex items-center gap-2 transition-all disabled:opacity-50"
               >
+                {isSaving ? <RefreshCw size={14} className="animate-spin text-black" /> : <Save size={14} />}
+                <span>{isSaving ? "Saving..." : "Save Identity Changes"}</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Security / Password */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 space-y-4">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-white/[0.06]">
+              <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/20 flex items-center justify-center">
+                <Shield size={16} />
+              </div>
+              <h3 className="font-semibold text-base text-[#F3F1EC]">
+                Cryptographic Credentials & BCrypt Rotation
+              </h3>
+            </div>
+
+            {pwdSaved && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs font-mono flex items-center gap-2">
+                <CheckCircle2 size={15} className="text-emerald-400" />
+                <span>Password updated and re-hashed with BCrypt(12).</span>
+              </div>
+            )}
+            {pwdError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs font-mono">
+                {pwdError}
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordUpdate} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white font-mono text-sm focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-mono uppercase text-[#8E929B] font-medium">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#07090D] border border-white/[0.08] focus:border-[#38BDF8] rounded-xl text-white font-mono text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isUpdatingPwd || !currentPassword || !newPassword}
+                className="py-2.5 px-5 bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/10 rounded-xl font-mono uppercase text-xs font-semibold tracking-wider transition-all disabled:opacity-50"
+              >
+                {isUpdatingPwd ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Account Info & Notifications (Col 5) */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Live Bound Account Info Card */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <Building size={16} className="text-[#38BDF8]" />
+                <h4 className="font-semibold text-sm text-[#F3F1EC]">
+                  Active Treasury Account Details
+                </h4>
+              </div>
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase font-semibold">
+                ● LIVE BOUND
+              </span>
+            </div>
+
+            <div className="space-y-2.5 font-mono text-xs pt-1">
+              <div className="flex justify-between items-center py-1.5 border-b border-white/[0.04]">
+                <span className="text-[#8E929B]">Account Number:</span>
+                <span className="text-[#F3F1EC] font-semibold">{accountNumber}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-white/[0.04]">
