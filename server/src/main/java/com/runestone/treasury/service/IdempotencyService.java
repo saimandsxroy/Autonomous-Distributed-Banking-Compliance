@@ -121,6 +121,19 @@ public class IdempotencyService {
     stringRedisTemplate.delete(redisKey);
   }
 
+  private Boolean safeRedisSetIfAbsent(String key, String value, long timeout, TimeUnit unit) {
+    try {
+      if (stringRedisTemplate != null) {
+        return stringRedisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+      }
+    } catch (Exception ex) {
+      log.warn(
+          "Redis unavailable for idempotency lock, failing open to MySQL durable records: {}",
+          ex.getMessage());
+    }
+    return Boolean.TRUE;
+  }
+
   private String computeSha256(Object obj) {
     try {
       if (obj instanceof com.runestone.treasury.entity.JournalEntry je) {
