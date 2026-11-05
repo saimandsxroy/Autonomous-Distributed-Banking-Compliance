@@ -378,3 +378,143 @@ export function AegisVaultCore3D({ className = "", onHoverChange }) {
     const ring2Geo = new THREE.TorusGeometry(2.15, 0.025, 16, 80);
     const gimbalRing2 = new THREE.Mesh(ring2Geo, gimbalMat2);
     gimbalRing2.userData = { type: "gimbal", label: "GIMBAL: SHA-256 TAMPER-EVIDENT AUDIT CHAIN" };
+    gimbalRing2.rotation.x = Math.PI / 2.8;
+    gimbalGroup.add(gimbalRing2);
+
+    // Ring 2 tick notches
+    for (let t = 0; t < 16; t++) {
+      const ang = (t * Math.PI * 2) / 16;
+      const notchGeo = new THREE.BoxGeometry(0.03, 0.06, 0.04);
+      const notch = new THREE.Mesh(notchGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+      notch.position.set(Math.cos(ang) * 2.15, Math.sin(ang) * 2.15, 0);
+      notch.rotation.z = ang;
+      gimbalRing2.add(notch);
+    }
+
+    const interactableObjects = [
+      ...nodeMeshes,
+      gimbalRing1,
+      gimbalRing2,
+      coreMesh,
+      shellMesh,
+    ];
+
+    // --- Interactive Drag Handling ---
+    const handlePointerDown = (e) => {
+      isDraggingRef.current = true;
+      previousMousePosRef.current = { x: e.clientX, y: e.clientY };
+      document.body.style.cursor = "grabbing";
+    };
+
+    const handlePointerMove = (e) => {
+      if (!isDraggingRef.current) return;
+      const deltaX = e.clientX - previousMousePosRef.current.x;
+      const deltaY = e.clientY - previousMousePosRef.current.y;
+
+      dragRotationRef.current.y += deltaX * 0.006;
+      dragRotationRef.current.x += deltaY * 0.006;
+      currentDragVelocityRef.current = { x: deltaY * 0.006, y: deltaX * 0.006 };
+
+      previousMousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointerUp = () => {
+      isDraggingRef.current = false;
+      document.body.style.cursor = hoveredObject ? "pointer" : "default";
+    };
+
+    container.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    // Resize Handler with responsive mobile camera adjustment
+    const handleResize = () => {
+      if (!container) return;
+      const newWidth = container.clientWidth || window.innerWidth;
+      const newHeight = container.clientHeight || window.innerHeight;
+      camera.aspect = newWidth / newHeight;
+      const mobile = newWidth < 768;
+      camera.position.z = mobile ? 9.8 : 7.2;
+      camera.updateProjectionMatrix();
+      renderer.setSize(newWidth, newHeight);
+    };
+    window.addEventListener("resize", handleResize);
+
+    // --- Animation Loop with Frame-Rate Independent Exponential Smoothing ---
+    let clock = new THREE.Clock();
+    let lastTime = performance.now();
+    let smoothProgress = 0;
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
+
+      const now = performance.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      const elapsedTime = clock.getElapsedTime();
+
+      // Delta-time damping exponential smoothing:
+      // damp = 1 - Math.exp(-5.5 * dt)
+      const damp = 1 - Math.exp(-5.5 * dt);
+      smoothProgress += (scrollProgressRef.current - smoothProgress) * damp;
+
+      // Smooth cubic ease-in-out curve
+      const ease =
+        smoothProgress < 0.5
+          ? 4 * smoothProgress ** 3
+          : 1 - Math.pow(-2 * smoothProgress + 2, 3) / 2;
+
+      // Inertia decay for dragging
+      if (!isDraggingRef.current) {
+        dragRotationRef.current.x += currentDragVelocityRef.current.x;
+        dragRotationRef.current.y += currentDragVelocityRef.current.y;
+        currentDragVelocityRef.current.x *= 0.94;
+        currentDragVelocityRef.current.y *= 0.94;
+      }
+
+      // Root rotation: continuous gentle autonomous spin + drag + subtle scroll ease
+      masterGroup.rotation.x =
+        dragRotationRef.current.x + Math.sin(elapsedTime * 0.35) * 0.08 + ease * 0.2;
+      masterGroup.rotation.y += dt * 0.22 + ease * 0.02;
+      masterGroup.rotation.z = Math.cos(elapsedTime * 0.25) * 0.05;
+
+      // Opposing gimbal ring rotations
+      gimbalRing1.rotation.z = elapsedTime * 0.25;
+      gimbalRing2.rotation.z = -elapsedTime * 0.2;
+
+      // Smooth WebGL space glide: from dead-center (0) to right column (+1.95) on desktop; stay centered on mobile
+      const isMobileScreen = (container.clientWidth || window.innerWidth) < 768;
+      masterGroup.position.x = isMobileScreen ? 0 : ease * 1.95;
+      masterGroup.position.y = isMobileScreen ? ease * -0.35 : ease * -0.12;
+
+      // Smoothly expand outer node/gimbal radius by (1 + ease * 0.15) in Section 2
+      const scaleMultiplier = 1 + ease * 0.15;
+      gimbalGroup.scale.set(scaleMultiplier, scaleMultiplier, scaleMultiplier);
+      networkGroup.scale.set(scaleMultiplier, scaleMultiplier, scaleMultiplier);
+
+      // Ledger core gentle breathing pulse
+      const corePulse = 1.0 + Math.sin(elapsedTime * 2.5) * 0.035;
+      coreGroup.scale.set(corePulse, corePulse, corePulse);
+      coreWire.rotation.y = elapsedTime * 0.3;
+      coreWire.rotation.x = elapsedTime * 0.2;
+
+      // Animate quarantine cage around Charlie #3
+      const quarantineNode = nodeMeshes[2];
+      if (quarantineNode) {
+        const cage = quarantineNode.getObjectByName("quarantineCage");
+        if (cage) {
+          cage.rotation.y = elapsedTime * 1.8;
+          cage.rotation.z = elapsedTime * 1.2;
+        }
+        const pulse = quarantineNode.getObjectByName("pulseRing");
+        if (pulse) {
+          const s = 1.0 + Math.sin(elapsedTime * 4.0) * 0.25;
+          pulse.scale.set(s, s, s);
+          pulse.material.opacity = 0.5 + Math.sin(elapsedTime * 4.0) * 0.3;
+        }
+      }
+
+      // Animate data particles along tubes
+      particles.forEach((pt) => {
+        pt.progress += pt.speed;
+        if (pt.progress > 1.0) pt.progress = 0.0;
