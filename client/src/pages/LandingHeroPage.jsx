@@ -338,3 +338,158 @@ export function LandingHeroPage() {
             to="/login"
             onClick={() => playButtonClickSound()}
             className={`px-3 py-1 rounded-full border text-[9px] font-tech-mono tracking-[0.16em] font-medium transition ${
+              isSection2
+                ? "border-black/20 text-[#52555A] hover:bg-black/5"
+                : "border-white/20 text-[#E8E5DE] hover:bg-white/10"
+            }`}
+          >
+            SIGN IN
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+            className="p-1.5 rounded-md text-[#9CA3AF] hover:text-white transition-colors"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Drawer Menu (< md) */}
+      {mobileMenuOpen && (
+        <div className="fixed top-[53px] left-0 right-0 z-40 md:hidden bg-[#0B0D0F]/95 backdrop-blur-xl border-b border-white/10 px-6 py-5 shadow-2xl animate-hero-pill">
+          <div className="text-[9px] font-tech-mono tracking-[0.22em] text-[#7A7D82] uppercase mb-3">
+            // OPERATIONAL DESTINATIONS
+          </div>
+          <div className="flex flex-col gap-2.5 font-tech-mono text-[11px] tracking-[0.14em]">
+            <Link
+              to="/dashboard"
+              onClick={() => {
+                playButtonClickSound();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-[#E8E5DE] transition"
+            >
+              <div className="flex items-center gap-2">
+                <Terminal size={14} className="text-[#38BDF8]" />
+                <span>TREASURY TERMINAL</span>
+              </div>
+              <ArrowUpRight size={12} className="text-[#7A7D82]" />
+            </Link>
+            <Link
+              to="/compliance"
+              onClick={() => {
+                playButtonClickSound();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-[#E8E5DE] transition"
+            >
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-[#F43F5E]" />
+                <span>AML INVESTIGATIONS</span>
+              </div>
+              <ArrowUpRight size={12} className="text-[#7A7D82]" />
+            </Link>
+            <Link
+              to="/batch-fx"
+              onClick={() => {
+                playButtonClickSound();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-[#E8E5DE] transition"
+            >
+              <div className="flex items-center gap-2">
+                <Zap size={14} className="text-[#38BDF8]" />
+                <span>BATCH &amp; FX DESK</span>
+              </div>
+              <ArrowUpRight size={12} className="text-[#7A7D82]" />
+            </Link>
+            <Link
+              to="/reconciliation"
+              onClick={() => {
+                playButtonClickSound();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-[#E8E5DE] transition"
+            >
+              <div className="flex items-center gap-2">
+                <Lock size={14} className="text-[#38BDF8]" />
+                <span>RECONCILIATION</span>
+              </div>
+              <ArrowUpRight size={12} className="text-[#7A7D82]" />
+            </Link>
+            <Link
+              to="/transfer"
+              onClick={() => {
+                playButtonClickSound();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-[#E8E5DE] transition"
+            >
+              <div className="flex items-center gap-2">
+                <ArrowUpRight size={14} className="text-[#8CB0DB]" />
+                <span>WIRE TRANSFER</span>
+              </div>
+              <ArrowUpRight size={12} className="text-[#7A7D82]" />
+            </Link>
+          </div>
+          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[9px] font-tech-mono text-[#7A7D82]">
+            <span>FOUREYES AEGIS ENGINE</span>
+            <span className="text-[#10B981]">● ONLINE</span>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          STAGE 1: DARK CARBON HERO (100vh, #08090A)
+          Clean 3-Column Grid with tight typography & integrated right subheading
+          ===================================================================== */}
+      <section
+        className={`relative z-20 min-h-screen w-full flex flex-col justify-between pt-20 sm:pt-24 pb-6 px-4 sm:px-8 lg:px-12 pointer-events-none transition-all duration-700 ease-out ${
+          isSection2
+            ? "opacity-0 -translate-y-8"
+            : "opacity-100 translate-y-0"
+        }`}
+      >
+        {/* Strict 12-Column Center Stage */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 items-center gap-6 lg:gap-8 w-full max-w-[1440px] mx-auto my-auto">
+          {/* Left Column (lg:col-span-4) — Eyebrow, Stacked Headline, Red Laser, In-Place Typewriter */}
+          <div className="lg:col-span-4 flex flex-col justify-center pointer-events-auto select-none z-20">
+            {/* High-Contrast Obsidian Glass Badge */}
+            <div className="animate-hero-pill institutional-glass-badge inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-tech-mono tracking-[0.14em] text-[#E2E8F0] uppercase mb-4 sm:mb-6 w-fit transition-all duration-500 max-w-full">
+              <span
+                className={`w-2 h-2 rounded-full transition-all duration-500 shrink-0 ${
+                  isThreatPulse
+                    ? "bg-[#F43F5E] shadow-[0_0_10px_#F43F5E]"
+                    : "bg-[#38BDF8] shadow-[0_0_10px_rgba(56,189,248,0.8)] animate-pulse"
+                }`}
+              />
+              <span className="truncate">REAL-TIME TREASURY &amp; FRAUD INTERCEPTION</span>
+            </div>
+
+            {/* Main Institutional Heading: "Intercept fraud" with Periodic Crimson Text Glow */}
+            <h1
+              className="font-display-sans text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.06] sm:leading-[1.06] tracking-[-0.015em] font-[500]"
+              style={{
+                color: isThreatPulse ? "#FFF1F2" : "#F3F1EC",
+                textShadow: isThreatPulse
+                  ? "0 0 22px rgba(244, 63, 94, 0.75), 0 0 48px rgba(225, 29, 72, 0.42)"
+                  : "0 2px 18px rgba(255, 255, 255, 0.08)",
+                transition: "text-shadow 500ms ease, color 500ms ease",
+              }}
+            >
+              <span className="block">Intercept</span>
+              <span className="block">fraud</span>
+            </h1>
+
+            {/* Sleek horizontal red laser scan line */}
+            <div className="h-[1px] w-full max-w-[340px] my-3.5 relative overflow-hidden bg-rose-500/20 rounded-full">
+              <div
+                className={`absolute top-0 bottom-0 w-28 bg-gradient-to-r from-[#F43F5E] via-rose-500/60 to-transparent shadow-[0_0_14px_#F43F5E] transition-transform ${
+                  laserActive
+                    ? "translate-x-[360px] duration-500 ease-in-out"
+                    : "-translate-x-full duration-0"
+                }`}
+              />
+            </div>
