@@ -328,3 +328,81 @@ export function SettingsPage() {
                 <span className="text-[#F3F1EC] font-semibold">{accountNumber}</span>
               </div>
               <div className="flex justify-between items-center py-1.5 border-b border-white/[0.04]">
+                <span className="text-[#8E929B]">Account Owner / Name:</span>
+                <span className="text-white font-semibold">{accountName}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-white/[0.04]">
+                <span className="text-[#8E929B]">Operational Currency:</span>
+                <span className="text-[#38BDF8] font-semibold">{accountCurrency}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-white/[0.04]">
+                <span className="text-[#8E929B]">Clearance Persona:</span>
+                <span className="text-emerald-400 font-semibold uppercase">{activePersonaKey}</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5">
+                <span className="text-[#8E929B]">Email On-Record:</span>
+                <span className="text-[#F3F1EC] truncate max-w-[180px]">{email}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications */}
+          <div className="bg-[#0C1017]/90 backdrop-blur-xl border border-white/[0.08] hover:border-white/[0.14] rounded-2xl p-6 transition-all duration-300 space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-white/[0.06]">
+              <Bell size={16} className="text-[#38BDF8]" />
+              <h4 className="font-semibold text-sm text-[#F3F1EC]">
+                Dispatch & Compliance Alerts
+              </h4>
+            </div>
+
+            <div className="space-y-2">
+              <ToggleRow
+                label="Email Notifications"
+                description="Receive journal execution receipts"
+                checked={emailNotifs}
+                onChange={setEmailNotifs}
+              />
+              <ToggleRow
+                label="Login Alerts"
+                description="Alert on unfamiliar session sign-ins"
+                checked={loginAlerts}
+                onChange={setLoginAlerts}
+              />
+              <ToggleRow
+                label="High-Value Wire Alerts"
+                description="Notify when wire triggers FINRA L2+ holds"
+                checked={transferAlerts}
+                onChange={setTransferAlerts}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ToggleRow({ label, description, checked, onChange }) {
+  return (
+    <div
+      onClick={() => onChange(!checked)}
+      className="flex items-center justify-between p-3 rounded-xl bg-[#07090D] border border-white/[0.05] hover:border-white/10 cursor-pointer transition-colors"
+    >
+      <div>
+        <p className="text-xs font-semibold text-[#F3F1EC]">{label}</p>
+        <p className="text-[10.5px] text-[#7A7D82] font-mono mt-0.5">{description}</p>
+      </div>
+      <div
+        className={`w-10 h-6 rounded-full p-0.5 transition-colors relative ${
+          checked ? "bg-[#38BDF8]" : "bg-white/[0.1]"
+        }`}
+      >
+        <div
+          className={`w-5 h-5 rounded-full bg-black transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
