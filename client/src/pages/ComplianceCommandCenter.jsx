@@ -1598,3 +1598,183 @@ export function ComplianceCommandCenter() {
               <div className="flex flex-col justify-end space-y-2 pt-1">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
+                    type="checkbox"
+                    checked={webhookTamperSignature}
+                    onChange={(e) => setWebhookTamperSignature(e.target.checked)}
+                    className="w-4 h-4 rounded bg-[#06080C] border-white/20 text-rose-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <span className={`text-xs font-mono font-medium ${webhookTamperSignature ? "text-rose-400" : "text-[#8E929B]"}`}>
+                    Tamper Signature (Test HTTP 401)
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={webhookExpiredTimestamp}
+                    onChange={(e) => setWebhookExpiredTimestamp(e.target.checked)}
+                    className="w-4 h-4 rounded bg-[#06080C] border-white/20 text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <span className={`text-xs font-mono font-medium ${webhookExpiredTimestamp ? "text-amber-400" : "text-[#8E929B]"}`}>
+                    Expired Timestamp (&gt; 300s Replay)
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Execute Button */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => handleSendTestWebhook()}
+                disabled={isWebhookLoading}
+                className={`w-full py-3.5 px-6 font-mono font-semibold uppercase tracking-wider text-xs md:text-sm rounded-xl transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer ${
+                  webhookTamperSignature
+                    ? "bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.15)]"
+                    : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                } ${isWebhookLoading ? "opacity-60 cursor-not-allowed" : "active:scale-[0.99]"}`}
+              >
+                {isWebhookLoading ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : webhookTamperSignature ? (
+                  <XCircle size={16} className="text-rose-400" />
+                ) : (
+                  <CheckCircle2 size={16} className="text-white" />
+                )}
+                <span>
+                  {isWebhookLoading
+                    ? "Cryptographically Verifying..."
+                    : `Send Signed Inbound Webhook (${webhookTamperSignature ? "Tampered Mode" : "Valid Mode"})`}
+                </span>
+              </button>
+            </div>
+
+            {/* Simulation Response Inspection */}
+            {lastWebhookResult && (
+              <div className="bg-[#06080C] border border-white/[0.08] rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase font-semibold text-[#8E929B]">
+                      Gateway Response
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${
+                        lastWebhookResult.httpStatus === 200
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                          : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                      }`}
+                    >
+                      HTTP {lastWebhookResult.httpStatus}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-[#6E737D]">
+                    Event ID: {lastWebhookResult.signedPayload?.eventId}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                  <div>
+                    <span className="text-[#8E929B] block mb-1">Signed Headers:</span>
+                    <pre className="bg-[#0C1017] p-2.5 rounded-lg border border-white/[0.06] text-[#D1D5DB] text-[11px] whitespace-pre-wrap break-all">
+                      {`X-RuneStone-Timestamp: ${lastWebhookResult.signedPayload?.timestamp}\nX-RuneStone-Signature: ${lastWebhookResult.signedPayload?.signature}`}
+                    </pre>
+                  </div>
+                  <div>
+                    <span className="text-[#8E929B] block mb-1">Server Response Body:</span>
+                    <pre className="bg-[#0C1017] p-2.5 rounded-lg border border-white/[0.06] text-[#D1D5DB] text-[11px] whitespace-pre-wrap break-all">
+                      {JSON.stringify(lastWebhookResult.response, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Webhook Deliveries Log Table */}
+          <div className="bg-[#0C1017]/90 border border-white/[0.08] rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <Activity size={18} className="text-amber-400" />
+                <h4 className="text-sm font-semibold uppercase tracking-wider text-[#F3F1EC]">
+                  Webhook Deliveries Ledger ({webhookDeliveries.length})
+                </h4>
+              </div>
+              <button
+                onClick={async () => {
+                  const whs = await fetchWebhookDeliveries().catch(() => []);
+                  setWebhookDeliveries(whs);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white rounded-lg text-xs font-mono font-medium border border-white/10 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={12} />
+                <span>Refresh Log</span>
+              </button>
+            </div>
+
+            {webhookDeliveries.length === 0 ? (
+              <div className="text-center py-12 text-[#6E737D] font-mono text-sm">
+                No webhook deliveries recorded yet. Use the simulator buttons above to generate signed events.
+              </div>
+            ) : (
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead>
+                    <tr className="border-b border-white/[0.08] text-[#6E737D] uppercase text-[10px] tracking-wider">
+                      <th className="pb-3 pr-4 font-semibold">ID</th>
+                      <th className="pb-3 px-4 font-semibold">Direction</th>
+                      <th className="pb-3 px-4 font-semibold">Event ID</th>
+                      <th className="pb-3 px-4 font-semibold">Event Type</th>
+                      <th className="pb-3 px-4 font-semibold">Target / Rail</th>
+                      <th className="pb-3 px-4 font-semibold">Verification Status</th>
+                      <th className="pb-3 pl-4 font-semibold">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.06]">
+                    {webhookDeliveries.map((d) => (
+                      <tr key={d.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 pr-4 text-[#8CB0DB] font-semibold">#{d.id}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                              d.direction === "INBOUND"
+                                ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/30"
+                                : "bg-purple-500/10 text-purple-300 border border-purple-500/30"
+                            }`}
+                          >
+                            {d.direction}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-[#D1D5DB] font-mono max-w-[140px] truncate">
+                          {d.eventId}
+                        </td>
+                        <td className="py-3 px-4 text-[#F3F1EC] font-semibold">{d.eventType}</td>
+                        <td className="py-3 px-4 text-[#9CA3AF]">{d.targetOrSource}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                              d.verificationOrHttpStatus === "VERIFIED_OK"
+                                ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+                                : d.verificationOrHttpStatus === "SIGNATURE_INVALID"
+                                ? "bg-rose-500/10 text-rose-300 border border-rose-500/30"
+                                : "bg-white/[0.04] text-[#9CA3AF] border border-white/10"
+                            }`}
+                          >
+                            {d.verificationOrHttpStatus}
+                          </span>
+                        </td>
+                        <td className="py-3 pl-4 text-[#7A7D82] whitespace-nowrap">
+                          {d.createdAt ? new Date(d.createdAt).toLocaleString() : "N/A"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
