@@ -146,3 +146,116 @@ export function TotalBalance({ isRevealed, setIsRevealed }) {
         {/* Double-Entry Invariant Strip: 3 Balance Buckets */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Bucket 1: Posted Balance */}
+          <div className="p-4 bg-[#06080C]/80 border border-white/[0.08] hover:border-white/[0.16] rounded-xl transition-all">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-[#8E929B] font-semibold">
+              1. Posted Ledger Total
+            </div>
+            <div
+              className={`text-2xl md:text-3xl font-semibold font-['JetBrains_Mono',monospace] mt-1 text-[#F3F1EC] tracking-[-0.02em] ${
+                !isRevealed ? "blur-md select-none opacity-50" : ""
+              }`}
+            >
+              $
+              {posted.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+            <div className="text-[10px] font-mono text-[#6E737D] mt-1">
+              Book Value = Available + Held
+            </div>
+          </div>
+
+          {/* Bucket 2: Available Balance */}
+          <div className="p-4 bg-emerald-950/20 border border-emerald-500/30 hover:border-emerald-500/50 rounded-xl transition-all">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-semibold">
+              2. Available (Spendable)
+            </div>
+            <div
+              className={`text-2xl md:text-3xl font-semibold font-['JetBrains_Mono',monospace] mt-1 text-emerald-400 tracking-[-0.02em] ${
+                !isRevealed ? "blur-md select-none opacity-50" : ""
+              }`}
+            >
+              $
+              {available.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+            <div className="text-[10px] font-mono text-emerald-500/70 mt-1">
+              Free of Encumbrances
+            </div>
+          </div>
+
+          {/* Bucket 3: Held / Escrowed Balance */}
+          <div className="p-4 bg-amber-950/20 border border-amber-500/30 hover:border-amber-500/50 rounded-xl transition-all">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-semibold">
+              3. Held / Escrowed
+            </div>
+            <div
+              className={`text-2xl md:text-3xl font-semibold font-['JetBrains_Mono',monospace] mt-1 text-amber-400 tracking-[-0.02em] ${
+                !isRevealed ? "blur-md select-none opacity-50" : ""
+              }`}
+            >
+              $
+              {held.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+            <div className="text-[10px] font-mono text-amber-500/70 mt-1">
+              Intercepted AML & Velocity Holds
+            </div>
+          </div>
+        </div>
+
+        {/* Mathematical Invariant Verification Badge */}
+        <div className="p-3 bg-[#06080C]/80 border border-white/[0.06] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2 text-[#9CA3AF]">
+            <Lock size={14} className="text-[#38BDF8] shrink-0" />
+            <span>
+              Invariant:{" "}
+              <span className="text-white font-bold">${posted.toFixed(2)}</span>{" "}
+              ={" "}
+              <span className="text-emerald-400 font-bold">
+                ${available.toFixed(2)}
+              </span>{" "}
+              +{" "}
+              <span className="text-amber-400 font-bold">
+                ${held.toFixed(2)}
+              </span>
+            </span>
+          </div>
+
+          <button
+            onClick={() => navigate("/compliance")}
+            className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-[#38BDF8] hover:text-white rounded-xl border border-[#38BDF8]/20 font-mono font-semibold uppercase tracking-wider text-[11px] flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <span>Open AML Compliance Command</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+
+        {/* Account Info and Copy */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center text-xs font-mono text-[#8E929B] uppercase tracking-wider gap-2 pt-3 border-t border-white/[0.06]">
+          <span className="text-white font-semibold">{balanceInfo.accountName}</span>
+          <button
+            onClick={handleCopy}
+            className="bg-[#06080C] px-3 py-1.5 border border-white/10 hover:border-white/20 rounded-xl hover:text-white transition-colors flex items-center gap-2 text-xs text-[#9CA3AF]"
+            title="Copy Account Number"
+          >
+            <span>
+              {treasuryAccount?.accountNumber || balanceInfo.accountNumber}
+            </span>
+            {copied ? (
+              <Check size={14} className="text-emerald-400" />
+            ) : (
+              <Copy size={14} />
+            )}
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
