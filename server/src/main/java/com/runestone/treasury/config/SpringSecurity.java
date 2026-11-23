@@ -110,7 +110,7 @@ public class SpringSecurity {
     return config.getAuthenticationManager();
   }
 
-  @Value("${app.cors.allowed-origins:http://localhost:5174,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5174,http://127.0.0.1:5173,*}")
+  @Value("${app.cors.allowed-origins:https://foureyes.saimands.com,https://foureyes.saimands.com/,http://localhost:5174,http://localhost:5173,http://localhost:3000,http://127.0.0.1:5174,http://127.0.0.1:5173,*}")
   private String allowedOrigins;
 
   @Bean
@@ -120,6 +120,12 @@ public class SpringSecurity {
         Arrays.stream(allowedOrigins.split(","))
             .map(String::trim)
             .filter(s -> !s.isEmpty())
+            .flatMap(
+                s ->
+                    s.endsWith("/") && s.length() > 1
+                        ? java.util.stream.Stream.of(s, s.substring(0, s.length() - 1))
+                        : java.util.stream.Stream.of(s))
+            .distinct()
             .collect(Collectors.toList());
     configuration.setAllowedOriginPatterns(origins);
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

@@ -19,26 +19,69 @@ import { DoubleEntryBucketsCard } from "../components/DoubleEntryBucketsCard";
 import { QuickTransfer } from "../components/dashboard/QuickTransfer";
 import { RecentTransactions } from "../components/dashboard/RecentTransactions";
 
+const DEFAULT_DEMO_ACCOUNTS = [
+  {
+    id: 7,
+    accountNumber: "AC-7FC899A9A222",
+    accountName: "Alice Smith (Maker Vault)",
+    currency: "USD",
+    postedBalance: 24380.0,
+    availableBalance: 24380.0,
+    heldBalance: 0.0,
+    status: "ACTIVE",
+  },
+  {
+    id: 8,
+    accountNumber: "AC-B8F0DABD582C",
+    accountName: "Bob Jones (Checker Vault)",
+    currency: "USD",
+    postedBalance: 15510.0,
+    availableBalance: 15510.0,
+    heldBalance: 0.0,
+    status: "ACTIVE",
+  },
+  {
+    id: 9,
+    accountNumber: "AC-61E364687A17",
+    accountName: "Charlie Day (Retail Corridor)",
+    currency: "USD",
+    postedBalance: 10010.0,
+    availableBalance: 10010.0,
+    heldBalance: 0.0,
+    status: "ACTIVE",
+  },
+  {
+    id: 10,
+    accountNumber: "AC-B077377200A4",
+    accountName: "Sarah Connor (Compliance Buffer)",
+    currency: "USD",
+    postedBalance: 50000.0,
+    availableBalance: 50000.0,
+    heldBalance: 0.0,
+    status: "ACTIVE",
+  },
+];
+
 export function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isRevealed, setIsRevealed] = useState(true);
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [allAccounts, setAllAccounts] = useState([]);
+  const [allAccounts, setAllAccounts] = useState(DEFAULT_DEMO_ACCOUNTS);
 
   // Initialize with deterministic instant state to permanently eliminate "Loading..." flash
   const activePersonaKey = getActivePersona();
   const personaMeta = PERSONAS[activePersonaKey] || PERSONAS.alice;
 
   const [activeAccount, setActiveAccount] = useState({
-    id: personaMeta.accountId || 1,
-    accountNumber: user?.accountNumber || (personaMeta.username === "bob" ? "AC-69D1D364271B" : personaMeta.username === "charlie" ? "AC-2B1F918288D9" : "AC-4BE19A42A8DC"),
+    id: personaMeta.username === "bob" ? 8 : personaMeta.username === "charlie" ? 9 : personaMeta.username === "sarah_compliance" ? 10 : 7,
+    accountNumber: user?.accountNumber || (personaMeta.username === "bob" ? "AC-B8F0DABD582C" : personaMeta.username === "charlie" ? "AC-61E364687A17" : personaMeta.username === "sarah_compliance" ? "AC-B077377200A4" : "AC-7FC899A9A222"),
     accountName: personaMeta.displayName,
     currency: "USD",
-    postedBalance: user?.accountBalance || 249250.0,
-    availableBalance: 36280.0,
-    heldBalance: 212970.0,
+    postedBalance: user?.accountBalance || (personaMeta.username === "bob" ? 15510.0 : personaMeta.username === "charlie" ? 10010.0 : personaMeta.username === "sarah_compliance" ? 50000.0 : 24380.0),
+    availableBalance: personaMeta.username === "bob" ? 15510.0 : personaMeta.username === "charlie" ? 10010.0 : personaMeta.username === "sarah_compliance" ? 50000.0 : 24380.0,
+    heldBalance: 0.0,
     status: "ACTIVE",
   });
 

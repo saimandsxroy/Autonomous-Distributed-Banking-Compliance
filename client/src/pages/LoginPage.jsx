@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -19,12 +19,17 @@ import {
   Shield,
   Layers,
   Terminal,
+  Server,
+  Settings,
+  X,
 } from "lucide-react";
 import {
   loginWithCredentials,
   switchDemoPersonaJwt,
   registerUser,
   createTreasuryAccount,
+  getApiBaseUrl,
+  setApiBaseUrl,
 } from "../api/treasuryApi";
 
 
@@ -78,6 +83,41 @@ export function LoginPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [demoLoggingIn, setDemoLoggingIn] = useState(null);
+
+  // API Server Configuration State
+  const [showApiModal, setShowApiModal] = useState(false);
+  const [customApiUrl, setCustomApiUrl] = useState(getApiBaseUrl());
+  const [apiUrlInput, setApiUrlInput] = useState(
+    getApiBaseUrl() || "https://burning-reviewer-books-acknowledge.trycloudflare.com"
+  );
+  const [testingConnection, setTestingConnection] = useState(false);
+
+  useEffect(() => {
+    const handleUrlChange = (e) => setCustomApiUrl(e.detail || "");
+    window.addEventListener("foureyes_api_url_changed", handleUrlChange);
+    return () => window.removeEventListener("foureyes_api_url_changed", handleUrlChange);
+  }, []);
+
+  const testApiEndpoint = async (url) => {
+    setTestingConnection(true);
+    setError("");
+    try {
+      const cleanUrl = url.trim().replace(/\/$/, "");
+      const res = await fetch(`${cleanUrl}/health-check`, { method: "GET" });
+      if (res.ok) {
+        setApiBaseUrl(cleanUrl);
+        setCustomApiUrl(cleanUrl);
+        setSuccessMsg(`Connected to FourEyes API server (${cleanUrl})!`);
+        setShowApiModal(false);
+      } else {
+        setError(`Backend responded with HTTP ${res.status}`);
+      }
+    } catch (e) {
+      setError(`Cannot reach backend at ${url}: ${e.message}`);
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -234,13 +274,34 @@ export function LoginPage() {
           </div>
         </Link>
 
-        <Link
-          to="/"
-          className="group inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-tech-mono tracking-[0.16em] text-[#8CB0DB] hover:text-white uppercase transition-colors"
-        >
-          <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-1" />
-          <span>Return to 3D Architecture</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowApiModal(true)}
+            className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-tech-mono px-2.5 py-1 rounded-full border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-[#8CB0DB] transition-all cursor-pointer"
+            title="Configure Spring Boot API Server Endpoint"
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                customApiUrl ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-sky-400"
+              }`}
+            />
+            <span className="hidden sm:inline">API:</span>
+            <span className="max-w-[130px] truncate text-white/80">
+              {customApiUrl ? customApiUrl.replace(/^https?:\/\//, "") : "Direct / Proxy"}
+            </span>
+            <Settings size={12} className="text-[#8CB0DB]/70" />
+          </button>
+
+          <Link
+            to="/"
+            className="group inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-tech-mono tracking-[0.16em] text-[#8CB0DB] hover:text-white uppercase transition-colors"
+          >
+            <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-1" />
+            <span className="hidden sm:inline">Return to 3D Architecture</span>
+            <span className="sm:hidden">Home</span>
+          </Link>
+        </div>
       </header>
 
       {/* =====================================================================
@@ -449,9 +510,35 @@ export function LoginPage() {
 
             {/* Error Notification Banner */}
             {error && (
-              <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-300 flex items-start gap-2.5 animate-fadeIn">
-                <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
-                <p className="text-xs font-tech-mono leading-relaxed">{error}</p>
+              <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-300 space-y-2 animate-fadeIn">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle size={16} className="text-rose-400 shrink-0 mt-0.5" />
+                  <p className="text-xs font-tech-mono leading-relaxed">{error}</p>
+                </div>
+                {(error.includes("405") ||
+                  error.includes("static frontend") ||
+                  error.includes("backend") ||
+                  error.includes("reach") ||
+                  error.includes("Failed to execute")) && (
+                  <div className="pt-2 border-t border-rose-500/20 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        testApiEndpoint("https://burning-reviewer-books-acknowledge.trycloudflare.com");
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-tech-mono bg-rose-500/20 hover:bg-rose-500/30 text-white rounded border border-rose-500/40 transition-colors cursor-pointer"
+                    >
+                      ⚡ Connect Live Tunnel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowApiModal(true)}
+                      className="px-2.5 py-1 text-[11px] font-tech-mono bg-white/5 hover:bg-white/10 text-[#C5C8CD] rounded border border-white/10 transition-colors cursor-pointer"
+                    >
+                      ⚙️ Configure API Server...
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -756,6 +843,123 @@ export function LoginPage() {
           </div>
         </div>
       </footer>
+
+      {/* =====================================================================
+          API SERVER CONFIGURATION MODAL
+          ===================================================================== */}
+      {showApiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="relative w-full max-w-md p-6 rounded-2xl bg-[#0D1117] border border-white/15 shadow-2xl text-left space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Server size={18} className="text-[#38BDF8]" />
+                <h3 className="text-sm font-semibold text-white font-tech-mono">
+                  Spring Boot Core API Server
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowApiModal(false)}
+                className="p-1 rounded-lg text-[#7A7D82] hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-xs text-[#94A3B8] leading-relaxed">
+              When accessing FourEyes from a deployed frontend (e.g.{" "}
+              <code className="text-[#38BDF8]">https://foureyes.saimands.com</code>), specify the
+              URL of the running FourEyes Spring Boot backend (or live Cloudflare Tunnel).
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-tech-mono uppercase tracking-wider text-[#A1A4A8]">
+                Backend Endpoint URL
+              </label>
+              <input
+                type="url"
+                value={apiUrlInput}
+                onChange={(e) => setApiUrlInput(e.target.value)}
+                placeholder="https://your-backend-tunnel.trycloudflare.com"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-[#38BDF8]/60 transition-colors"
+              />
+            </div>
+
+            {/* Quick Presets */}
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-tech-mono uppercase tracking-wider text-[#6E737D]">
+                Presets &amp; Active Tunnels
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setApiUrlInput("https://burning-reviewer-books-acknowledge.trycloudflare.com")
+                  }
+                  className="text-left px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 text-[11px] font-mono text-emerald-400 flex items-center justify-between transition-colors"
+                >
+                  <span className="truncate">⚡ Live Cloudflare Tunnel (TryCloudflare)</span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300">
+                    Active
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApiUrlInput("http://localhost:8081")}
+                  className="text-left px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 text-[11px] font-mono text-sky-400 flex items-center justify-between transition-colors"
+                >
+                  <span className="truncate">💻 Local Machine (http://localhost:8081)</span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300">
+                    Local
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApiUrlInput("")}
+                  className="text-left px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 text-[11px] font-mono text-[#A1A4A8] flex items-center justify-between transition-colors"
+                >
+                  <span className="truncate">🔗 Direct Relative Proxy ("")</span>
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-white/5 text-[#A1A4A8]">
+                    Vite
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setApiBaseUrl("");
+                  setCustomApiUrl("");
+                  setApiUrlInput("");
+                  setShowApiModal(false);
+                  setSuccessMsg("Reset API endpoint to default proxy.");
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-tech-mono text-[#8E9299] hover:text-white transition-colors"
+              >
+                Reset Default
+              </button>
+              <button
+                type="button"
+                disabled={testingConnection}
+                onClick={() => testApiEndpoint(apiUrlInput)}
+                className="px-4 py-2 rounded-xl bg-[#38BDF8] hover:bg-[#38BDF8]/90 text-black font-tech-mono text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {testingConnection ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Connecting...</span>
+                  </>
+                ) : (
+                  <span>Save &amp; Connect</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

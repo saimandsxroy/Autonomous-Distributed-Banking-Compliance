@@ -176,11 +176,71 @@ export function isOfficerRole() {
   );
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+export function getApiBaseUrl() {
+  if (typeof window !== "undefined") {
+    const override = localStorage.getItem("foureyes_api_base_url");
+    if (override && override.trim()) {
+      return override.trim().replace(/\/$/, "");
+    }
+    if (window.__FOUREYES_API_BASE_URL__) {
+      return window.__FOUREYES_API_BASE_URL__.trim().replace(/\/$/, "");
+    }
+    if (
+      window.location &&
+      (window.location.hostname === "foureyes.saimands.com" ||
+        window.location.hostname.endsWith("pages.dev"))
+    ) {
+      return "https://burning-reviewer-books-acknowledge.trycloudflare.com";
+    }
+  }
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && envUrl.trim()) {
+    return envUrl.trim().replace(/\/$/, "");
+  }
+  return "";
+}
+
+export function setApiBaseUrl(url) {
+  if (typeof window !== "undefined") {
+    if (url && url.trim()) {
+      localStorage.setItem("foureyes_api_base_url", url.trim().replace(/\/$/, ""));
+    } else {
+      localStorage.removeItem("foureyes_api_base_url");
+    }
+    window.dispatchEvent(new CustomEvent("foureyes_api_url_changed", { detail: url }));
+  }
+}
+
+async function safeParseResponse(response, defaultError = "Request failed") {
+  const text = await response.text().catch(() => "");
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { message: text };
+    }
+  }
+
+  if (!response.ok) {
+    if (response.status === 405) {
+      throw new Error(
+        `HTTP 405 Method Not Allowed: The API request was sent to a static frontend host (${response.url || "current origin"}) rather than the Spring Boot backend server. Please configure your FourEyes API Server URL.`
+      );
+    }
+    const msg = data?.message || data?.error || (typeof data === "string" ? data : null);
+    throw new Error(
+      msg || `${defaultError} (HTTP ${response.status}: ${response.statusText || "Server error"})`
+    );
+  }
+
+  return data || {};
+}
 
 /** POST /auth/login — authenticates with credentials, generates and stores stateless JWT */
 export async function loginWithCredentials(usernameOrEmail, password) {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -188,10 +248,7 @@ export async function loginWithCredentials(usernameOrEmail, password) {
     },
     body: JSON.stringify({ usernameOrEmail, password }),
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Invalid username or password");
-  }
+  const data = await safeParseResponse(response, "Invalid username or password");
   if (data.token) {
     localStorage.setItem("foureyes_jwt_token", data.token);
     localStorage.setItem("runestone_jwt_token", data.token);
@@ -213,17 +270,18 @@ export async function loginWithCredentials(usernameOrEmail, password) {
 
 /** POST /auth/demo-switch/{personaUsername} — 1-click cryptographic demo persona swap */
 export async function switchDemoPersonaJwt(personaUsername) {
-  const response = await fetch(`${API_BASE_URL}/auth/demo-switch/${personaUsername}`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/demo-switch/${personaUsername}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Requested-With": "XMLHttpRequest",
     },
   });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || `Failed to switch to persona ${personaUsername}`);
-  }
+  const data = await safeParseResponse(
+    response,
+    `Failed to switch to persona ${personaUsername}`
+  );
   if (data.token) {
     localStorage.setItem("foureyes_jwt_token", data.token);
     localStorage.setItem("runestone_jwt_token", data.token);
@@ -250,7 +308,8 @@ export async function login(username, password) {
 
 /** POST /public/create-user — registers a new corporate user with BCrypt password hashing */
 export async function registerUser({ userName, email, password }) {
-  const response = await fetch(`${API_BASE_URL}/public/create-user`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/public/create-user`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -258,11 +317,10 @@ export async function registerUser({ userName, email, password }) {
     },
     body: JSON.stringify({ userName, username: userName, email, password }),
   });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || "Registration failed. User may already exist.");
-  }
-  return await response.json();
+  return await safeParseResponse(
+    response,
+    "Registration failed. User may already exist."
+  );
 }
 
 /* =====================================================================
@@ -277,7 +335,8 @@ async function treasuryFetch(url, options = {}) {
     ...(options.headers || {}),
   };
 
-  const response = await fetch(`${API_BASE_URL}${url}`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}${url}`, {
     ...options,
     headers,
   });
@@ -296,16 +355,28 @@ async function treasuryFetch(url, options = {}) {
 
   if (!response.ok) {
     let errorDetail = `HTTP ${response.status} ${response.statusText}`;
-    try {
-      const errJson = await response.json();
-      if (errJson?.message) {
-        errorDetail = errJson.message;
-      } else if (errJson?.error) {
-        errorDetail = errJson.error;
+    if (response.status === 405) {
+      errorDetail = `HTTP 405 Method Not Allowed: The API request was sent to a static frontend host rather than the backend server. Please verify your backend API URL.`;
+    } else {
+      try {
+        const text = await response.text().catch(() => "");
+        if (text) {
+          try {
+            const errJson = JSON.parse(text);
+            if (errJson?.message) {
+              errorDetail = errJson.message;
+            } else if (errJson?.error) {
+              errorDetail = errJson.error;
+            } else {
+              errorDetail = text;
+            }
+          } catch {
+            errorDetail = text;
+          }
+        }
+      } catch {
+        // Fallback to HTTP status text
       }
-    } catch {
-      const text = await response.text().catch(() => "");
-      if (text) errorDetail = text;
     }
     const err = new Error(errorDetail);
     err.status = response.status;

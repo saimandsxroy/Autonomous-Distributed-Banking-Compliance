@@ -1,10 +1,12 @@
 import { apiRequest } from "./api";
+import { getApiBaseUrl } from "../api/treasuryApi";
 
 export async function loginUser(email, password) {
   // Call /auth/login for stateless enterprise JWT
   let response;
   try {
-    const res = await fetch("/auth/login", {
+    const baseUrl = getApiBaseUrl();
+    const res = await fetch(`${baseUrl}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -13,7 +15,8 @@ export async function loginUser(email, password) {
       body: JSON.stringify({ usernameOrEmail: email, password }),
     });
     if (res.ok) {
-      const data = await res.json();
+      const text = await res.text().catch(() => "");
+      const data = text ? JSON.parse(text) : {};
       const token = data.token;
       localStorage.setItem("foureyes_jwt_token", token);
       localStorage.setItem("runestone_jwt_token", token);

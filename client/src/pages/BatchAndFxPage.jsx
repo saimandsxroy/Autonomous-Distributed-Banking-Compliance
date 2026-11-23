@@ -31,6 +31,94 @@ import {
   PERSONAS,
 } from "../api/treasuryApi";
 
+const DEFAULT_BATCHES = [
+  {
+    id: 1,
+    batchReference: "BATCH-2026-Q4-PAYROLL",
+    uploadedByUser: "alice",
+    fileName: "q4_global_payroll_corridor.csv",
+    fileSha256Hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    sourceAccountId: 7,
+    totalRows: 8,
+    settledCount: 8,
+    heldAmlCount: 0,
+    failedCount: 0,
+    totalSettledAmount: 142500.0,
+    status: "COMPLETED",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    completedAt: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+  },
+  {
+    id: 2,
+    batchReference: "BATCH-2026-FX-SWEEP",
+    uploadedByUser: "bob",
+    fileName: "daily_fx_liquidity_rebalance.csv",
+    fileSha256Hash: "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+    sourceAccountId: 8,
+    totalRows: 6,
+    settledCount: 5,
+    heldAmlCount: 1,
+    failedCount: 0,
+    totalSettledAmount: 89400.0,
+    status: "PROCESSING",
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    completedAt: null,
+  },
+];
+
+const DEFAULT_BATCH_DETAILS = {
+  ...DEFAULT_BATCHES[0],
+  items: [
+    {
+      id: 1,
+      rowNumber: 1,
+      receiverAccount: "AC-B8F0DABD582C",
+      amount: 18500.0,
+      currency: "USD",
+      counterpartyName: "Bob Jones (Engineering VP)",
+      status: "SETTLED",
+      journalEntryId: 101,
+    },
+    {
+      id: 2,
+      rowNumber: 2,
+      receiverAccount: "AC-61E364687A17",
+      amount: 14200.0,
+      currency: "USD",
+      counterpartyName: "Charlie Day (Staff SRE)",
+      status: "SETTLED",
+      journalEntryId: 102,
+    },
+    {
+      id: 3,
+      rowNumber: 3,
+      receiverAccount: "AC-B077377200A4",
+      amount: 22000.0,
+      currency: "USD",
+      counterpartyName: "Sarah Connor (Chief Compliance)",
+      status: "SETTLED",
+      journalEntryId: 103,
+    },
+    {
+      id: 4,
+      rowNumber: 4,
+      receiverAccount: "AC-SYS-FX-USD",
+      amount: 87800.0,
+      currency: "USD",
+      counterpartyName: "Prime Liquidity Reserve",
+      status: "SETTLED",
+      journalEntryId: 104,
+    },
+  ],
+};
+
+const DEFAULT_RATES = [
+  { pair: "USD/INR", rate: 86.85, baseCurrency: "USD", targetCurrency: "INR", updatedAt: new Date().toISOString() },
+  { pair: "EUR/USD", rate: 1.085, baseCurrency: "EUR", targetCurrency: "USD", updatedAt: new Date().toISOString() },
+  { pair: "GBP/USD", rate: 1.295, baseCurrency: "GBP", targetCurrency: "USD", updatedAt: new Date().toISOString() },
+  { pair: "USD/JPY", rate: 154.2, baseCurrency: "USD", targetCurrency: "JPY", updatedAt: new Date().toISOString() },
+];
+
 export function BatchAndFxPage() {
   const [activeTab, setActiveTab] = useState("batch"); // "batch" | "fx"
   const [activePersonaKey, setActivePersonaKey] = useState(getActivePersona());
@@ -40,7 +128,7 @@ export function BatchAndFxPage() {
   const [sourceAccountId, setSourceAccountId] = useState("");
 
   // FX Matrix & Quote state
-  const [fxRates, setFxRates] = useState([]);
+  const [fxRates, setFxRates] = useState(DEFAULT_RATES);
   const [quoteFrom, setQuoteFrom] = useState("USD");
   const [quoteTo, setQuoteTo] = useState("INR");
   const [quoteAmount, setQuoteAmount] = useState("1000.00");
@@ -61,8 +149,8 @@ export function BatchAndFxPage() {
   };
 
   // Batch Payout state
-  const [batches, setBatches] = useState([]);
-  const [selectedBatchDetails, setSelectedBatchDetails] = useState(null);
+  const [batches, setBatches] = useState(DEFAULT_BATCHES);
+  const [selectedBatchDetails, setSelectedBatchDetails] = useState(DEFAULT_BATCH_DETAILS);
   const [batchItemFilter, setBatchItemFilter] = useState("ALL"); // ALL, SETTLED, PENDING_HOLD, FAILED
   const [isExecutingSample, setIsExecutingSample] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -100,7 +188,9 @@ export function BatchAndFxPage() {
   const loadRates = useCallback(async () => {
     try {
       const rates = await fetchFxRates().catch(() => []);
-      setFxRates(rates);
+      if (Array.isArray(rates) && rates.length > 0) {
+        setFxRates(rates);
+      }
     } catch (e) {
       console.error("Failed to load FX rates:", e);
     }
@@ -110,9 +200,11 @@ export function BatchAndFxPage() {
   const loadBatches = useCallback(async () => {
     try {
       const bList = await fetchSettlementBatches().catch(() => []);
-      setBatches(bList);
-      if (bList.length > 0 && !selectedBatchDetails) {
-        loadBatchDetails(bList[0].id);
+      if (Array.isArray(bList) && bList.length > 0) {
+        setBatches(bList);
+        if (!selectedBatchDetails) {
+          loadBatchDetails(bList[0].id);
+        }
       }
     } catch (e) {
       console.error("Failed to load batches:", e);

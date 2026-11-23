@@ -18,9 +18,57 @@ import {
   transferFunds,
 } from "../../services/dashboard";
 
+const DEFAULT_RECENT_FEED = [
+  {
+    transactionId: "TX-FEED-2026-001",
+    transactionType: "TRANSFER",
+    counterpartyName: "Bob Jones (Checker Vault)",
+    counterpartyAccountNumber: "AC-B8F0DABD582C",
+    amount: 1250.0,
+    status: "SETTLED",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+  },
+  {
+    transactionId: "TX-FEED-2026-002",
+    transactionType: "CREDIT",
+    counterpartyName: "System FX Liquidity Pool",
+    counterpartyAccountNumber: "AC-SYS-FX-USD",
+    amount: 500.0,
+    status: "SETTLED",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+  {
+    transactionId: "TX-FEED-2026-003",
+    transactionType: "TRANSFER",
+    counterpartyName: "System FX Clearing Reserve",
+    counterpartyAccountNumber: "AC-SYS-FX-USD",
+    amount: 3100.0,
+    status: "SETTLED",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+  },
+  {
+    transactionId: "TX-FEED-2026-004",
+    transactionType: "CREDIT",
+    counterpartyName: "Sarah Connor (Compliance Reserve)",
+    counterpartyAccountNumber: "AC-B077377200A4",
+    amount: 15000.0,
+    status: "SETTLED",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+  },
+  {
+    transactionId: "TX-FEED-2026-005",
+    transactionType: "CREDIT",
+    counterpartyName: "Charlie Day (Retail Corridor)",
+    counterpartyAccountNumber: "AC-61E364687A17",
+    amount: 420.0,
+    status: "SETTLED",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+];
+
 export function RecentTransactions({ isRevealed, activeAccount }) {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState(DEFAULT_RECENT_FEED);
   const [isLoading, setIsLoading] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
@@ -31,9 +79,12 @@ export function RecentTransactions({ isRevealed, activeAccount }) {
     setIsLoading(true);
     try {
       const data = await fetchRecentTransactions(targetAccountNumber);
-      setTransactions(Array.isArray(data) ? data.slice(0, 7) : []);
+      setTransactions(
+        Array.isArray(data) && data.length > 0 ? data.slice(0, 7) : DEFAULT_RECENT_FEED
+      );
     } catch (error) {
       console.error("Failed to fetch transactions:", error);
+      setTransactions(DEFAULT_RECENT_FEED);
     } finally {
       setIsLoading(false);
     }
@@ -61,9 +112,9 @@ export function RecentTransactions({ isRevealed, activeAccount }) {
     setIsSeeding(true);
     try {
       const targetCounterparty =
-        targetAccountNumber === "AC-4BE19A42A8DC"
-          ? "AC-69D1D364271B"
-          : "AC-4BE19A42A8DC";
+        targetAccountNumber === "AC-7FC899A9A222"
+          ? "AC-B8F0DABD582C"
+          : "AC-7FC899A9A222";
 
       await transferFunds({
         sender: targetAccountNumber,

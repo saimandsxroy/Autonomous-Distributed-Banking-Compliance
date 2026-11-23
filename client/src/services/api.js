@@ -1,6 +1,4 @@
-import { getAuthHeader } from "../api/treasuryApi";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import { getAuthHeader, getApiBaseUrl } from "../api/treasuryApi";
 
 export async function apiRequest(endpoint, options = {}) {
   const token =
@@ -24,7 +22,8 @@ export async function apiRequest(endpoint, options = {}) {
     }
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers,
   });

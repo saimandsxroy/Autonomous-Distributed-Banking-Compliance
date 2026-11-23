@@ -36,6 +36,131 @@ import {
   PERSONAS,
 } from "../api/treasuryApi";
 
+const DEFAULT_RECON_RUNS = [
+  {
+    id: 1,
+    statementReference: "STMT-EOD-2026-11-23",
+    totalExternalRecords: 250,
+    matchedCount: 248,
+    missingInternalCount: 1,
+    missingExternalCount: 0,
+    amountMismatchCount: 1,
+    status: "COMPLETED",
+    executedBy: "bob",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+  },
+];
+
+const DEFAULT_DISCREPANCIES = [
+  {
+    id: 1,
+    runId: 1,
+    transactionReference: "SWIFT-2026-99120",
+    discrepancyType: "AMOUNT_MISMATCH",
+    externalAmount: 2450.0,
+    internalAmount: 2400.0,
+    currency: "USD",
+    resolutionStatus: "OPEN",
+    variance: 50.0,
+    discrepancyReason: "Foreign intermediary wire fee deducted prior to nostro credit ingestion.",
+  },
+  {
+    id: 2,
+    runId: 1,
+    transactionReference: "FEDWIRE-2026-1049",
+    discrepancyType: "MISSING_INTERNAL",
+    externalAmount: 15000.0,
+    internalAmount: 0.0,
+    currency: "USD",
+    resolutionStatus: "RESOLVED",
+    variance: 15000.0,
+    discrepancyReason: "Manual treasury hold release verified by Lead Compliance Officer.",
+  },
+];
+
+const DEFAULT_CORPORATE_WIRES = [
+  {
+    id: 1,
+    idempotencyKey: "wire-corp-001",
+    sourceAccountId: 7,
+    destinationAccountId: 8,
+    amount: 125000.0,
+    currency: "USD",
+    description: "Acme Corp Q4 Supplier Settlement",
+    policyTier: "TIER_2_DUAL_CONTROL",
+    requiredApprovals: 2,
+    currentApprovals: 1,
+    makerUserName: "alice",
+    checkerOneUserName: "bob",
+    checkerTwoUserName: null,
+    status: "PENDING_APPROVAL",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+  {
+    id: 2,
+    idempotencyKey: "wire-corp-002",
+    sourceAccountId: 8,
+    destinationAccountId: 10,
+    amount: 45000.0,
+    currency: "USD",
+    description: "Eurozone Treasury Corridor Sweep",
+    policyTier: "TIER_1_SUPERVISORY",
+    requiredApprovals: 1,
+    currentApprovals: 1,
+    makerUserName: "bob",
+    checkerOneUserName: "sarah_compliance",
+    checkerTwoUserName: null,
+    status: "SETTLED",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+  },
+  {
+    id: 3,
+    idempotencyKey: "wire-corp-003",
+    sourceAccountId: 9,
+    destinationAccountId: 7,
+    amount: 78500.0,
+    currency: "USD",
+    description: "Inter-Entity Capital Reallocation",
+    policyTier: "TIER_2_DUAL_CONTROL",
+    requiredApprovals: 2,
+    currentApprovals: 0,
+    makerUserName: "charlie",
+    checkerOneUserName: null,
+    checkerTwoUserName: null,
+    status: "PENDING_APPROVAL",
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+  {
+    id: 4,
+    idempotencyKey: "wire-corp-004",
+    sourceAccountId: 7,
+    destinationAccountId: 10,
+    amount: 210000.0,
+    currency: "USD",
+    description: "Institutional Liquidity Buffer Fund",
+    policyTier: "TIER_2_DUAL_CONTROL",
+    requiredApprovals: 2,
+    currentApprovals: 2,
+    makerUserName: "alice",
+    checkerOneUserName: "bob",
+    checkerTwoUserName: "sarah_compliance",
+    status: "SETTLED",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+  },
+];
+
+const DEFAULT_TELEMETRY = {
+  totalPostedLiquidityUsd: 30100000.0,
+  mcpAutoExecutionsCount: 3,
+  openReconciliationDiscrepancies: 1,
+  dlqCount: 4,
+  activeHoldsCount: 3,
+  outboxPendingCount: 0,
+  sha256ChainVerified: true,
+  pendingMakerCheckerWires: 2,
+  timestamp: new Date().toISOString(),
+};
+
 export function ReconciliationAndCorporateWires() {
   const [activeTab, setActiveTab] = useState("recon"); // "recon" | "wires" | "telemetry"
   const [activePersonaKey, setActivePersonaKey] = useState(getActivePersona());
@@ -57,9 +182,9 @@ export function ReconciliationAndCorporateWires() {
   const [accounts, setAccounts] = useState([]);
 
   // ================= TAB 1: RECONCILIATION STATE =================
-  const [reconRuns, setReconRuns] = useState([]);
-  const [selectedRun, setSelectedRun] = useState(null);
-  const [discrepancies, setDiscrepancies] = useState([]);
+  const [reconRuns, setReconRuns] = useState(DEFAULT_RECON_RUNS);
+  const [selectedRun, setSelectedRun] = useState(DEFAULT_RECON_RUNS[0]);
+  const [discrepancies, setDiscrepancies] = useState(DEFAULT_DISCREPANCIES);
   const [reconLoading, setReconLoading] = useState(false);
   const [resolvingId, setResolvingId] = useState(null);
   const [reconAlert, setReconAlert] = useState(null);
@@ -69,11 +194,11 @@ export function ReconciliationAndCorporateWires() {
   const [showCustomModal, setShowCustomModal] = useState(false);
 
   // ================= TAB 2: MAKER-CHECKER WIRES STATE =================
-  const [corporateWires, setCorporateWires] = useState([]);
+  const [corporateWires, setCorporateWires] = useState(DEFAULT_CORPORATE_WIRES);
   const [wiresLoading, setWiresLoading] = useState(false);
   const [wireForm, setWireForm] = useState({
-    sourceAccountId: "1",
-    destinationAccountId: "2",
+    sourceAccountId: "7",
+    destinationAccountId: "8",
     amount: "15000.00",
     description: "Corporate Vendor Settlement (Q4 Infrastructure)",
   });
@@ -82,7 +207,7 @@ export function ReconciliationAndCorporateWires() {
   const [wireAlert, setWireAlert] = useState(null);
 
   // ================= TAB 3: TELEMETRY STATE =================
-  const [telemetry, setTelemetry] = useState(null);
+  const [telemetry, setTelemetry] = useState(DEFAULT_TELEMETRY);
   const [telemetryLoading, setTelemetryLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
@@ -90,20 +215,26 @@ export function ReconciliationAndCorporateWires() {
   const loadInitialData = useCallback(async () => {
     try {
       const accts = await fetchUserAccounts().catch(() => []);
-      setAccounts(accts || []);
+      if (Array.isArray(accts) && accts.length > 0) {
+        setAccounts(accts);
+      }
 
       const runs = await fetchReconciliationRuns().catch(() => []);
-      setReconRuns(runs || []);
-      if (runs && runs.length > 0) {
+      if (Array.isArray(runs) && runs.length > 0) {
+        setReconRuns(runs);
         setSelectedRun(runs[0]);
         loadDiscrepancies(runs[0].id);
       }
 
       const wires = await fetchCorporateWires().catch(() => []);
-      setCorporateWires(wires || []);
+      if (Array.isArray(wires) && wires.length > 0) {
+        setCorporateWires(wires);
+      }
 
       const telem = await fetchTelemetryMetrics().catch(() => null);
-      setTelemetry(telem);
+      if (telem) {
+        setTelemetry(telem);
+      }
     } catch (e) {
       console.error("Initial load failed:", e);
     }

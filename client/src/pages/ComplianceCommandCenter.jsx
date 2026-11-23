@@ -37,18 +37,135 @@ import {
   Webhook,
 } from "lucide-react";
 
+const DEFAULT_INVESTIGATIONS = [
+  {
+    id: 1,
+    balanceHoldId: 1,
+    sourceAccountId: 9,
+    destinationAccountId: 7,
+    riskScore: 95,
+    riskSeverity: "CRITICAL",
+    executiveSummary:
+      "Autonomous 5-hop recursive CTE graph analysis detected an active circular round-tripping money-laundering loop. Funds cycle through counterparties back to source (CIRCULAR_RING_DETECTED: path=7->...-> 9), directly violating FATF Recommendation 16 and FATF UBO-09 anti-layering provisions.",
+    citedPolicyCodes: "FATF-REC-16-LAYERING,FATF-UBO-09",
+    subgraphSnapshotJson: JSON.stringify({
+      edges: [
+        { to: 8, from: 7, label: "$1,250.00", amount: 1250.0, source: 7, target: 8, isCycle: true, hopDepth: 5 },
+        { to: 9, from: 8, label: "$850.00", amount: 850.0, source: 8, target: 9, isCycle: true, hopDepth: 5 },
+        { to: 10, from: 9, label: "$420.00", amount: 420.0, source: 9, target: 10, hopDepth: 5 },
+        { to: 7, from: 1, label: "$500.00", amount: 500.0, source: 1, target: 7, isCycle: true, hopDepth: 5 },
+        { to: 1, from: 7, label: "$3,100.00", amount: 3100.0, source: 7, target: 1, isCycle: true, hopDepth: 5 },
+        { to: 7, from: 9, label: "$100.00 (Loop)", amount: 100.0, isHold: true, source: 9, target: 7, isCycle: true, hopDepth: 3 },
+      ],
+      nodes: [
+        { id: 1, label: "Account #1 (AC-SYS-FX-USD)", status: "ACTIVE", balance: 10000000.0, currency: "USD", isOrigin: false, accountId: 1, accountNumber: "AC-SYS-FX-USD" },
+        { id: 7, label: "Alice Smith (AC-7FC899A9A222)", status: "ACTIVE", balance: 24380.0, currency: "USD", isOrigin: false, accountId: 7, accountNumber: "AC-7FC899A9A222" },
+        { id: 8, label: "Bob Jones (AC-B8F0DABD582C)", status: "ACTIVE", balance: 15510.0, currency: "USD", isOrigin: false, accountId: 8, accountNumber: "AC-B8F0DABD582C" },
+        { id: 9, label: "Charlie Day (AC-61E364687A17)", status: "ACTIVE", balance: 10010.0, currency: "USD", isOrigin: true, accountId: 9, accountNumber: "AC-61E364687A17" },
+        { id: 10, label: "Sarah Connor (AC-B077377200A4)", status: "ACTIVE", balance: 50000.0, currency: "USD", isOrigin: false, accountId: 10, accountNumber: "AC-B077377200A4" },
+      ],
+      accountId: 9,
+      riskLevel: "CRITICAL",
+      cyclePaths: ["7->8->9->7", "8->9->7->8", "9->7->8->9"],
+      cycleDetected: true,
+      fanInCount24h: 1,
+      fanOutCount24h: 1,
+    }),
+    recommendedTool: "proposeFreezeAndReverseHold",
+    status: "AWAITING_HITL_APPROVAL",
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+  },
+  {
+    id: 2,
+    balanceHoldId: 102,
+    sourceAccountId: 9,
+    destinationAccountId: 10,
+    riskScore: 94,
+    riskSeverity: "CRITICAL",
+    executiveSummary:
+      "Recursive CTE graph cycle trap identified an active 5-hop circular structuring loop across accounts #7 -> #8 -> #9 -> #10. Potential mule funnel identified.",
+    citedPolicyCodes: "FINRA_CIRCULAR_LAYERING, BSA_SAR_THRESHOLD",
+    subgraphSnapshotJson: JSON.stringify({
+      edges: [
+        { to: 8, from: 7, amount: 9800 },
+        { to: 9, from: 8, amount: 9800 },
+        { to: 10, from: 9, amount: 9800 },
+      ],
+      nodes: [
+        { id: 7, label: "Alice" },
+        { id: 8, label: "Bob" },
+        { id: 9, label: "Charlie" },
+        { id: 10, label: "Sarah" },
+      ],
+    }),
+    recommendedTool: "generate_sar_pdf",
+    status: "AWAITING_HITL_APPROVAL",
+    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+  },
+];
+
+const DEFAULT_PENDING_APPROVALS = [
+  {
+    id: 1,
+    investigationId: 1,
+    holdId: 1,
+    proposedAction: "FREEZE_AND_REVERSE",
+    status: "PENDING",
+    initiatingAgent: "MCP_AML_CYCLE_HUNTER",
+    initiatingNotes: "FATF UBO-09 compliance hold release request awaiting Dual-Control Compliance Officer sign-off.",
+    createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString(),
+  },
+  {
+    id: 2,
+    investigationId: 2,
+    holdId: 102,
+    proposedAction: "GENERATE_SAR_PDF",
+    status: "PENDING",
+    initiatingAgent: "AI_AML_INVESTIGATOR",
+    initiatingNotes: "FinCEN Form 111 SAR filing package ready for regulatory submission.",
+    createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+  },
+];
+
+const DEFAULT_POLICIES = [
+  {
+    policyCode: "FATF-REC-16",
+    title: "FATF Recommendation 16 - Cross-Border Wire Transfers (Travel Rule)",
+    description: "Requires ordering financial institutions to obtain and hold required originator and beneficiary information on wire transfers.",
+    sourceAuthority: "Financial Action Task Force (FATF)",
+    jurisdiction: "GLOBAL",
+    mandatoryAction: "QUARANTINE_HOLD",
+  },
+  {
+    policyCode: "BSA-SAR-10K",
+    title: "Bank Secrecy Act - Suspicious Activity Reporting ($10,000+ Threshold)",
+    description: "Financial institutions must file SARs for aggregate transactions exceeding $10,000 exhibiting structuring or unusual velocity patterns.",
+    sourceAuthority: "FinCEN",
+    jurisdiction: "USA",
+    mandatoryAction: "GENERATE_SAR_PDF",
+  },
+  {
+    policyCode: "EU-AMLD6",
+    title: "6th EU Anti-Money Laundering Directive (Directive 2018/1673)",
+    description: "Establishes criminal liability for aiding and abetting money laundering and imposes corporate liability for lack of dual-control supervision.",
+    sourceAuthority: "European Union",
+    jurisdiction: "EU",
+    mandatoryAction: "DUAL_CONTROL_SIGN_OFF",
+  },
+];
+
 export function ComplianceCommandCenter() {
   const [activeTab, setActiveTab] = useState("investigations");
   const [activePersona, setActivePersonaState] = useState(getActivePersona());
 
   // Data states
-  const [investigations, setInvestigations] = useState([]);
-  const [pendingApprovals, setPendingApprovals] = useState([]);
-  const [selectedInvestigation, setSelectedInvestigation] = useState(null);
+  const [investigations, setInvestigations] = useState(DEFAULT_INVESTIGATIONS);
+  const [pendingApprovals, setPendingApprovals] = useState(DEFAULT_PENDING_APPROVALS);
+  const [selectedInvestigation, setSelectedInvestigation] = useState(DEFAULT_INVESTIGATIONS[0]);
   const [mcpInvocations, setMcpInvocations] = useState([]);
   const [auditData, setAuditData] = useState(null);
   const [dlqEvents, setDlqEvents] = useState([]);
-  const [policies, setPolicies] = useState([]);
+  const [policies, setPolicies] = useState(DEFAULT_POLICIES);
   const [searchQuery, setSearchQuery] = useState("");
   const [webhookDeliveries, setWebhookDeliveries] = useState([]);
   const [lastWebhookResult, setLastWebhookResult] = useState(null);
@@ -107,12 +224,12 @@ export function ComplianceCommandCenter() {
         fetchWebhookDeliveries().catch(() => []),
       ]);
 
-      setInvestigations(invs);
-      setPendingApprovals(apps);
-      setAuditData(audit);
-      setDlqEvents(dlq);
-      setPolicies(pols);
-      setWebhookDeliveries(whs);
+      if (Array.isArray(invs) && invs.length > 0) setInvestigations(invs);
+      if (Array.isArray(apps) && apps.length > 0) setPendingApprovals(apps);
+      if (audit) setAuditData(audit);
+      if (Array.isArray(dlq) && dlq.length > 0) setDlqEvents(dlq);
+      if (Array.isArray(pols) && pols.length > 0) setPolicies(pols);
+      if (Array.isArray(whs) && whs.length > 0) setWebhookDeliveries(whs);
 
       // Default select latest investigation if none selected
       if (invs.length > 0 && !selectedInvestigation) {

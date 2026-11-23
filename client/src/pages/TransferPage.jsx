@@ -14,6 +14,7 @@ import {
   Zap,
   Check,
   Sparkles,
+  
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -30,6 +31,14 @@ import {
 } from "../api/treasuryApi";
 import { useNavigate } from "react-router-dom";
 
+const DEFAULT_ACCOUNTS_PRESET = [
+  { id: 7, accountNumber: "AC-7FC899A9A222", currency: "USD", accountName: "Alice Smith (Maker Vault)" },
+  { id: 8, accountNumber: "AC-B8F0DABD582C", currency: "USD", accountName: "Bob Jones (Checker Vault)" },
+  { id: 9, accountNumber: "AC-61E364687A17", currency: "USD", accountName: "Charlie Day (Retail Corridor)" },
+  { id: 10, accountNumber: "AC-B077377200A4", currency: "USD", accountName: "Sarah Connor (Compliance Buffer)" },
+  { id: 1, accountNumber: "AC-SYS-FX-USD", currency: "USD", accountName: "System FX Clearing (USD)" },
+];
+
 export function TransferPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -45,16 +54,16 @@ export function TransferPage() {
   const [copiedKey, setCopiedKey] = useState(false);
 
   // Advanced Treasury & Idempotency Controls
-  const [sourceAccountId, setSourceAccountId] = useState(1);
-  const [destAccountId, setDestAccountId] = useState(2);
+  const [sourceAccountId, setSourceAccountId] = useState(7);
+  const [destAccountId, setDestAccountId] = useState(8);
   const [treasuryAmount, setTreasuryAmount] = useState("50.00");
   const [idempotencyKey, setIdempotencyKey] = useState(
     () => "tx-" + Math.random().toString(36).substring(2, 10)
   );
   const [isKeyLocked, setIsKeyLocked] = useState(false);
   const [lastJournalResult, setLastJournalResult] = useState(null);
-  const [treasuryAccounts, setTreasuryAccounts] = useState([]);
-  const [allAccounts, setAllAccounts] = useState([]);
+  const [treasuryAccounts, setTreasuryAccounts] = useState(DEFAULT_ACCOUNTS_PRESET);
+  const [allAccounts, setAllAccounts] = useState(DEFAULT_ACCOUNTS_PRESET);
   const [rawResponseStatus, setRawResponseStatus] = useState(null);
 
   // Recent recipients state
@@ -452,26 +461,35 @@ export function TransferPage() {
                     </div>
                   )}
 
-                  {recentRecipients.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
-                      <span className="text-[10px] uppercase font-mono text-[#6E737D]">
-                        Recents:
-                      </span>
-                      {recentRecipients.map((rec) => (
+                  {/* Verified Institutional Counterparties */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                    <span className="text-[10px] uppercase font-mono text-[#6E737D]">
+                      Active Receiver Accounts:
+                    </span>
+                    {[
+                      { name: "Bob Jones", account: "AC-B8F0DABD582C", role: "Checker" },
+                      { name: "Charlie Day", account: "AC-61E364687A17", role: "Retail" },
+                      { name: "Sarah Connor", account: "AC-B077377200A4", role: "Compliance" },
+                      { name: "Alice Smith", account: "AC-7FC899A9A222", role: "Maker" },
+                      { name: "System FX", account: "AC-SYS-FX-USD", role: "Pool" },
+                    ]
+                      .filter((rec) => rec.account !== user?.accountNumber)
+                      .map((rec) => (
                         <button
                           key={rec.account}
                           type="button"
                           onClick={() => {
                             setReceiver(rec.account);
-                            setResolvedName(rec.name);
+                            setResolvedName(`${rec.name} (${rec.role})`);
+                            setError("");
                           }}
-                          className="px-2 py-0.5 bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/20 rounded-lg text-[10.5px] text-[#8E929B] hover:text-white font-mono transition-colors"
+                          className="px-2 py-0.5 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] hover:border-[#38BDF8]/40 rounded-lg text-[10.5px] text-[#8CB0DB] hover:text-white font-mono transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          {rec.name}
+                          <span>{rec.name}</span>
+                          <span className="text-[9px] text-[#6E737D]">[{rec.role}]</span>
                         </button>
                       ))}
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -739,3 +757,5 @@ export function TransferPage() {
     </div>
   );
 }
+
+

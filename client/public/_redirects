@@ -1,2 +1,25 @@
-/*    /index.html   200
+/auth/*          https://burning-reviewer-books-acknowledge.trycloudflare.com/auth/:splat          200
+/account/*       https://burning-reviewer-books-acknowledge.trycloudflare.com/account/:splat       200
+/account         https://burning-reviewer-books-acknowledge.trycloudflare.com/account         200
+/journal/*       https://burning-reviewer-books-acknowledge.trycloudflare.com/journal/:splat       200
+/journal         https://burning-reviewer-books-acknowledge.trycloudflare.com/journal         200
+/batch/*         https://burning-reviewer-books-acknowledge.trycloudflare.com/batch/:splat         200
+/batch           https://burning-reviewer-books-acknowledge.trycloudflare.com/batch           200
+/corporate-wires/* https://burning-reviewer-books-acknowledge.trycloudflare.com/corporate-wires/:splat 200
+/corporate-wires https://burning-reviewer-books-acknowledge.trycloudflare.com/corporate-wires 200
+/reconciliation/* https://burning-reviewer-books-acknowledge.trycloudflare.com/reconciliation/:splat 200
+/reconciliation  https://burning-reviewer-books-acknowledge.trycloudflare.com/reconciliation  200
+/fx/*            https://burning-reviewer-books-acknowledge.trycloudflare.com/fx/:splat            200
+/fx              https://burning-reviewer-books-acknowledge.trycloudflare.com/fx              200
+/compliance/*    https://burning-reviewer-books-acknowledge.trycloudflare.com/compliance/:splat    200
+/compliance      https://burning-reviewer-books-acknowledge.trycloudflare.com/compliance      200
+/hold/*          https://burning-reviewer-books-acknowledge.trycloudflare.com/hold/:splat          200
+/user/*          https://burning-reviewer-books-acknowledge.trycloudflare.com/user/:splat          200
+/webhooks/*      https://burning-reviewer-books-acknowledge.trycloudflare.com/webhooks/:splat      200
+/stream/*        https://burning-reviewer-books-acknowledge.trycloudflare.com/stream/:splat        200
+/public/*        https://burning-reviewer-books-acknowledge.trycloudflare.com/public/:splat        200
+/api/*           https://burning-reviewer-books-acknowledge.trycloudflare.com/api/:splat           200
+/actuator/*      https://burning-reviewer-books-acknowledge.trycloudflare.com/actuator/:splat      200
+/*               /index.html                                                                        200
+
 

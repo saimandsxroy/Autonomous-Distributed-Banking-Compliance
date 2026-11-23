@@ -4,9 +4,11 @@ import { useAuth } from "../../context/AuthContext";
 import { transferFunds } from "../../services/dashboard";
 
 const COUNTERPARTY_PRESETS = [
-  { label: "Bob Jones", account: "AC-69D1D364271B" },
-  { label: "Alice Smith", account: "AC-4BE19A42A8DC" },
-  { label: "Charlie Day", account: "AC-2B1F918288D9" },
+  { label: "Bob Jones (Checker)", account: "AC-B8F0DABD582C" },
+  { label: "Charlie Day (Retail)", account: "AC-61E364687A17" },
+  { label: "Sarah Connor (Compliance)", account: "AC-B077377200A4" },
+  { label: "Alice Smith (Maker)", account: "AC-7FC899A9A222" },
+  { label: "System FX Clearing", account: "AC-SYS-FX-USD" },
 ];
 
 export function QuickTransfer({ isRevealed, activeAccount, onTransferSuccess }) {
@@ -17,7 +19,7 @@ export function QuickTransfer({ isRevealed, activeAccount, onTransferSuccess }) 
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
 
-  const senderAccount = activeAccount?.accountNumber || user?.accountNumber || "AC-4BE19A42A8DC";
+  const senderAccount = activeAccount?.accountNumber || user?.accountNumber || "AC-7FC899A9A222";
   const availableBalance = Number(activeAccount?.availableBalance ?? user?.accountBalance ?? 0);
 
   const handleTransfer = async (e) => {

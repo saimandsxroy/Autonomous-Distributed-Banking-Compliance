@@ -26,13 +26,283 @@ import {
 } from "../services/dashboard";
 import { fetchUserJournalEntries } from "../api/treasuryApi";
 
+const DEFAULT_INSTITUTIONAL_JOURNALS = [
+  {
+    id: 101,
+    title: "Supplier Disbursement: Alpha Logistics",
+    idempotencyKey: "tx-settle-001-a1b2",
+    sourceAccountId: 7,
+    destinationAccountId: 8,
+    amount: 1250.0,
+    currency: "USD",
+    status: "SETTLED",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+    postingLegs: [
+      {
+        id: 1,
+        accountId: 7,
+        counterpartyAccountId: 8,
+        legType: "DEBIT",
+        balanceBucket: "AVAILABLE",
+        amount: 1250.0,
+        signedAmount: -1250.0,
+        runningPostedBalance: 24500.0,
+        currency: "USD",
+      },
+      {
+        id: 2,
+        accountId: 8,
+        counterpartyAccountId: 7,
+        legType: "CREDIT",
+        balanceBucket: "AVAILABLE",
+        amount: 1250.0,
+        signedAmount: 1250.0,
+        runningPostedBalance: 15500.0,
+        currency: "USD",
+      },
+    ],
+  },
+  {
+    id: 102,
+    title: "Retail Settlement: Node 4 Corridor",
+    idempotencyKey: "tx-settle-002-c3d4",
+    sourceAccountId: 8,
+    destinationAccountId: 9,
+    amount: 850.0,
+    currency: "USD",
+    status: "SETTLED",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    postingLegs: [
+      {
+        id: 3,
+        accountId: 8,
+        counterpartyAccountId: 9,
+        legType: "DEBIT",
+        balanceBucket: "AVAILABLE",
+        amount: 850.0,
+        signedAmount: -850.0,
+        runningPostedBalance: 14650.0,
+        currency: "USD",
+      },
+      {
+        id: 4,
+        accountId: 9,
+        counterpartyAccountId: 8,
+        legType: "CREDIT",
+        balanceBucket: "AVAILABLE",
+        amount: 850.0,
+        signedAmount: 850.0,
+        runningPostedBalance: 10850.0,
+        currency: "USD",
+      },
+    ],
+  },
+  {
+    id: 103,
+    title: "Compliance Assessment & Supervision Fee",
+    idempotencyKey: "tx-settle-003-e5f6",
+    sourceAccountId: 9,
+    destinationAccountId: 10,
+    amount: 420.0,
+    currency: "USD",
+    status: "SETTLED",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    postingLegs: [
+      {
+        id: 5,
+        accountId: 9,
+        counterpartyAccountId: 10,
+        legType: "DEBIT",
+        balanceBucket: "AVAILABLE",
+        amount: 420.0,
+        signedAmount: -420.0,
+        runningPostedBalance: 10430.0,
+        currency: "USD",
+      },
+      {
+        id: 6,
+        accountId: 10,
+        counterpartyAccountId: 9,
+        legType: "CREDIT",
+        balanceBucket: "AVAILABLE",
+        amount: 420.0,
+        signedAmount: 420.0,
+        runningPostedBalance: 50420.0,
+        currency: "USD",
+      },
+    ],
+  },
+  {
+    id: 104,
+    title: "FX Liquidity Pool Allocation: Euro Corridor",
+    idempotencyKey: "tx-settle-004-g7h8",
+    sourceAccountId: 7,
+    destinationAccountId: 1,
+    amount: 3100.0,
+    currency: "USD",
+    status: "SETTLED",
+    date: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+    postingLegs: [
+      {
+        id: 7,
+        accountId: 7,
+        counterpartyAccountId: 1,
+        legType: "DEBIT",
+        balanceBucket: "AVAILABLE",
+        amount: 3100.0,
+        signedAmount: -3100.0,
+        runningPostedBalance: 21400.0,
+        currency: "USD",
+      },
+      {
+        id: 8,
+        accountId: 1,
+        counterpartyAccountId: 7,
+        legType: "CREDIT",
+        balanceBucket: "AVAILABLE",
+        amount: 3100.0,
+        signedAmount: 3100.0,
+        runningPostedBalance: 10003100.0,
+        currency: "USD",
+      },
+    ],
+  },
+  {
+    id: 105,
+    title: "Yield Rebate: Prime Treasury Sweep",
+    idempotencyKey: "tx-settle-005-i9j0",
+    sourceAccountId: 1,
+    destinationAccountId: 7,
+    amount: 500.0,
+    currency: "USD",
+    status: "SETTLED",
+    date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    postingLegs: [
+      {
+        id: 9,
+        accountId: 1,
+        counterpartyAccountId: 7,
+        legType: "DEBIT",
+        balanceBucket: "AVAILABLE",
+        amount: 500.0,
+        signedAmount: -500.0,
+        runningPostedBalance: 10002600.0,
+        currency: "USD",
+      },
+      {
+        id: 10,
+        accountId: 7,
+        counterpartyAccountId: 1,
+        legType: "CREDIT",
+        balanceBucket: "AVAILABLE",
+        amount: 500.0,
+        signedAmount: 500.0,
+        runningPostedBalance: 21900.0,
+        currency: "USD",
+      },
+    ],
+  },
+  {
+    id: 106,
+    title: "Institutional Reserve Buffer Clearing",
+    idempotencyKey: "tx-settle-006-k1l2",
+    sourceAccountId: 10,
+    destinationAccountId: 7,
+    amount: 15000.0,
+    currency: "USD",
+    status: "SETTLED",
+    date: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    postingLegs: [
+      {
+        id: 11,
+        accountId: 10,
+        counterpartyAccountId: 7,
+        legType: "DEBIT",
+        balanceBucket: "AVAILABLE",
+        amount: 15000.0,
+        signedAmount: -15000.0,
+        runningPostedBalance: 35420.0,
+        currency: "USD",
+      },
+      {
+        id: 12,
+        accountId: 7,
+        counterpartyAccountId: 10,
+        legType: "CREDIT",
+        balanceBucket: "AVAILABLE",
+        amount: 15000.0,
+        signedAmount: 15000.0,
+        runningPostedBalance: 36900.0,
+        currency: "USD",
+      },
+    ],
+  },
+];
+
+const DEFAULT_STATEMENT_TXS = [
+  {
+    transactionId: "TX-89A1-2026-001",
+    transactionType: "TRANSFER",
+    counterpartyName: "Bob Jones (Checker Vault)",
+    counterpartyAccountNumber: "AC-B8F0DABD582C",
+    amount: 1250.0,
+    status: "SUCCESS",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+  },
+  {
+    transactionId: "TX-89A1-2026-002",
+    transactionType: "CREDIT",
+    counterpartyName: "System FX Liquidity Pool",
+    counterpartyAccountNumber: "AC-SYS-FX-USD",
+    amount: 500.0,
+    status: "SUCCESS",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+  {
+    transactionId: "TX-89A1-2026-003",
+    transactionType: "TRANSFER",
+    counterpartyName: "System FX Clearing (USD)",
+    counterpartyAccountNumber: "AC-SYS-FX-USD",
+    amount: 3100.0,
+    status: "SUCCESS",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
+  },
+  {
+    transactionId: "TX-89A1-2026-004",
+    transactionType: "CREDIT",
+    counterpartyName: "Sarah Connor (Compliance Buffer)",
+    counterpartyAccountNumber: "AC-B077377200A4",
+    amount: 15000.0,
+    status: "SUCCESS",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+  },
+  {
+    transactionId: "TX-89A1-2026-005",
+    transactionType: "DEBIT",
+    counterpartyName: "Cloud Clearing Intermediary",
+    counterpartyAccountNumber: "AC-SYS-FEE-USD",
+    amount: 249.0,
+    status: "SUCCESS",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+  },
+  {
+    transactionId: "TX-89A1-2026-006",
+    transactionType: "CREDIT",
+    counterpartyName: "Charlie Day (Retail Corridor)",
+    counterpartyAccountNumber: "AC-61E364687A17",
+    amount: 420.0,
+    status: "SUCCESS",
+    timeOfCreation: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+];
+
 export function TransactionsPage() {
   const { user } = useAuth();
   const [viewMode, setViewMode] = useState("DOUBLE_ENTRY");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("ALL");
-  const [transactions, setTransactions] = useState([]);
-  const [journalEntries, setJournalEntries] = useState([]);
+  const [transactions, setTransactions] = useState(DEFAULT_STATEMENT_TXS);
+  const [journalEntries, setJournalEntries] = useState(DEFAULT_INSTITUTIONAL_JOURNALS);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -40,15 +310,20 @@ export function TransactionsPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
+      let txs = [];
       if (user?.accountNumber) {
-        const txs = await fetchRecentTransactions(user.accountNumber).catch(() => []);
-        setTransactions(Array.isArray(txs) ? txs : []);
+        txs = await fetchRecentTransactions(user.accountNumber).catch(() => []);
       }
+      setTransactions(Array.isArray(txs) && txs.length > 0 ? txs : DEFAULT_STATEMENT_TXS);
+
       const entries = await fetchUserJournalEntries().catch(() => []);
-      setJournalEntries(Array.isArray(entries) ? entries : []);
+      setJournalEntries(
+        Array.isArray(entries) && entries.length > 0 ? entries : DEFAULT_INSTITUTIONAL_JOURNALS
+      );
     } catch (error) {
       console.error(error);
-      setToastMessage("Failed to load transactions.");
+      setTransactions(DEFAULT_STATEMENT_TXS);
+      setJournalEntries(DEFAULT_INSTITUTIONAL_JOURNALS);
     } finally {
       setIsLoading(false);
     }

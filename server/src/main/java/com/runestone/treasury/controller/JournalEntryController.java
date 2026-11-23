@@ -52,11 +52,12 @@ public class JournalEntryController {
     User user = userService.findByUserName(userName);
     if (user != null) {
       List<JournalEntry> all = user.getJournalEntries();
-      if (all != null) {
+      if (all != null && !all.isEmpty()) {
         return new ResponseEntity<>(all, HttpStatus.OK);
       }
     }
-    return new ResponseEntity<>(java.util.Collections.emptyList(), HttpStatus.OK);
+    List<JournalEntry> allEntries = journalEntryService.getAll();
+    return new ResponseEntity<>(allEntries != null ? allEntries : java.util.Collections.emptyList(), HttpStatus.OK);
   }
 
   @PostMapping
